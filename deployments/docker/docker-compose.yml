@@ -1,0 +1,71 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - APP_ENV=development
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - VISION_GRPC_HOST=vision
+      - VISION_GRPC_PORT=50051
+    depends_on:
+      - mysql
+      - redis
+      - vision
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=freshbox
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:7.0
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  vision:
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile.vision
+    ports:
+      - "50051:50051"
+    environment:
+      - MODEL_PATH=/app/model/yolov5s.pt
+    volumes:
+      - vision_models:/app/model
+
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+
+  grafana:
+    image: grafana/grafana:10.0.0
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+volumes:
+  mysql_data:
+  redis_data:
+  vision_models:
+  prometheus_data:
+  grafana_data:

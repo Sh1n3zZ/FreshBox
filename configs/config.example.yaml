@@ -1,0 +1,42 @@
+app:
+  name: FreshBox
+  mode: development
+  port: 8080
+
+mysql:
+  host: localhost
+  port: 3306
+  username: root
+  password: root
+  database: freshbox
+  max_idle_conns: 10
+  max_open_conns: 100
+
+redis:
+  host: localhost
+  port: 6379
+  password: ""
+  db: 0
+
+vision:
+  grpc:
+    host: localhost
+    port: 50051
+    timeout: 5s
+
+blockchain:
+  polygon:
+    rpc_url: "https://polygon-rpc.com"
+    contract_address: ""
+    private_key: ""
+
+jwt:
+  secret: "your-secret-key"
+  expire_hours: 24
+
+log:
+  level: debug
+  filename: "./logs/app.log"
+  max_size: 100
+  max_age: 7
+  max_backups: 10 
