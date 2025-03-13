@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
 	"FreshBox/internal/api/rest"
@@ -37,7 +39,7 @@ func main() {
 	defer logger.Sync()
 
 	// 初始化数据库
-	db, err := initDB()
+	db, err := initDB(logger)
 	if err != nil {
 		logger.Fatal("初始化数据库失败", zap.Error(err))
 	}
@@ -127,16 +129,35 @@ func initLogger() (*zap.Logger, error) {
 	return cfg.Build()
 }
 
-func initDB() (*gorm.DB, error) {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		viper.GetString("mysql.username"),
-		viper.GetString("mysql.password"),
-		viper.GetString("mysql.host"),
-		viper.GetInt("mysql.port"),
-		viper.GetString("mysql.database"),
-	)
+func initDB(logger *zap.Logger) (*gorm.DB, error) {
+	// 尝试连接MySQL
+	if viper.IsSet("mysql.host") {
+		dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+			viper.GetString("mysql.username"),
+			viper.GetString("mysql.password"),
+			viper.GetString("mysql.host"),
+			viper.GetInt("mysql.port"),
+			viper.GetString("mysql.database"),
+		)
 
-	return gorm.Open(mysql.Open(dsn), &gorm.Config{})
+		db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+		if err == nil {
+			logger.Info("成功连接到MySQL数据库")
+			return db, nil
+		}
+		logger.Warn("连接MySQL失败，将使用SQLite作为备选", zap.Error(err))
+	}
+
+	// 如果MySQL连接失败或未配置，使用SQLite
+	dbPath := "./data"
+	if err := os.MkdirAll(dbPath, 0755); err != nil {
+		return nil, fmt.Errorf("创建数据目录失败: %v", err)
+	}
+
+	sqlitePath := filepath.Join(dbPath, "freshbox.db")
+	logger.Info("使用SQLite数据库", zap.String("path", sqlitePath))
+
+	return gorm.Open(sqlite.Open(sqlitePath), &gorm.Config{})
 }
 
 func initRedis() *redis.Client {
