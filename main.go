@@ -22,6 +22,7 @@ import (
 	"FreshBox/internal/api/rest/handler"
 	"FreshBox/internal/core/pricing"
 	"FreshBox/internal/core/vision"
+	"FreshBox/internal/pkg/migration"
 	"FreshBox/internal/service"
 )
 
@@ -143,6 +144,10 @@ func initDB(logger *zap.Logger) (*gorm.DB, error) {
 		db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 		if err == nil {
 			logger.Info("成功连接到MySQL数据库")
+			// 执行数据库迁移
+			if err := migration.Run(db); err != nil {
+				return nil, fmt.Errorf("MySQL迁移失败: %v", err)
+			}
 			return db, nil
 		}
 		logger.Warn("连接MySQL失败，将使用SQLite作为备选", zap.Error(err))
@@ -157,7 +162,17 @@ func initDB(logger *zap.Logger) (*gorm.DB, error) {
 	sqlitePath := filepath.Join(dbPath, "freshbox.db")
 	logger.Info("使用SQLite数据库", zap.String("path", sqlitePath))
 
-	return gorm.Open(sqlite.Open(sqlitePath), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(sqlitePath), &gorm.Config{})
+	if err != nil {
+		return nil, fmt.Errorf("打开SQLite数据库失败: %v", err)
+	}
+
+	// 执行数据库迁移
+	if err := migration.Run(db); err != nil {
+		return nil, fmt.Errorf("SQLite迁移失败: %v", err)
+	}
+
+	return db, nil
 }
 
 func initRedis() *redis.Client {

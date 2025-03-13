@@ -13,9 +13,9 @@ import (
 type User struct {
 	ID        string    `json:"id" gorm:"primaryKey"`
 	Username  string    `json:"username" gorm:"uniqueIndex"`
+	Email     string    `json:"email" gorm:"uniqueIndex"`
 	Password  string    `json:"-" gorm:"not null"`
-	Email     string    `json:"email"`
-	Phone     string    `json:"phone"`
+	Avatar    string    `json:"avatar,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -43,6 +43,14 @@ func (s *UserService) Register(ctx context.Context, user *User) error {
 		return errors.New("用户名已存在")
 	}
 
+	// 检查邮箱是否已存在
+	if err := s.db.Model(&User{}).Where("email = ?", user.Email).Count(&count).Error; err != nil {
+		return errors.Wrap(err, "检查邮箱失败")
+	}
+	if count > 0 {
+		return errors.New("邮箱已被注册")
+	}
+
 	// 加密密码
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -63,11 +71,14 @@ func (s *UserService) Register(ctx context.Context, user *User) error {
 	return nil
 }
 
-// Login 用户登录
-func (s *UserService) Login(ctx context.Context, username, password string) (*User, error) {
+// LoginByEmail 使用邮箱登录
+func (s *UserService) LoginByEmail(ctx context.Context, email, password string) (*User, error) {
 	var user User
-	if err := s.db.Where("username = ?", username).First(&user).Error; err != nil {
-		return nil, errors.Wrap(err, "用户不存在")
+	if err := s.db.Where("email = ?", email).First(&user).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.New("用户不存在")
+		}
+		return nil, errors.Wrap(err, "查询用户失败")
 	}
 
 	// 验证密码
@@ -82,6 +93,9 @@ func (s *UserService) Login(ctx context.Context, username, password string) (*Us
 func (s *UserService) GetProfile(ctx context.Context, id string) (*User, error) {
 	var user User
 	if err := s.db.First(&user, "id = ?", id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.New("用户不存在")
+		}
 		return nil, errors.Wrap(err, "获取用户信息失败")
 	}
 
@@ -90,10 +104,10 @@ func (s *UserService) GetProfile(ctx context.Context, id string) (*User, error) 
 
 // UpdateProfile 更新用户信息
 func (s *UserService) UpdateProfile(ctx context.Context, user *User) error {
-	// 只允许更新部分字段
 	updates := map[string]interface{}{
+		"username":   user.Username,
 		"email":      user.Email,
-		"phone":      user.Phone,
+		"avatar":     user.Avatar,
 		"updated_at": time.Now(),
 	}
 
@@ -102,4 +116,16 @@ func (s *UserService) UpdateProfile(ctx context.Context, user *User) error {
 	}
 
 	return nil
+}
+
+// GetUserByID 根据ID获取用户
+func (s *UserService) GetUserByID(ctx context.Context, id string) (*User, error) {
+	var user User
+	if err := s.db.First(&user, "id = ?", id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.New("用户不存在")
+		}
+		return nil, errors.Wrap(err, "获取用户失败")
+	}
+	return &user, nil
 }

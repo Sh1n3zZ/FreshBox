@@ -1,7 +1,12 @@
 package rest
 
 import (
+	"net/http"
+	"time"
+
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 
 	"FreshBox/internal/api/rest/handler"
 	"FreshBox/internal/api/rest/middleware"
@@ -14,6 +19,50 @@ func SetupRouter(
 ) *gin.Engine {
 	r := gin.Default()
 
+	// CORS配置
+	corsConfig := cors.DefaultConfig()
+
+	// 根据环境设置CORS
+	if viper.GetString("app.mode") == "development" {
+		corsConfig.AllowAllOrigins = true
+		corsConfig.AllowCredentials = false // AllowAllOrigins为true时，必须设置为false
+	} else {
+		corsConfig.AllowOrigins = []string{
+			viper.GetString("cors.allow_origin"),
+			"http://localhost:3000",
+			"http://localhost:3001",
+		}
+		corsConfig.AllowCredentials = viper.GetBool("cors.allow_credentials")
+	}
+
+	corsConfig.AllowMethods = []string{
+		http.MethodGet,
+		http.MethodPost,
+		http.MethodPut,
+		http.MethodPatch,
+		http.MethodDelete,
+		http.MethodOptions,
+		http.MethodHead,
+	}
+	corsConfig.AllowHeaders = []string{
+		"Origin",
+		"Content-Type",
+		"Content-Length",
+		"Accept-Encoding",
+		"X-CSRF-Token",
+		"Authorization",
+		"Accept",
+		"Cache-Control",
+		"X-Requested-With",
+	}
+	corsConfig.ExposeHeaders = []string{
+		"Content-Length",
+		"Authorization",
+	}
+	corsConfig.MaxAge = time.Duration(viper.GetInt("cors.max_age")) * time.Hour
+
+	r.Use(cors.New(corsConfig))
+
 	// 全局中间件
 	r.Use(middleware.Trace())
 	r.Use(middleware.Logger())
@@ -22,27 +71,27 @@ func SetupRouter(
 	// API v1
 	v1 := r.Group("/api/v1")
 	{
-		// 公开接口
-		public := v1.Group("")
+		// 认证相关接口
+		auth := v1.Group("/auth")
 		{
-			// 用户注册和登录
-			public.POST("/register", userHandler.Register)
-			public.POST("/login", userHandler.Login)
+			auth.POST("/register", userHandler.Register)
+			auth.POST("/login", userHandler.Login)
+			auth.POST("/refresh", userHandler.RefreshToken)
 		}
 
 		// 需要认证的接口
-		auth := v1.Group("")
-		auth.Use(middleware.Auth())
+		protected := v1.Group("")
+		protected.Use(middleware.Auth())
 		{
 			// 用户相关
-			auth.GET("/profile", userHandler.GetProfile)
-			auth.PUT("/profile", userHandler.UpdateProfile)
+			protected.GET("/user/profile", userHandler.GetProfile)
+			protected.PUT("/user/profile", userHandler.UpdateProfile)
 
 			// 盲盒相关
-			auth.POST("/boxes", boxHandler.CreateBox)
-			auth.GET("/boxes/:id", boxHandler.GetBox)
-			auth.GET("/boxes", boxHandler.ListBoxes)
-			auth.POST("/boxes/:id/purchase", boxHandler.PurchaseBox)
+			protected.POST("/boxes", boxHandler.CreateBox)
+			protected.GET("/boxes/:id", boxHandler.GetBox)
+			protected.GET("/boxes", boxHandler.ListBoxes)
+			protected.POST("/boxes/:id/purchase", boxHandler.PurchaseBox)
 		}
 	}
 

@@ -1,10 +1,11 @@
 package jwt
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -15,63 +16,100 @@ var (
 	TokenExpiry = 24 * time.Hour
 )
 
-// Claims 自定义的 JWT 声明
+// Claims 自定义JWT声明
 type Claims struct {
-	UserID    string `json:"user_id"`
-	Username  string `json:"username"`
-	TokenType string `json:"token_type"`
+	UserID   string `json:"user_id"`
+	Username string `json:"username"`
+	Type     string `json:"type"`
 	jwt.RegisteredClaims
 }
 
-// GenerateToken 生成 JWT 令牌
-func GenerateToken(userID, username string) (string, error) {
-	now := time.Now()
+const (
+	// TokenTypeAccess 访问令牌类型
+	TokenTypeAccess = "access"
+	// TokenTypeRefresh 刷新令牌类型
+	TokenTypeRefresh = "refresh"
+)
+
+// GenerateTokenPair 生成访问令牌和刷新令牌对
+func GenerateTokenPair(userID, username string) (string, string, error) {
+	// 生成访问令牌
+	accessToken, err := generateToken(userID, username, TokenTypeAccess, 1*time.Hour)
+	if err != nil {
+		return "", "", fmt.Errorf("生成访问令牌失败: %v", err)
+	}
+
+	// 生成刷新令牌
+	refreshToken, err := generateToken(userID, username, TokenTypeRefresh, 7*24*time.Hour)
+	if err != nil {
+		return "", "", fmt.Errorf("生成刷新令牌失败: %v", err)
+	}
+
+	return accessToken, refreshToken, nil
+}
+
+// generateToken 生成JWT令牌
+func generateToken(userID, username, tokenType string, expiration time.Duration) (string, error) {
 	claims := Claims{
-		UserID:    userID,
-		Username:  username,
-		TokenType: "access",
+		UserID:   userID,
+		Username: username,
+		Type:     tokenType,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(now.Add(TokenExpiry)),
-			IssuedAt:  jwt.NewNumericDate(now),
-			NotBefore: jwt.NewNumericDate(now),
-			Issuer:    "freshbox",
-			Subject:   userID,
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiration)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			NotBefore: jwt.NewNumericDate(time.Now()),
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, err := token.SignedString(secretKey)
-	if err != nil {
-		return "", errors.Wrap(err, "签名令牌失败")
-	}
-
-	return signedToken, nil
+	return token.SignedString(secretKey)
 }
 
-// ValidateToken 验证并解析 JWT 令牌
+// ValidateToken 验证访问令牌
 func ValidateToken(tokenString string) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+	return validateTokenWithType(tokenString, TokenTypeAccess)
+}
+
+// ValidateRefreshToken 验证刷新令牌
+func ValidateRefreshToken(tokenString string) (*Claims, error) {
+	return validateTokenWithType(tokenString, TokenTypeRefresh)
+}
+
+// validateTokenWithType 验证指定类型的令牌
+func validateTokenWithType(tokenString string, expectedType string) (*Claims, error) {
+	claims := &Claims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.Errorf("意外的签名方法: %v", token.Header["alg"])
+			return nil, fmt.Errorf("无效的签名方法: %v", token.Header["alg"])
 		}
 		return secretKey, nil
 	})
 
 	if err != nil {
-		return nil, errors.Wrap(err, "解析令牌失败")
+		return nil, fmt.Errorf("解析令牌失败: %v", err)
 	}
 
-	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
-		return claims, nil
+	if !token.Valid {
+		return nil, fmt.Errorf("无效的令牌")
 	}
 
-	return nil, errors.New("无效的令牌")
+	if claims.Type != expectedType {
+		return nil, fmt.Errorf("无效的令牌类型")
+	}
+
+	return claims, nil
 }
 
-// ExtractBearerToken 从 Authorization 头提取 Bearer 令牌
+// ExtractBearerToken 从Authorization头提取Bearer令牌
 func ExtractBearerToken(authHeader string) (string, error) {
-	if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
-		return authHeader[7:], nil
+	if authHeader == "" {
+		return "", fmt.Errorf("未提供Authorization头")
 	}
-	return "", errors.New("无效的 Authorization 头")
+
+	parts := strings.Split(authHeader, " ")
+	if len(parts) != 2 || parts[0] != "Bearer" {
+		return "", fmt.Errorf("无效的Authorization头格式")
+	}
+
+	return parts[1], nil
 }

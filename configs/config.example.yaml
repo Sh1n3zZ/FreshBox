@@ -3,6 +3,11 @@ app:
   mode: development
   port: 8080
 
+cors:
+  allow_origin: "http://localhost:3000"
+  allow_credentials: true
+  max_age: 12
+
 mysql:
   host: localhost
   port: 3306
