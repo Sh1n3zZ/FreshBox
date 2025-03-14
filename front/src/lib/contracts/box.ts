@@ -4,12 +4,15 @@ export interface Box {
   description: string;
   originalPrice: number;
   currentPrice: number;
-  expiryDate: string;
-  quantity: number;
-  images: string[];
+  discount: number;
   category: string;
-  tags: string[];
-  merchant: {
+  imageUrl: string;
+  status: string;
+  expiryDate: string;
+  createdAt: string;
+  quantity?: number;
+  tags?: string[];
+  merchant?: {
     id: string;
     name: string;
     logo: string;
@@ -39,6 +42,7 @@ export interface BoxListParams {
   maxPrice?: number;
   sortBy?: 'price' | 'expiry' | 'popularity';
   order?: 'asc' | 'desc';
+  search?: string;
 }
 
 export interface PurchaseBoxRequest {
@@ -51,4 +55,4 @@ export interface PurchaseBoxResponse {
   orderId: string;
   paymentUrl: string;
   qrCode?: string;
-} 
+}

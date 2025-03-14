@@ -16,6 +16,7 @@ import (
 func SetupRouter(
 	userHandler *handler.UserHandler,
 	boxHandler *handler.BoxHandler,
+	taskHandler *handler.TaskHandler,
 ) *gin.Engine {
 	r := gin.Default()
 
@@ -68,9 +69,61 @@ func SetupRouter(
 	r.Use(middleware.Logger())
 	r.Use(middleware.Recovery())
 
+	// 静态文件服务
+	r.Static("/static/uploads/boxes", "./uploads/boxes")
+	r.Static("/static/uploads/users", "./uploads/users")
+	r.Static("/static/uploads/others", "./uploads/others")
+
+	// 图片处理
+	imageHandler := handler.NewImageHandler()
+	r.GET("/images/:type/:filename", imageHandler.GetImage)
+
+	// 仪表盘处理器
+	dashboardHandler := handler.NewDashboardHandler()
+
 	// API v1
 	v1 := r.Group("/api/v1")
 	{
+		// 上传图片接口 - 不需要认证
+		v1.POST("/upload", imageHandler.UploadImage)
+
+		// 公开的盲盒接口 - 不需要认证
+		v1.GET("/boxes", boxHandler.ListBoxes)
+		v1.GET("/boxes/:id", boxHandler.GetBox)
+
+		// 仪表盘接口 - 公开接口（在实际生产环境中应该加上认证）
+		dashboard := v1.Group("/dashboard")
+		{
+			dashboard.GET("/summary", dashboardHandler.GetSummary)
+			dashboard.GET("/revenue", dashboardHandler.GetRevenueStats)
+			dashboard.GET("/categories", dashboardHandler.GetBoxCategories)
+			dashboard.GET("/user-activity", dashboardHandler.GetUserActivity)
+			dashboard.GET("/donations", dashboardHandler.GetDonationStats)
+			dashboard.GET("/recent-boxes", dashboardHandler.GetRecentBoxes)
+			dashboard.GET("/top-tasks", dashboardHandler.GetTopPerformingTasks)
+		}
+
+		// 社交任务接口 - 部分公开
+		tasks := v1.Group("/tasks")
+		{
+			// 公开接口
+			tasks.GET("", taskHandler.ListTasks)                       // 获取任务列表
+			tasks.GET("/recommended", taskHandler.GetRecommendedTasks) // 获取推荐任务
+			tasks.GET("/popular", taskHandler.GetPopularTasks)         // 获取热门任务
+			tasks.GET("/:id", taskHandler.GetTask)                     // 获取任务详情
+			tasks.GET("/:id/progress", taskHandler.GetTaskProgress)    // 获取任务进度
+			tasks.GET("/:id/contents", taskHandler.GetTaskContents)    // 获取任务内容列表
+
+			// 需要认证的接口
+			tasksAuth := tasks.Group("")
+			tasksAuth.Use(middleware.Auth())
+			{
+				tasksAuth.POST("", taskHandler.CreateTask)                    // 创建任务
+				tasksAuth.PUT("/:id/status", taskHandler.UpdateTaskStatus)    // 更新任务状态
+				tasksAuth.POST("/:id/content", taskHandler.UploadTaskContent) // 上传任务内容
+			}
+		}
+
 		// 认证相关接口
 		auth := v1.Group("/auth")
 		{
@@ -87,11 +140,14 @@ func SetupRouter(
 			protected.GET("/user/profile", userHandler.GetProfile)
 			protected.PUT("/user/profile", userHandler.UpdateProfile)
 
-			// 盲盒相关
+			// 盲盒相关 - 需要认证
 			protected.POST("/boxes", boxHandler.CreateBox)
-			protected.GET("/boxes/:id", boxHandler.GetBox)
-			protected.GET("/boxes", boxHandler.ListBoxes)
+			protected.PUT("/boxes/:id", boxHandler.UpdateBox)
+			protected.DELETE("/boxes/:id", boxHandler.DeleteBox)
 			protected.POST("/boxes/:id/purchase", boxHandler.PurchaseBox)
+
+			// 上传图片 - 需要认证的上传（可选，如果需要认证）
+			protected.POST("/upload/auth", imageHandler.UploadImage)
 		}
 	}
 

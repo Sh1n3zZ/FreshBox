@@ -38,29 +38,53 @@ export function RegisterForm() {
   });
 
   async function onSubmit(data: RegisterFormValues) {
+    console.log("[RegisterForm] 开始注册流程:", { username: data.username, email: data.email });
     setIsLoading(true);
 
     try {
       const result = await register(data.username, data.email, data.password);
+      console.log("[RegisterForm] API 注册成功:", { 
+        accessToken: result.accessToken ? `${result.accessToken.substring(0, 20)}...` : null,
+        hasRefreshToken: !!result.refreshToken,
+        user: result.user
+      });
       
-      // 使用 NextAuth 的 signIn 方法
+      if (!result.user || !result.accessToken || !result.refreshToken) {
+        console.error("[RegisterForm] API 返回的注册数据不完整:", {
+          hasUser: !!result.user,
+          hasAccessToken: !!result.accessToken,
+          hasRefreshToken: !!result.refreshToken
+        });
+        throw new Error("注册数据不完整，请联系管理员");
+      }
+      
+      // 使用 NextAuth 的 signIn 方法，传递用户信息
+      console.log("[RegisterForm] 调用 NextAuth signIn...");
       const signInResult = await signIn('credentials', {
         accessToken: result.accessToken,
         refreshToken: result.refreshToken,
+        user: JSON.stringify(result.user),
         redirect: false,
       });
+      console.log("[RegisterForm] NextAuth signIn 结果:", signInResult);
 
       if (signInResult?.error) {
-        throw new Error(signInResult.error);
+        console.error("[RegisterForm] NextAuth signIn 失败:", signInResult.error);
+        throw new Error(`认证失败: ${signInResult.error}`);
       }
 
       toast.success('注册成功', {
         description: '欢迎加入FreshBox！',
       });
       
-      router.push('/dashboard');
+      // 延迟一点时间确保会话已经建立
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      console.log("[RegisterForm] 注册成功，准备跳转到 /boxes");
+      router.push('/boxes');
       router.refresh();
     } catch (error) {
+      console.error("[RegisterForm] 注册失败:", error);
       toast.error('注册失败', {
         description: error instanceof Error ? error.message : '请检查您的输入',
       });

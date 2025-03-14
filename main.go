@@ -21,6 +21,7 @@ import (
 	"FreshBox/internal/api/rest"
 	"FreshBox/internal/api/rest/handler"
 	"FreshBox/internal/core/pricing"
+	"FreshBox/internal/core/social"
 	"FreshBox/internal/core/vision"
 	"FreshBox/internal/pkg/migration"
 	"FreshBox/internal/service"
@@ -70,9 +71,14 @@ func main() {
 	userService := service.NewUserService(db)
 	boxService := service.NewBoxService(db, pricingEngine, visionService)
 
+	// 初始化社交任务服务
+	taskManager := social.NewDefaultTaskManager(db)
+	contentManager := social.NewDefaultContentManager(db)
+
 	// 初始化处理器
 	userHandler := handler.NewUserHandler(userService)
 	boxHandler := handler.NewBoxHandler(boxService)
+	taskHandler := handler.NewTaskHandler(taskManager, contentManager)
 
 	// 设置运行模式
 	if viper.GetString("app.mode") == "production" {
@@ -80,7 +86,7 @@ func main() {
 	}
 
 	// 设置路由
-	r := rest.SetupRouter(userHandler, boxHandler)
+	r := rest.SetupRouter(userHandler, boxHandler, taskHandler)
 
 	// 创建HTTP服务器
 	srv := &http.Server{

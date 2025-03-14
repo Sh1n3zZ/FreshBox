@@ -1,48 +1,54 @@
+"use client";
+
 import { useState, useEffect } from 'react';
+import type { Box } from '@/lib/contracts/box';
 
-interface UseBoxPriceProps {
-  originalPrice: number;
-  expiryDate: string;
-  baseDiscountRate?: number; // 基础折扣率
-  minDiscountRate?: number; // 最低折扣率
-}
-
-export function useBoxPrice({
-  originalPrice,
-  expiryDate,
-  baseDiscountRate = 0.8,
-  minDiscountRate = 0.3,
-}: UseBoxPriceProps) {
-  const [currentPrice, setCurrentPrice] = useState(originalPrice);
-  const [remainingHours, setRemainingHours] = useState(0);
+export function useBoxPrice(box: Box) {
+  const { originalPrice, currentPrice, expiryDate } = box;
+  const [daysUntilExpiry, setDaysUntilExpiry] = useState(0);
+  const [formattedPrice, setFormattedPrice] = useState('');
+  const [formattedDiscount, setFormattedDiscount] = useState('');
 
   useEffect(() => {
-    const calculatePrice = () => {
+    // 计算到期天数
+    const calculateDaysUntilExpiry = () => {
       const now = new Date();
       const expiry = new Date(expiryDate);
-      const diffInHours = Math.max(0, (expiry.getTime() - now.getTime()) / (1000 * 60 * 60));
+      // 设置时间为当天结束
+      expiry.setHours(23, 59, 59, 999);
       
-      // 计算动态折扣率
-      // 48小时内开始降价，每小时递减1%，但不低于最低折扣率
-      const hoursUntilExpiry = Math.min(48, diffInHours);
-      const dynamicRate = Math.max(
-        minDiscountRate,
-        baseDiscountRate - ((48 - hoursUntilExpiry) * 0.01)
-      );
-      
-      setRemainingHours(Math.floor(diffInHours));
-      setCurrentPrice(Number((originalPrice * dynamicRate).toFixed(2)));
+      // 计算天数差异（向上取整）
+      const diffTime = expiry.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return Math.max(0, diffDays);
     };
 
-    calculatePrice();
-    const interval = setInterval(calculatePrice, 60000); // 每分钟更新一次
+    // 格式化价格和折扣显示
+    const formatPrice = (price: number): string => {
+      return price.toFixed(2);
+    };
+
+    const formatDiscount = (discount: number): string => {
+      return Math.round(discount).toString();
+    };
+
+    setDaysUntilExpiry(calculateDaysUntilExpiry());
+    setFormattedPrice(formatPrice(currentPrice));
+    setFormattedDiscount(formatDiscount(box.discount));
+
+    // 每小时更新一次
+    const interval = setInterval(() => {
+      setDaysUntilExpiry(calculateDaysUntilExpiry());
+    }, 60 * 60 * 1000);
     
     return () => clearInterval(interval);
-  }, [originalPrice, expiryDate, baseDiscountRate, minDiscountRate]);
+  }, [expiryDate, currentPrice, box.discount, originalPrice]);
 
   return {
+    formattedPrice,
+    formattedDiscount,
+    daysUntilExpiry,
     currentPrice,
-    remainingHours,
-    discountPercentage: Math.round((1 - currentPrice / originalPrice) * 100),
+    originalPrice,
   };
 } 

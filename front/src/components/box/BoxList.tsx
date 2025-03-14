@@ -1,4 +1,6 @@
-import { useState } from 'react';
+"use client";
+
+import { useState, useEffect } from 'react';
 import { BoxCard } from './BoxCard';
 import { Input } from "@/components/ui/input";
 import {
@@ -9,23 +11,56 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { APIClient } from '@/lib/api/client';
+import { BoxListSkeleton } from './BoxListSkeleton';
 import type { Box, BoxListParams } from '@/lib/contracts/box';
 
-async function getBoxes(params: BoxListParams) {
-  const api = APIClient.getInstance();
-  const response = await api.client.get('/api/boxes', { params });
-  return response.data;
-}
-
-export async function BoxList() {
+export function BoxList() {
   const [searchParams, setSearchParams] = useState<BoxListParams>({
     page: 1,
     pageSize: 12,
     sortBy: 'expiry',
     order: 'asc',
   });
+  const [boxes, setBoxes] = useState<Box[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const { boxes, total } = await getBoxes(searchParams);
+  useEffect(() => {
+    async function fetchBoxes() {
+      setLoading(true);
+      try {
+        const api = APIClient.getInstance();
+        const response = await api.client.get('/boxes', { params: searchParams });
+        console.log("[BoxList] 接收到的响应数据:", response.data);
+        
+        // 修复数据解析：处理嵌套的 data 结构
+        if (response.data && response.data.data && response.data.data.boxes) {
+          setBoxes(response.data.data.boxes || []);
+          setTotal(response.data.data.total || 0);
+          console.log("[BoxList] 成功解析盲盒数据:", {
+            boxes: response.data.data.boxes.length,
+            total: response.data.data.total
+          });
+        } else {
+          console.warn("[BoxList] 无法解析盲盒数据:", response.data);
+          setBoxes([]);
+          setTotal(0);
+        }
+      } catch (err) {
+        console.error('[BoxList] 获取盲盒列表失败', err);
+        setError('获取盲盒列表失败，请稍后重试');
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchBoxes();
+  }, [searchParams]);
+
+  if (loading) return <BoxListSkeleton />;
+  if (error) return <div className="text-center text-red-500">{error}</div>;
+  if (boxes.length === 0) return <div className="text-center">暂无盲盒数据</div>;
 
   return (
     <div className="space-y-6">

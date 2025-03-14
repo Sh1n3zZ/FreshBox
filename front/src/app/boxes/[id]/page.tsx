@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { BoxDetail } from '@/components/box/BoxDetail';
 import { BoxDetailSkeleton } from '@/components/box/BoxDetailSkeleton';
-import { APIClient } from '@/lib/api/client';
+import { BoxService } from '@/lib/services/box-service';
 
 interface BoxPageProps {
   params: {
@@ -12,10 +12,10 @@ interface BoxPageProps {
 
 async function getBoxDetail(id: string) {
   try {
-    const api = APIClient.getInstance();
-    const response = await api.client.get(`/api/boxes/${id}`);
-    return response.data;
+    const boxData = await BoxService.getBoxDetail(id);
+    return boxData;
   } catch (error) {
+    console.error('获取盲盒详情失败:', error);
     return null;
   }
 }

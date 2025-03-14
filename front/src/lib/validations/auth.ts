@@ -31,4 +31,4 @@ export const registerSchema = z.object({
 }).refine((data) => data.password === data.confirmPassword, {
   message: "两次输入的密码不一致",
   path: ["confirmPassword"],
-}); 
+});

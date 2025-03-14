@@ -104,6 +104,7 @@ export class APIClient {
               }
             } catch (refreshError) {
               // 刷新失败，清除会话并重定向到登录页
+              console.error('刷新失败', refreshError);
               await signOut({ redirect: true, callbackUrl: '/login' });
               return Promise.reject(refreshError);
             } finally {

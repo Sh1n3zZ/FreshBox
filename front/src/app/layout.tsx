@@ -1,20 +1,14 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
-import { fontLinks } from "@/lib/fonts";
 import { Providers } from "@/components/providers/Providers";
 import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "FreshBox",
   description: "可持续生活方式的践行者",
-  other: {
-    ...Object.fromEntries(
-      fontLinks.map((link, index) => [
-        `font-${index}`,
-        JSON.stringify(link),
-      ])
-    ),
-  },
 };
 
 export default function RootLayout({
@@ -24,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-CN">
-      <body className="font-misans antialiased">
+      <body className={inter.className}>
         <Providers>
           {children}
           <Toaster />

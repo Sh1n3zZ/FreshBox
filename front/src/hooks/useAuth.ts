@@ -82,6 +82,7 @@ export function useAuth() {
   };
 
   const login = async (email: string, password: string): Promise<LoginResponse> => {
+    console.log("[useAuth] 开始登录:", { email });
     try {
       setIsLoading(true);
       // 创建新的 AbortController
@@ -97,8 +98,14 @@ export function useAuth() {
         }
       );
 
+      console.log("[useAuth] 登录成功:", { 
+        hasUser: !!response.data.user,
+        hasAccessToken: !!response.data.accessToken,
+        hasRefreshToken: !!response.data.refreshToken 
+      });
       return response.data;
     } catch (error) {
+      console.error("[useAuth] 登录失败:", error);
       throw handleError(error);
     } finally {
       setIsLoading(false);
@@ -111,6 +118,7 @@ export function useAuth() {
     email: string,
     password: string
   ): Promise<LoginResponse> => {
+    console.log("[useAuth] 开始注册:", { username, email });
     try {
       setIsLoading(true);
       // 创建新的 AbortController
@@ -132,8 +140,14 @@ export function useAuth() {
         }
       );
 
+      console.log("[useAuth] 注册成功:", { 
+        hasUser: !!response.data.user,
+        hasAccessToken: !!response.data.accessToken,
+        hasRefreshToken: !!response.data.refreshToken 
+      });
       return response.data;
     } catch (error) {
+      console.error("[useAuth] 注册失败:", error);
       throw handleError(error);
     } finally {
       setIsLoading(false);

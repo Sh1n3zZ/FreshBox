@@ -44,4 +44,4 @@ export interface DonationCertificate {
     savedWeight: number;
     co2Reduction: number;
   };
-} 
+}

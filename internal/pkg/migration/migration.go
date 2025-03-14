@@ -34,6 +34,11 @@ func autoMigrate(db *gorm.DB) error {
 		return err
 	}
 
+	log.Println("迁移盲盒订单表...")
+	if err := db.AutoMigrate(&model.BoxOrder{}); err != nil {
+		return err
+	}
+
 	log.Println("迁移交易记录表...")
 	if err := db.AutoMigrate(&model.Transaction{}); err != nil {
 		return err

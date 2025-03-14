@@ -10,10 +10,13 @@ import (
 	"go.uber.org/zap"
 )
 
-// Trace 添加请求追踪ID
+// Trace 添加跟踪ID
 func Trace() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		traceID := uuid.New().String()
+		traceID := c.GetHeader("X-Trace-ID")
+		if traceID == "" {
+			traceID = uuid.NewString()
+		}
 		c.Set("trace_id", traceID)
 		c.Header("X-Trace-ID", traceID)
 		c.Next()
