@@ -1,0 +1,98 @@
+name: FreshBox CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build:
+    name: 构建和测试
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 设置Go环境
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.21"
+          cache: true
+
+      - name: 下载依赖
+        run: go mod download
+
+      - name: 运行测试
+        run: go test -v ./...
+
+      - name: 编译
+        run: make build
+
+      - name: 设置Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: 构建应用Docker镜像
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: deployments/docker/Dockerfile
+          push: false
+          tags: freshbox/app:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 构建视觉服务Docker镜像
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: deployments/docker/Dockerfile.vision
+          push: false
+          tags: freshbox/vision:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # 发布到Docker Hub的任务（可选，需要配置密钥）
+  publish:
+    name: 发布Docker镜像
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 登录到Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: 设置Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: 构建并推送应用Docker镜像
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: deployments/docker/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_HUB_USERNAME }}/freshbox:latest
+            ${{ secrets.DOCKER_HUB_USERNAME }}/freshbox:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 构建并推送视觉服务Docker镜像
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: deployments/docker/Dockerfile.vision
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_HUB_USERNAME }}/freshbox-vision:latest
+            ${{ secrets.DOCKER_HUB_USERNAME }}/freshbox-vision:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

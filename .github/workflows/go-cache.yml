@@ -1,0 +1,25 @@
+name: Go依赖缓存
+
+on:
+  push:
+    paths:
+      - "go.mod"
+      - "go.sum"
+
+jobs:
+  cache-deps:
+    name: 缓存Go依赖
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 设置Go环境
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.21"
+          cache: true
+
+      - name: 下载和缓存依赖
+        run: go mod download
