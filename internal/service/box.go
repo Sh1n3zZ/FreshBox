@@ -6,26 +6,38 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 
 	"FreshBox/internal/core/pricing"
 	"FreshBox/internal/core/vision"
 	"FreshBox/internal/model"
+	"FreshBox/internal/pkg/mq"
 )
 
 // BoxService 盲盒服务
 type BoxService struct {
 	db            *gorm.DB
 	pricingEngine pricing.Engine
-	visionService vision.Recognition
+	visionService *vision.VisionService
+	mqClient      *mq.MQClient
+	logger        *zap.Logger
 }
 
 // NewBoxService 创建盲盒服务
-func NewBoxService(db *gorm.DB, pricingEngine pricing.Engine, visionService vision.Recognition) *BoxService {
+func NewBoxService(
+	db *gorm.DB,
+	pricingEngine pricing.Engine,
+	visionService *vision.VisionService,
+	mqClient *mq.MQClient,
+	logger *zap.Logger,
+) *BoxService {
 	return &BoxService{
 		db:            db,
 		pricingEngine: pricingEngine,
 		visionService: visionService,
+		mqClient:      mqClient,
+		logger:        logger,
 	}
 }
 

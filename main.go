@@ -20,11 +20,17 @@ import (
 
 	"FreshBox/internal/api/rest"
 	"FreshBox/internal/api/rest/handler"
+	"FreshBox/internal/core/donation"
 	"FreshBox/internal/core/pricing"
 	"FreshBox/internal/core/social"
 	"FreshBox/internal/core/vision"
 	"FreshBox/internal/pkg/migration"
+	"FreshBox/internal/pkg/mq"
 	"FreshBox/internal/service"
+
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 func main() {
@@ -69,7 +75,49 @@ func main() {
 
 	// 初始化业务服务
 	userService := service.NewUserService(db)
-	boxService := service.NewBoxService(db, pricingEngine, visionService)
+	// 初始化以太坊客户端
+	ethClient, err := ethclient.Dial(viper.GetString("blockchain.polygon.rpc_url"))
+	if err != nil {
+		logger.Fatal("连接区块链网络失败", zap.Error(err))
+	}
+
+	// 初始化以太坊私钥
+	privateKey, err := crypto.HexToECDSA(viper.GetString("blockchain.polygon.private_key"))
+	if err != nil {
+		logger.Fatal("解析私钥失败", zap.Error(err))
+	}
+
+	// 创建交易签名者
+	chainID, err := ethClient.ChainID(context.Background())
+	if err != nil {
+		logger.Fatal("获取链ID失败", zap.Error(err))
+	}
+
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
+	if err != nil {
+		logger.Fatal("创建交易签名者失败", zap.Error(err))
+	}
+
+	// 初始化区块链服务
+	blockchainService, err := donation.NewPolygonService(
+		ethClient,
+		viper.GetString("blockchain.polygon.contract_address"),
+		auth,
+		viper.GetString("blockchain.polygon.ipfs_gateway"),
+	)
+	if err != nil {
+		logger.Fatal("初始化区块链服务失败", zap.Error(err))
+	}
+
+	// 初始化RocketMQ客户端
+	mqClient, err := mq.NewMQClient()
+	if err != nil {
+		logger.Fatal("初始化RocketMQ客户端失败", zap.Error(err))
+	}
+	defer mqClient.Close()
+
+	// 初始化盲盒服务
+	boxService := service.NewBoxService(db, pricingEngine, visionService, mqClient, logger)
 
 	// 初始化社交任务服务
 	taskManager := social.NewDefaultTaskManager(db)
@@ -79,6 +127,37 @@ func main() {
 	userHandler := handler.NewUserHandler(userService)
 	boxHandler := handler.NewBoxHandler(boxService)
 	taskHandler := handler.NewTaskHandler(taskManager, contentManager)
+
+	// 初始化各模块的MQ处理器
+	visionMQHandler := vision.NewVisionMQHandler(mqClient, visionService, logger)
+	priceMQHandler := pricing.NewPriceMQHandler(mqClient, pricingEngine, logger)
+	taskMQHandler := social.NewTaskMQHandler(mqClient, taskManager, logger)
+	donationMQHandler := donation.NewDonationMQHandler(mqClient, blockchainService, logger)
+
+	// 启动消费者
+	go func() {
+		if err := visionMQHandler.StartConsume(); err != nil {
+			logger.Error("启动视觉识别消费者失败", zap.Error(err))
+		}
+	}()
+
+	go func() {
+		if err := priceMQHandler.StartConsume(); err != nil {
+			logger.Error("启动价格更新消费者失败", zap.Error(err))
+		}
+	}()
+
+	go func() {
+		if err := taskMQHandler.StartConsume(); err != nil {
+			logger.Error("启动任务管理消费者失败", zap.Error(err))
+		}
+	}()
+
+	go func() {
+		if err := donationMQHandler.StartConsume(); err != nil {
+			logger.Error("启动捐赠管理消费者失败", zap.Error(err))
+		}
+	}()
 
 	// 设置运行模式
 	if viper.GetString("app.mode") == "production" {
