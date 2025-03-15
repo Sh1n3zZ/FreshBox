@@ -28,7 +28,9 @@ jobs:
         run: go test -v ./...
 
       - name: 编译
-        run: make build
+        run: |
+          mkdir -p build
+          go build -o build/freshbox -v .
 
       - name: 设置Docker Buildx
         uses: docker/setup-buildx-action@v2

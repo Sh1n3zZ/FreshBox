@@ -23,7 +23,7 @@ all: test build
 
 build:
 	mkdir -p $(BUILD_DIR)
-	$(GOBUILD) -o $(BUILD_DIR)/$(BINARY_NAME) -v ./cmd/api
+	$(GOBUILD) -o $(BUILD_DIR)/$(BINARY_NAME) -v .
 
 clean:
 	$(GOCLEAN)
@@ -54,7 +54,7 @@ lint:
 	golangci-lint run
 
 run:
-	$(GOBUILD) -o $(BUILD_DIR)/$(BINARY_NAME) -v ./cmd/api
+	$(GOBUILD) -o $(BUILD_DIR)/$(BINARY_NAME) -v .
 	./$(BUILD_DIR)/$(BINARY_NAME)
 
 .DEFAULT_GOAL := all 
