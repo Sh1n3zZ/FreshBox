@@ -19,7 +19,7 @@ import (
 type BoxService struct {
 	db            *gorm.DB
 	pricingEngine pricing.Engine
-	visionService *vision.VisionService
+	ocrService    *vision.OCRService
 	mqClient      *mq.MQClient
 	logger        *zap.Logger
 }
@@ -28,14 +28,14 @@ type BoxService struct {
 func NewBoxService(
 	db *gorm.DB,
 	pricingEngine pricing.Engine,
-	visionService *vision.VisionService,
+	ocrService *vision.OCRService,
 	mqClient *mq.MQClient,
 	logger *zap.Logger,
 ) *BoxService {
 	return &BoxService{
 		db:            db,
 		pricingEngine: pricingEngine,
-		visionService: visionService,
+		ocrService:    ocrService,
 		mqClient:      mqClient,
 		logger:        logger,
 	}
@@ -43,22 +43,35 @@ func NewBoxService(
 
 // CreateBox 创建盲盒
 func (s *BoxService) CreateBox(ctx context.Context, boxData *model.Box, imageData []byte) error {
-	// 使用计算机视觉服务识别商品
-	productInfo, err := s.visionService.DetectProduct(ctx, imageData)
+	// 使用OCR服务处理图像
+	ocrResult, err := s.ocrService.ProcessImage(ctx, imageData, "jpg", true)
 	if err != nil {
-		return errors.Wrap(err, "识别商品失败")
+		return errors.Wrap(err, "OCR处理图像失败")
+	}
+
+	// 分析OCR结果，提取过期日期
+	// 这里需要根据实际OCR结果格式实现过期日期提取逻辑
+	// 示例实现 - 假设第一个文本块包含过期日期信息
+	expiryDate := time.Now().Add(30 * 24 * time.Hour) // 默认30天后过期
+
+	if len(ocrResult.TextBlocks) > 0 {
+		// 这里需要实现从OCR结果中提取过期日期的逻辑
+		// 例如: expiryDate = parseExpiryDate(ocrResult.TextBlocks)
+		s.logger.Info("从OCR中提取信息",
+			zap.Int("文本块数量", len(ocrResult.TextBlocks)),
+			zap.String("第一个文本", ocrResult.TextBlocks[0].Text))
 	}
 
 	// 计算动态价格
 	boxData.OriginalPrice = boxData.Price // 保存原价
-	price, err := s.pricingEngine.CalculatePrice(ctx, productInfo.ExpiryDate, boxData.Price)
+	price, err := s.pricingEngine.CalculatePrice(ctx, expiryDate, boxData.Price)
 	if err != nil {
 		return errors.Wrap(err, "计算价格失败")
 	}
 
 	// 设置盲盒信息
 	boxData.Price = price
-	boxData.ExpiryDate = productInfo.ExpiryDate
+	boxData.ExpiryDate = expiryDate
 	boxData.Status = "available"
 	boxData.ID = GenerateID()
 	boxData.CreatedAt = time.Now()

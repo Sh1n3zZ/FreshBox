@@ -15,36 +15,40 @@ import (
 
 // VisionMessage 图像识别消息
 type VisionMessage struct {
-	ImageID   string `json:"image_id"`
-	ImageData []byte `json:"image_data"`
-	UserID    string `json:"user_id"`
-	BoxID     string `json:"box_id,omitempty"`
-	Timestamp int64  `json:"timestamp"`
+	ImageID     string `json:"image_id"`
+	ImageData   []byte `json:"image_data"`
+	UserID      string `json:"user_id"`
+	BoxID       string `json:"box_id,omitempty"`
+	ImageFormat string `json:"image_format"`
+	AutoRotate  bool   `json:"auto_rotate"`
+	Timestamp   int64  `json:"timestamp"`
 }
 
 // VisionMQHandler 图像识别消息处理器
 type VisionMQHandler struct {
-	mqClient      *mq.MQClient
-	visionService *VisionService
-	logger        *zap.Logger
+	mqClient   *mq.MQClient
+	ocrService *OCRService
+	logger     *zap.Logger
 }
 
 // NewVisionMQHandler 创建图像识别消息处理器
-func NewVisionMQHandler(mqClient *mq.MQClient, visionService *VisionService, logger *zap.Logger) *VisionMQHandler {
+func NewVisionMQHandler(mqClient *mq.MQClient, ocrService *OCRService, logger *zap.Logger) *VisionMQHandler {
 	return &VisionMQHandler{
-		mqClient:      mqClient,
-		visionService: visionService,
-		logger:        logger,
+		mqClient:   mqClient,
+		ocrService: ocrService,
+		logger:     logger,
 	}
 }
 
 // SendImageRecognitionTask 发送图像识别任务
 func (h *VisionMQHandler) SendImageRecognitionTask(ctx context.Context, imageID string, imageData []byte, userID string) error {
 	msg := &VisionMessage{
-		ImageID:   imageID,
-		ImageData: imageData,
-		UserID:    userID,
-		Timestamp: time.Now().Unix(),
+		ImageID:     imageID,
+		ImageData:   imageData,
+		UserID:      userID,
+		ImageFormat: "jpg", // 默认格式
+		AutoRotate:  true,  // 默认自动旋转
+		Timestamp:   time.Now().Unix(),
 	}
 
 	data, err := json.Marshal(msg)
@@ -92,20 +96,28 @@ func (h *VisionMQHandler) handleVisionMessage(ctx context.Context, msgs ...*prim
 
 		h.logger.Info("处理图像识别消息", zap.String("imageID", visionMsg.ImageID))
 
-		// 调用图像识别服务
-		productInfo, err := h.visionService.DetectProduct(ctx, visionMsg.ImageData)
+		// 调用OCR识别服务
+		ocrResult, err := h.ocrService.ProcessImage(ctx, visionMsg.ImageData, visionMsg.ImageFormat, visionMsg.AutoRotate)
 		if err != nil {
-			h.logger.Error("图像识别失败", zap.Error(err), zap.String("imageID", visionMsg.ImageID))
+			h.logger.Error("OCR识别失败", zap.Error(err), zap.String("imageID", visionMsg.ImageID))
 			// 失败后可以重试或记录
 			continue
 		}
 
 		// 处理识别结果，这里可以存储到数据库或发送新的消息通知
-		h.logger.Info("图像识别成功",
+		h.logger.Info("OCR识别成功",
 			zap.String("imageID", visionMsg.ImageID),
-			zap.String("productName", productInfo.ProductName),
-			zap.Time("expiryDate", productInfo.ExpiryDate),
+			zap.Int("文本块数量", len(ocrResult.TextBlocks)),
 		)
+
+		// 记录识别到的文本
+		for i, block := range ocrResult.TextBlocks {
+			h.logger.Debug("识别文本",
+				zap.Int("index", i),
+				zap.String("text", block.Text),
+				zap.Float32("confidence", block.Confidence),
+			)
+		}
 
 		// TODO: 存储识别结果或发送后续处理消息
 	}

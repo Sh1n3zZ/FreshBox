@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package ocr;
+
+service OCRService {
+  rpc ProcessImage (ImageRequest) returns (OCRResponse) {}
+  rpc ProcessBatchImages (BatchImageRequest) returns (BatchOCRResponse) {}
+}
+
+message ImageRequest {
+  bytes image_data = 1;
+  string image_format = 2; // 可以是"jpg", "png"等
+  bool auto_rotate = 3;
+}
+
+message OCRResponse {
+  bool success = 1;
+  string error_message = 2;
+  repeated TextBlock text_blocks = 3;
+}
+
+message BatchImageRequest {
+  repeated ImageRequest images = 1;
+}
+
+message BatchOCRResponse {
+  bool success = 1;
+  string error_message = 2;
+  repeated BatchResult results = 3;
+}
+
+message BatchResult {
+  bool success = 1;
+  string error_message = 2;
+  repeated TextBlock text_blocks = 3;
+}
+
+message TextBlock {
+  string text = 1;
+  float confidence = 2;
+  BoundingBox box = 3;
+}
+
+message BoundingBox {
+  float x1 = 1;
+  float y1 = 2;
+  float x2 = 3;
+  float y2 = 4;
+  float x3 = 5;
+  float y3 = 6;
+  float x4 = 7;
+  float y4 = 8;
+}
