@@ -34,30 +34,25 @@ import (
 )
 
 func main() {
-	// 初始化配置
 	if err := initConfig(); err != nil {
 		panic(fmt.Sprintf("初始化配置失败: %v", err))
 	}
 
-	// 初始化日志
 	logger, err := initLogger()
 	if err != nil {
 		panic(fmt.Sprintf("初始化日志失败: %v", err))
 	}
 	defer logger.Sync()
 
-	// 初始化数据库
 	db, err := initDB(logger)
 	if err != nil {
 		logger.Fatal("初始化数据库失败", zap.Error(err))
 	}
 
-	// 初始化Redis
 	redisClient := initRedis()
 	defer redisClient.Close()
 
-	// 初始化视觉服务
-	visionService, err := vision.NewVisionService(
+	ocrService, err := vision.NewOCRService(
 		fmt.Sprintf("%s:%d",
 			viper.GetString("vision.grpc.host"),
 			viper.GetInt("vision.grpc.port"),
@@ -65,9 +60,9 @@ func main() {
 		0.8, // 置信度阈值
 	)
 	if err != nil {
-		logger.Fatal("初始化视觉服务失败", zap.Error(err))
+		logger.Fatal("初始化OCR服务失败", zap.Error(err))
 	}
-	defer visionService.Close()
+	defer ocrService.Close()
 
 	// 初始化定价引擎
 	pricingStrategy := pricing.NewTimeBasedStrategy(0.8, 72) // 最大折扣80%，72小时阈值
@@ -117,7 +112,7 @@ func main() {
 	defer mqClient.Close()
 
 	// 初始化盲盒服务
-	boxService := service.NewBoxService(db, pricingEngine, visionService, mqClient, logger)
+	boxService := service.NewBoxService(db, pricingEngine, ocrService, mqClient, logger)
 
 	// 初始化社交任务服务
 	taskManager := social.NewDefaultTaskManager(db)
@@ -129,7 +124,7 @@ func main() {
 	taskHandler := handler.NewTaskHandler(taskManager, contentManager)
 
 	// 初始化各模块的MQ处理器
-	visionMQHandler := vision.NewVisionMQHandler(mqClient, visionService, logger)
+	visionMQHandler := vision.NewVisionMQHandler(mqClient, ocrService, logger)
 	priceMQHandler := pricing.NewPriceMQHandler(mqClient, pricingEngine, logger)
 	taskMQHandler := social.NewTaskMQHandler(mqClient, taskManager, logger)
 	donationMQHandler := donation.NewDonationMQHandler(mqClient, blockchainService, logger)
@@ -137,7 +132,7 @@ func main() {
 	// 启动消费者
 	go func() {
 		if err := visionMQHandler.StartConsume(); err != nil {
-			logger.Error("启动视觉识别消费者失败", zap.Error(err))
+			logger.Error("启动OCR识别消费者失败", zap.Error(err))
 		}
 	}()
 

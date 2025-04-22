@@ -1,0 +1,19 @@
+{
+  "server": {
+    "host": "0.0.0.0",
+    "port": 50051,
+    "max_workers": 10
+  },
+  "ocr": {
+    "det_model_name": "db_resnet34",
+    "rec_model_name": "densenet_lite_136-gru",
+    "det_model_backend": "onnx",
+    "rec_model_backend": "onnx",
+    "context": "cpu"
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    "file": "ocr_server.log"
+  }
+}
