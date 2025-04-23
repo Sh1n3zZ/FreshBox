@@ -49,6 +49,18 @@ python main.py --config config.json
 python main.py --port 8000
 ```
 
+## 图像预处理功能
+
+OCR服务提供了多种图像预处理方法，以提高OCR识别的准确性：
+
+- **auto**: 自动选择预处理方法（默认）
+- **basic**: 基础预处理（灰度化、对比度增强、锐化）
+- **text**: 针对文本优化的预处理（灰度化、自适应阈值、降噪）
+- **document**: 针对文档优化的预处理（透视矫正、二值化、降噪）
+- **none**: 不进行预处理
+
+在请求中可以通过`preprocess_type`参数指定预处理类型。
+
 ## 配置文件示例
 
 ```json
@@ -87,4 +99,18 @@ python main.py
 从Golang后端可以通过gRPC调用以下方法：
 
 1. `ProcessImage`: 处理单个图像
-2. `ProcessBatchImages`: 批量处理多个图像 
+2. `ProcessBatchImages`: 批量处理多个图像
+
+## 测试客户端
+
+提供了一个简单的测试客户端，可以用来测试OCR服务：
+
+```bash
+# 使用自动预处理
+python client_test.py --image path/to/image.jpg
+
+# 指定预处理类型
+python client_test.py --image path/to/image.jpg --preprocess text
+
+# 可用的预处理类型: auto, basic, text, document, none
+``` 

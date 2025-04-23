@@ -73,10 +73,17 @@ func SetupRouter(
 	r.Static("/static/uploads/boxes", "./uploads/boxes")
 	r.Static("/static/uploads/users", "./uploads/users")
 	r.Static("/static/uploads/others", "./uploads/others")
+	r.Static("/static/uploads/ocr", "./uploads/ocr")
 
 	// 图片处理
 	imageHandler := handler.NewImageHandler()
 	r.GET("/images/:type/:filename", imageHandler.GetImage)
+
+	// OCR处理器初始化
+	ocrHandler, err := handler.NewOCRHandler()
+	if err != nil {
+		panic(err)
+	}
 
 	// 仪表盘处理器
 	dashboardHandler := handler.NewDashboardHandler()
@@ -86,6 +93,14 @@ func SetupRouter(
 	{
 		// 上传图片接口 - 不需要认证
 		v1.POST("/upload", imageHandler.UploadImage)
+
+		// OCR接口 - 公开接口
+		ocr := v1.Group("/ocr")
+		{
+			ocr.POST("/process", ocrHandler.UploadAndProcess)
+			ocr.POST("/batch", ocrHandler.ProcessBatchImages)
+			ocr.POST("/save", ocrHandler.SaveImageOCR)
+		}
 
 		// 公开的盲盒接口 - 不需要认证
 		v1.GET("/boxes", boxHandler.ListBoxes)
@@ -148,8 +163,21 @@ func SetupRouter(
 
 			// 上传图片 - 需要认证的上传（可选，如果需要认证）
 			protected.POST("/upload/auth", imageHandler.UploadImage)
+
+			// OCR - 需要认证的接口
+			protected.POST("/ocr/process/secure", ocrHandler.UploadAndProcess)
+			protected.POST("/ocr/save/secure", ocrHandler.SaveImageOCR)
 		}
 	}
+
+	// 健康检查端点，用于监控和前端检测API可用性
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status":    "ok",
+			"timestamp": time.Now().Unix(),
+			"version":   viper.GetString("app.version"),
+		})
+	})
 
 	return r
 }

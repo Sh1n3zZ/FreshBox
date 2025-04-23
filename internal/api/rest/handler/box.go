@@ -197,15 +197,15 @@ func (h *BoxHandler) CreateBox(c *gin.Context) {
 		CreatorID:   userID.(string),
 	}
 
-	// 调用服务层创建盲盒
-	if err := h.boxService.CreateBox(c.Request.Context(), box, imageData); err != nil {
-		h.logger.Error("创建盲盒失败", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  "创建盲盒失败: " + err.Error(),
-		})
-		return
-	}
+	// // 调用服务层创建盲盒
+	// if err := h.boxService.CreateBox(c.Request.Context(), box, imageData); err != nil {
+	// 	h.logger.Error("创建盲盒失败", zap.Error(err))
+	// 	c.JSON(http.StatusInternalServerError, gin.H{
+	// 		"code": 500,
+	// 		"msg":  "创建盲盒失败: " + err.Error(),
+	// 	})
+	// 	return
+	// }
 
 	// 构造返回数据
 	boxDTO := model.BoxDTO{

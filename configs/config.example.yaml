@@ -2,6 +2,7 @@ app:
   name: FreshBox
   mode: development
   port: 8080
+  version: "0.0.1"
 
 cors:
   allow_origin: "http://localhost:3000"
@@ -28,6 +29,12 @@ vision:
     host: localhost
     port: 50051
     timeout: 5s
+  openai:
+    api_key: "your-openai-api-key"
+    endpoint: "https://api.openai.com/v1"
+    model: "gpt-4o"
+    max_tokens: 1000
+    timeout_sec: 30
 
 blockchain:
   polygon:

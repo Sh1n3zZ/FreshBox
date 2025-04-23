@@ -5,15 +5,17 @@ import grpc
 # 导入生成的gRPC模块
 from proto import ocr_service_pb2, ocr_service_pb2_grpc
 
-def test_process_image(stub, image_path):
+def test_process_image(stub, image_path, preprocess_type="auto"):
     """
     测试单张图片OCR处理
     
     Args:
         stub: gRPC客户端存根
         image_path: 图片路径
+        preprocess_type: 预处理类型
     """
     print(f"测试图片: {image_path}")
+    print(f"预处理类型: {preprocess_type}")
     
     # 读取图片数据
     with open(image_path, 'rb') as f:
@@ -27,7 +29,8 @@ def test_process_image(stub, image_path):
     request = ocr_service_pb2.ImageRequest(
         image_data=image_data,
         image_format=image_format,
-        auto_rotate=True
+        auto_rotate=True,
+        preprocess_type=preprocess_type
     )
     
     # 发送请求
@@ -53,6 +56,8 @@ def main():
     parser.add_argument("--host", default="localhost", help="服务器主机名")
     parser.add_argument("--port", type=int, default=50051, help="服务器端口")
     parser.add_argument("--image", required=True, help="图片路径")
+    parser.add_argument("--preprocess", default="auto", choices=["auto", "basic", "text", "document", "none"], 
+                       help="图像预处理类型: auto(自动), basic(基础), text(文本优化), document(文档优化), none(不处理)")
     args = parser.parse_args()
     
     # 创建gRPC通道
@@ -62,7 +67,7 @@ def main():
     stub = ocr_service_pb2_grpc.OCRServiceStub(channel)
     
     # 测试单张图片
-    test_process_image(stub, args.image)
+    test_process_image(stub, args.image, args.preprocess)
     
     # 关闭通道
     channel.close()

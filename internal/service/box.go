@@ -26,63 +26,61 @@ type BoxService struct {
 func NewBoxService(
 	db *gorm.DB,
 	pricingEngine pricing.Engine,
-	ocrService *vision.OCRService,
 	logger *zap.Logger,
 ) *BoxService {
 	return &BoxService{
 		db:            db,
 		pricingEngine: pricingEngine,
-		ocrService:    ocrService,
 		logger:        logger,
 	}
 }
 
-// CreateBox 创建盲盒
-func (s *BoxService) CreateBox(ctx context.Context, boxData *model.Box, imageData []byte) error {
-	// 使用OCR服务处理图像
-	ocrResult, err := s.ocrService.ProcessImage(ctx, imageData, "jpg", true)
-	if err != nil {
-		return errors.Wrap(err, "OCR处理图像失败")
-	}
+// // CreateBox 创建盲盒
+// func (s *BoxService) CreateBox(ctx context.Context, boxData *model.Box, imageData []byte) error {
+// 	// 使用OCR服务处理图像
+// 	ocrResult, err := s.ocrService.ProcessImage(ctx, imageData, "jpg", true, "auto")
+// 	if err != nil {
+// 		return errors.Wrap(err, "OCR处理图像失败")
+// 	}
 
-	// 分析OCR结果，提取过期日期
-	// 这里需要根据实际OCR结果格式实现过期日期提取逻辑
-	// 示例实现 - 假设第一个文本块包含过期日期信息
-	expiryDate := time.Now().Add(30 * 24 * time.Hour) // 默认30天后过期
+// 	// 分析OCR结果，提取过期日期
+// 	// 这里需要根据实际OCR结果格式实现过期日期提取逻辑
+// 	// 示例实现 - 假设第一个文本块包含过期日期信息
+// 	expiryDate := time.Now().Add(30 * 24 * time.Hour) // 默认30天后过期
 
-	if len(ocrResult.TextBlocks) > 0 {
-		// 这里需要实现从OCR结果中提取过期日期的逻辑
-		// 例如: expiryDate = parseExpiryDate(ocrResult.TextBlocks)
-		s.logger.Info("从OCR中提取信息",
-			zap.Int("文本块数量", len(ocrResult.TextBlocks)),
-			zap.String("第一个文本", ocrResult.TextBlocks[0].Text))
-	}
+// 	if len(ocrResult.TextBlocks) > 0 {
+// 		// 这里需要实现从OCR结果中提取过期日期的逻辑
+// 		// 例如: expiryDate = parseExpiryDate(ocrResult.TextBlocks)
+// 		s.logger.Info("从OCR中提取信息",
+// 			zap.Int("文本块数量", len(ocrResult.TextBlocks)),
+// 			zap.String("第一个文本", ocrResult.TextBlocks[0].Text))
+// 	}
 
-	// 计算动态价格
-	boxData.OriginalPrice = boxData.Price // 保存原价
-	price, err := s.pricingEngine.CalculatePrice(ctx, expiryDate, boxData.Price)
-	if err != nil {
-		return errors.Wrap(err, "计算价格失败")
-	}
+// 	// 计算动态价格
+// 	boxData.OriginalPrice = boxData.Price // 保存原价
+// 	price, err := s.pricingEngine.CalculatePrice(ctx, expiryDate, boxData.Price)
+// 	if err != nil {
+// 		return errors.Wrap(err, "计算价格失败")
+// 	}
 
-	// 设置盲盒信息
-	boxData.Price = price
-	boxData.ExpiryDate = expiryDate
-	boxData.Status = "available"
-	boxData.ID = GenerateID()
-	boxData.CreatedAt = time.Now()
-	boxData.UpdatedAt = time.Now()
+// 	// 设置盲盒信息
+// 	boxData.Price = price
+// 	boxData.ExpiryDate = expiryDate
+// 	boxData.Status = "available"
+// 	boxData.ID = GenerateID()
+// 	boxData.CreatedAt = time.Now()
+// 	boxData.UpdatedAt = time.Now()
 
-	// 保存到数据库
-	if err := s.db.Create(boxData).Error; err != nil {
-		return errors.Wrap(err, "保存盲盒失败")
-	}
+// 	// 保存到数据库
+// 	if err := s.db.Create(boxData).Error; err != nil {
+// 		return errors.Wrap(err, "保存盲盒失败")
+// 	}
 
-	// 缓存价格 - 忽略缓存错误
-	_ = s.pricingEngine.UpdatePriceCache(ctx, boxData.ID, price)
+// 	// 缓存价格 - 忽略缓存错误
+// 	_ = s.pricingEngine.UpdatePriceCache(ctx, boxData.ID, price)
 
-	return nil
-}
+// 	return nil
+// }
 
 // GetBox 获取盲盒详情
 func (s *BoxService) GetBox(ctx context.Context, id string) (*model.Box, error) {

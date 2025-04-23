@@ -21,10 +21,13 @@ class OCRServicer(ocr_service_pb2_grpc.OCRServiceServicer):
         image_data = request.image_data
         image_format = request.image_format
         auto_rotate = request.auto_rotate
+        preprocess_type = request.preprocess_type or "auto"
+        
+        logger.info(f"预处理类型: {preprocess_type}")
         
         # 处理图像
         success, error_message, text_blocks = self.ocr_processor.process_image(
-            image_data, image_format, auto_rotate
+            image_data, image_format, auto_rotate, preprocess_type
         )
         
         # 构建响应
@@ -67,7 +70,8 @@ class OCRServicer(ocr_service_pb2_grpc.OCRServiceServicer):
             image_request = {
                 "image_data": img_req.image_data,
                 "image_format": img_req.image_format,
-                "auto_rotate": img_req.auto_rotate
+                "auto_rotate": img_req.auto_rotate,
+                "preprocess_type": img_req.preprocess_type or "auto"
             }
             image_requests.append(image_request)
         

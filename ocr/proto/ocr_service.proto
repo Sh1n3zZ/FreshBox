@@ -11,6 +11,7 @@ message ImageRequest {
   bytes image_data = 1;
   string image_format = 2; // 可以是"jpg", "png"等
   bool auto_rotate = 3;
+  string preprocess_type = 4; // 可以是"auto", "basic", "text", "document", "none"
 }
 
 message OCRResponse {

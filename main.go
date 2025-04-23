@@ -22,7 +22,6 @@ import (
 	"FreshBox/internal/api/rest/handler"
 	"FreshBox/internal/core/pricing"
 	"FreshBox/internal/core/social"
-	"FreshBox/internal/core/vision"
 	"FreshBox/internal/pkg/migration"
 	"FreshBox/internal/service"
 )
@@ -38,6 +37,15 @@ func main() {
 	}
 	defer logger.Sync()
 
+	// 检查前端构建目录是否存在
+	frontendDir := "./front/dist"
+	if _, err := os.Stat(frontendDir); os.IsNotExist(err) {
+		logger.Error("前端构建目录不存在，请确保已构建前端应用",
+			zap.String("expected_path", frontendDir),
+			zap.String("hint", "运行 'cd front && npm run build' 生成dist目录"))
+		panic("前端构建目录不存在，请先构建前端应用")
+	}
+
 	db, err := initDB(logger)
 	if err != nil {
 		logger.Fatal("初始化数据库失败", zap.Error(err))
@@ -45,18 +53,6 @@ func main() {
 
 	redisClient := initRedis()
 	defer redisClient.Close()
-
-	ocrService, err := vision.NewOCRService(
-		fmt.Sprintf("%s:%d",
-			viper.GetString("vision.grpc.host"),
-			viper.GetInt("vision.grpc.port"),
-		),
-		0.8, // 置信度阈值
-	)
-	if err != nil {
-		logger.Fatal("初始化OCR服务失败", zap.Error(err))
-	}
-	defer ocrService.Close()
 
 	// 初始化定价引擎
 	pricingStrategy := pricing.NewTimeBasedStrategy(0.8, 72) // 最大折扣80%，72小时阈值
@@ -99,7 +95,7 @@ func main() {
 	// }
 
 	// 初始化盲盒服务
-	boxService := service.NewBoxService(db, pricingEngine, ocrService, logger)
+	boxService := service.NewBoxService(db, pricingEngine, logger)
 
 	// 初始化社交任务服务
 	taskManager := social.NewDefaultTaskManager(db)
@@ -118,6 +114,25 @@ func main() {
 	// 设置路由
 	r := rest.SetupRouter(userHandler, boxHandler, taskHandler)
 
+	// 服务前端构建文件
+	r.Static("/assets", frontendDir+"/assets")
+	r.StaticFile("/favicon.ico", frontendDir+"/favicon.ico")
+	r.StaticFile("/", frontendDir+"/index.html")
+
+	// 所有不匹配的路由都默认到index.html
+	r.NoRoute(func(c *gin.Context) {
+		// 如果是API请求，返回404
+		if len(c.Request.URL.Path) >= 4 && c.Request.URL.Path[:4] == "/api" {
+			c.JSON(http.StatusNotFound, gin.H{
+				"code": 404,
+				"msg":  "API not found",
+			})
+			return
+		}
+		// 否则返回前端应用
+		c.File(frontendDir + "/index.html")
+	})
+
 	// 创建HTTP服务器
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", viper.GetInt("app.port")),
@@ -130,6 +145,11 @@ func main() {
 			logger.Fatal("监听失败", zap.Error(err))
 		}
 	}()
+
+	logger.Info("服务器启动成功",
+		zap.Int("port", viper.GetInt("app.port")),
+		zap.String("mode", viper.GetString("app.mode")),
+		zap.String("frontend", frontendDir))
 
 	// 等待中断信号
 	quit := make(chan os.Signal, 1)
