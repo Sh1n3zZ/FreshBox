@@ -23,14 +23,6 @@ redis:
   password: ""
   db: 0
 
-rocketmq:
-  nameserver: "127.0.0.1:9876"
-  broker: "127.0.0.1:10911"
-  producer:
-    group: "FreshBoxProducerGroup"
-  consumer:
-    group: "FreshBoxConsumerGroup"
-
 vision:
   grpc:
     host: localhost

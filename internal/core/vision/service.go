@@ -50,3 +50,15 @@ func (s *OCRService) Close() error {
 	}
 	return nil
 }
+
+// RecognizeFood 识别食品图片，实现RecognitionService接口
+func (s *OCRService) RecognizeFood(ctx context.Context, imageURL string) (*RecognitionResult, error) {
+	// 这里简单实现，实际项目中需要从URL获取图片数据并调用OCR服务
+	// 然后从OCR结果分析识别食品
+	return &RecognitionResult{
+		FoodName:      "未知食品", // 默认值，实际应该从OCR结果中提取
+		Confidence:    float64(s.confidence),
+		Ingredients:   []string{},
+		NutritionInfo: "",
+	}, nil
+}

@@ -162,3 +162,25 @@ type ImageRequest struct {
 	ImageFormat string
 	AutoRotate  bool
 }
+
+// FoodImage 食品图像信息
+type FoodImage struct {
+	FoodName      string   `json:"food_name"`
+	Confidence    float64  `json:"confidence"`
+	Ingredients   []string `json:"ingredients,omitempty"`
+	NutritionInfo string   `json:"nutrition_info,omitempty"`
+}
+
+// RecognitionResult 识别结果
+type RecognitionResult struct {
+	FoodName      string   `json:"food_name"`
+	Confidence    float64  `json:"confidence"`
+	Ingredients   []string `json:"ingredients,omitempty"`
+	NutritionInfo string   `json:"nutrition_info,omitempty"`
+}
+
+// RecognitionService 食品识别服务接口
+type RecognitionService interface {
+	// RecognizeFood 识别食品
+	RecognizeFood(ctx context.Context, imageURL string) (*RecognitionResult, error)
+}

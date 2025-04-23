@@ -12,7 +12,6 @@ import (
 	"FreshBox/internal/core/pricing"
 	"FreshBox/internal/core/vision"
 	"FreshBox/internal/model"
-	"FreshBox/internal/pkg/mq"
 )
 
 // BoxService 盲盒服务
@@ -20,7 +19,6 @@ type BoxService struct {
 	db            *gorm.DB
 	pricingEngine pricing.Engine
 	ocrService    *vision.OCRService
-	mqClient      *mq.MQClient
 	logger        *zap.Logger
 }
 
@@ -29,14 +27,12 @@ func NewBoxService(
 	db *gorm.DB,
 	pricingEngine pricing.Engine,
 	ocrService *vision.OCRService,
-	mqClient *mq.MQClient,
 	logger *zap.Logger,
 ) *BoxService {
 	return &BoxService{
 		db:            db,
 		pricingEngine: pricingEngine,
 		ocrService:    ocrService,
-		mqClient:      mqClient,
 		logger:        logger,
 	}
 }
