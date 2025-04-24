@@ -94,8 +94,9 @@ func main() {
 	// 	logger.Fatal("初始化区块链服务失败", zap.Error(err))
 	// }
 
-	// 初始化盲盒服务
-	boxService := service.NewBoxService(db, pricingEngine, logger)
+	// 初始化盲盒服务和商品服务
+	blindBoxService := service.NewBlindBoxService(db, pricingEngine, logger)
+	productService := service.NewProductService(db, logger)
 
 	// 初始化社交任务服务
 	taskManager := social.NewDefaultTaskManager(db)
@@ -103,7 +104,8 @@ func main() {
 
 	// 初始化处理器
 	userHandler := handler.NewUserHandler(userService)
-	boxHandler := handler.NewBoxHandler(boxService)
+	blindBoxHandler := handler.NewBlindBoxHandler(blindBoxService, productService)
+	productHandler := handler.NewProductHandler(productService)
 	taskHandler := handler.NewTaskHandler(taskManager, contentManager)
 
 	// 设置运行模式
@@ -112,7 +114,7 @@ func main() {
 	}
 
 	// 设置路由
-	r := rest.SetupRouter(userHandler, boxHandler, taskHandler)
+	r := rest.SetupRouter(userHandler, blindBoxHandler, productHandler, taskHandler)
 
 	// 服务前端构建文件
 	r.Static("/assets", frontendDir+"/assets")

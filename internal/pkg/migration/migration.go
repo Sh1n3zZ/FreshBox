@@ -29,13 +29,23 @@ func autoMigrate(db *gorm.DB) error {
 		return err
 	}
 
+	log.Println("迁移商品表...")
+	if err := db.AutoMigrate(&model.Product{}); err != nil {
+		return err
+	}
+
 	log.Println("迁移盲盒表...")
-	if err := db.AutoMigrate(&model.Box{}); err != nil {
+	if err := db.AutoMigrate(&model.BlindBox{}); err != nil {
 		return err
 	}
 
 	log.Println("迁移盲盒订单表...")
-	if err := db.AutoMigrate(&model.BoxOrder{}); err != nil {
+	if err := db.AutoMigrate(&model.BlindBoxOrder{}); err != nil {
+		return err
+	}
+
+	log.Println("迁移盲盒开启记录表...")
+	if err := db.AutoMigrate(&model.BlindBoxOpening{}); err != nil {
 		return err
 	}
 

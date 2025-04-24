@@ -58,7 +58,7 @@ func (s *UserService) Register(ctx context.Context, user *User) error {
 	}
 
 	// 设置用户信息
-	user.ID = GenerateID()
+	user.ID = GenerateUniqueID()
 	user.Password = string(hashedPassword)
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = time.Now()
