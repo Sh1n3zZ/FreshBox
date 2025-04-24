@@ -85,7 +85,7 @@ const envConfigs: Record<Environment, EnvironmentConfig> = {
 
 // 获取当前环境配置
 const currentEnv = getCurrentEnvironment();
-let config = {...envConfigs[currentEnv]};
+const config = {...envConfigs[currentEnv]};
 
 // 应用自定义API端点（如果存在）
 const customApiEndpoint = getCustomApiEndpoint();

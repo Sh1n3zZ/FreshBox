@@ -1,0 +1,97 @@
+{
+  "Home": "Home",
+  "OCR Recognition": "OCR Recognition",
+  "About Us": "About Us",
+  "Login / Register": "Login / Register",
+  "Logout": "Logout",
+  "Open menu": "Open menu",
+  "Switch Language": "Switch Language",
+  
+  "auth": {
+    "login_title": "Login",
+    "login_description": "Welcome back, please login to your account",
+    "email": "Email",
+    "email_placeholder": "Enter your email",
+    "email_invalid": "Please enter a valid email address",
+    "password": "Password",
+    "password_placeholder": "Enter your password",
+    "password_required": "Password is required",
+    "login": "Login",
+    "logging_in": "Logging in...",
+    "no_account": "Don't have an account?",
+    "register": "Register"
+  },
+  
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome, {{name}}! View system status and key metrics.",
+    "tabs": {
+      "overview": "Overview",
+      "analytics": "Analytics",
+      "reports": "Reports",
+      "settings": "Settings"
+    },
+    "actions": {
+      "refresh": "Refresh",
+      "new": "New",
+      "viewAll": "View All",
+      "Export Data": "Export Data"
+    },
+    "stats": {
+      "totalUsers": "Total Users",
+      "recognitionCount": "Recognition Count",
+      "todayRecognition": "Today's Recognition",
+      "accuracy": "Recognition Accuracy"
+    },
+    "charts": {
+      "title": "Usage Trends",
+      "description": "Recent recognition statistics",
+      "loading": "Chart loading...",
+      "periods": {
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "monthly": "Monthly",
+        "yearly": "Yearly"
+      }
+    },
+    "activity": {
+      "title": "Recent Activity",
+      "description": "Latest user actions",
+      "actions": {
+        "recognized": "recognized an image",
+        "batchProcessed": "batch processed images",
+        "registered": "registered an account"
+      },
+      "imageCount": "{{count}} images",
+      "time": {
+        "minutesAgo": "{{count}} minutes ago",
+        "hoursAgo": "{{count}} hours ago",
+        "daysAgo": "{{count}} days ago"
+      }
+    },
+    "quickActions": {
+      "ocr": {
+        "title": "OCR Settings",
+        "description": "Configure recognition engine and parameters",
+        "content": "Adjust OCR engine accuracy, speed, and language support settings.",
+        "action": "Adjust Settings"
+      },
+      "users": {
+        "title": "User Management",
+        "description": "Manage users and permissions",
+        "content": "Add, edit or delete users, set different access permissions and roles.",
+        "action": "Manage Users"
+      },
+      "system": {
+        "title": "System Configuration",
+        "description": "Adjust system settings and integrations",
+        "content": "Configure system parameters, storage options, and third-party service integrations.",
+        "action": "System Settings"
+      }
+    },
+    "inDevelopment": {
+      "title": "{{module}} in Development",
+      "description": "This feature is under development. Stay tuned!"
+    }
+  }
+} 

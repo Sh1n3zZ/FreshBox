@@ -1,34 +1,26 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useRoutes } from 'react-router-dom'
+import { Suspense } from 'react'
+import routes from './routes'
+import { ThemeProvider } from './providers/theme-provider'
+import { AuthProvider } from './providers/auth-provider'
+
+const LoadingFallback = () => (
+  <div className="flex h-screen w-full items-center justify-center">
+    <div className="h-32 w-32 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
+  </div>
+)
 
 function App() {
-  const [count, setCount] = useState(0)
+  const routeElements = useRoutes(routes)
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <ThemeProvider defaultTheme="light" storageKey="freshbox-theme">
+      <AuthProvider>
+        <Suspense fallback={<LoadingFallback />}>
+          {routeElements}
+        </Suspense>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }
 

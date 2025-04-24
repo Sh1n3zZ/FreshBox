@@ -1,0 +1,97 @@
+{
+  "Home": "首页",
+  "OCR Recognition": "OCR识别",
+  "About Us": "关于我们",
+  "Login / Register": "登录 / 注册",
+  "Logout": "退出",
+  "Open menu": "打开菜单",
+  "Switch Language": "切换语言",
+  
+  "auth": {
+    "login_title": "登录账户",
+    "login_description": "欢迎回来，请登录您的账户",
+    "email": "邮箱",
+    "email_placeholder": "请输入邮箱",
+    "email_invalid": "请输入有效的邮箱地址",
+    "password": "密码",
+    "password_placeholder": "请输入密码",
+    "password_required": "密码不能为空",
+    "login": "登录",
+    "logging_in": "登录中...",
+    "no_account": "没有账户？",
+    "register": "注册"
+  },
+  
+  "dashboard": {
+    "title": "仪表盘",
+    "welcome": "欢迎，{{name}}！查看系统运行状态和关键指标。",
+    "tabs": {
+      "overview": "概览",
+      "analytics": "分析",
+      "reports": "报告",
+      "settings": "设置"
+    },
+    "actions": {
+      "refresh": "刷新",
+      "new": "新建",
+      "viewAll": "查看全部",
+      "Export Data": "导出数据"
+    },
+    "stats": {
+      "totalUsers": "用户总数",
+      "recognitionCount": "识别总数",
+      "todayRecognition": "今日识别",
+      "accuracy": "识别准确率"
+    },
+    "charts": {
+      "title": "使用趋势",
+      "description": "近期识别数量统计",
+      "loading": "图表加载中...",
+      "periods": {
+        "daily": "每日",
+        "weekly": "每周",
+        "monthly": "每月",
+        "yearly": "每年"
+      }
+    },
+    "activity": {
+      "title": "最近活动",
+      "description": "用户的最新操作记录",
+      "actions": {
+        "recognized": "识别了一张图片",
+        "batchProcessed": "批量处理了图片",
+        "registered": "注册了账号"
+      },
+      "imageCount": "{{count}}张图片",
+      "time": {
+        "minutesAgo": "{{count}}分钟前",
+        "hoursAgo": "{{count}}小时前",
+        "daysAgo": "{{count}}天前"
+      }
+    },
+    "quickActions": {
+      "ocr": {
+        "title": "OCR设置",
+        "description": "配置识别引擎和参数",
+        "content": "调整OCR识别引擎的精度、速度和语言支持设置。",
+        "action": "调整设置"
+      },
+      "users": {
+        "title": "用户管理",
+        "description": "管理用户和权限",
+        "content": "添加、编辑或删除用户，设置不同的访问权限和角色。",
+        "action": "管理用户"
+      },
+      "system": {
+        "title": "系统配置",
+        "description": "调整系统设置和集成",
+        "content": "配置系统参数、存储选项和第三方服务集成。",
+        "action": "系统设置"
+      }
+    },
+    "inDevelopment": {
+      "title": "{{module}}功能开发中",
+      "description": "此功能正在开发中，敬请期待！"
+    }
+  }
+} 
