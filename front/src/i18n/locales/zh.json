@@ -1,11 +1,12 @@
 {
-  "Home": "首页",
-  "OCR Recognition": "OCR识别",
-  "About Us": "关于我们",
-  "Login / Register": "登录 / 注册",
-  "Logout": "退出",
-  "Open menu": "打开菜单",
-  "Switch Language": "切换语言",
+  "home": "首页",
+  "ocr-recognition": "OCR识别",
+  "about-us": "关于我们",
+  "login-and-register": "登录 / 注册",
+  "logout": "退出",
+  "open-menu": "打开菜单",
+  "switch-language": "切换语言",
+  "toggle-theme": "切换主题",
   
   "auth": {
     "login_title": "登录账户",

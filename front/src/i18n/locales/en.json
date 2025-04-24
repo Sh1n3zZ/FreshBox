@@ -1,11 +1,12 @@
 {
-  "Home": "Home",
-  "OCR Recognition": "OCR Recognition",
-  "About Us": "About Us",
-  "Login / Register": "Login / Register",
-  "Logout": "Logout",
-  "Open menu": "Open menu",
-  "Switch Language": "Switch Language",
+  "home": "Home",
+  "ocr-recognition": "OCR Recognition",
+  "about-us": "About Us",
+  "login-and-register": "Login / Register",
+  "logout": "Logout",
+  "open-menu": "Open menu",
+  "switch-language": "Switch Language",
+  "toggle-theme": "Toggle theme",
   
   "auth": {
     "login_title": "Login",
