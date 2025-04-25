@@ -117,8 +117,8 @@ func main() {
 	// }
 
 	// 初始化盲盒服务和商品服务
-	blindBoxService := service.NewBlindBoxService(db, pricingEngine, logger)
-	productService := service.NewProductService(db, logger)
+	blindBoxService := service.NewBlindBoxService(db, pricingEngine, logger, userService)
+	productService := service.NewProductService(db, logger, userService)
 
 	// 初始化社交任务服务
 	taskManager := social.NewDefaultTaskManager(db)

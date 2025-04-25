@@ -81,10 +81,10 @@ button {
   font-family: inherit;
   background-color: #1a1a1a;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: border-color 0.25s, background-color 0.25s;
 }
 button:hover {
-  border-color: #333333;
+  border-color: #646cff;
 }
 button:focus,
 button:focus-visible {
@@ -97,10 +97,11 @@ button:focus-visible {
     background-color: #ffffff;
   }
   a:hover {
-    color: #000000;
+    color: #535bf2;
   }
   button {
     background-color: #f9f9f9;
+    color: #213547;
   }
 }
 
@@ -174,14 +175,33 @@ button:focus-visible {
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  color: var(--foreground);
+  background-color: var(--background);
 }
 
 .dark a {
-  color: #e0e0e0;
+  color: #a0a0a0;
 }
 
 .dark a:hover {
   color: #ffffff;
+}
+
+.dark button {
+  background-color: var(--secondary);
+  color: var(--secondary-foreground);
+  border-color: var(--border);
+}
+
+.dark button:hover {
+  background-color: oklch(from var(--secondary) calc(l + 0.05) c h);
+  border-color: var(--ring);
+}
+
+/* Specific fix for inactive TabsTrigger border in dark mode */
+.dark [data-radix-collection-item][data-state="inactive"] {
+  border-color: transparent;
 }
 
 @layer base {

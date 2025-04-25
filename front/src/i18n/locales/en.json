@@ -23,7 +23,6 @@
     "no_account": "Don't have an account?",
     "register": "Register"
   },
-  
   "dashboard": {
     "title": "Dashboard",
     "welcome": "Welcome, {{name}}! View system status and key metrics.",
@@ -88,7 +87,9 @@
         "title": "System Configuration",
         "description": "Adjust system settings and integrations",
         "content": "Configure system parameters, storage options, and third-party service integrations.",
-        "action": "System Settings"
+        "action": "System Settings",
+        "blindBoxes": "Blind Box List",
+        "products": "Product List"
       }
     },
     "inDevelopment": {
@@ -96,4 +97,4 @@
       "description": "This feature is under development. Stay tuned!"
     }
   }
-} 
+}

@@ -87,7 +87,9 @@
         "title": "系统配置",
         "description": "调整系统设置和集成",
         "content": "配置系统参数、存储选项和第三方服务集成。",
-        "action": "系统设置"
+        "action": "系统设置",
+        "blindBoxes": "盲盒列表",
+        "products": "产品列表"
       }
     },
     "inDevelopment": {
