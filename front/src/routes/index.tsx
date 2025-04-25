@@ -12,6 +12,7 @@ const Register = lazy(() => import('@/pages/auth/Register'))
 const Dashboard = lazy(() => import('@/pages/dashboard/Dashboard'))
 const Settings = lazy(() => import('@/pages/admin/Settings'))
 const NotFound = lazy(() => import('@/pages/NotFound'))
+const BlindBoxPage = lazy(() => import('@/pages/blindbox/BlindBox'))
 
 const routes: RouteObject[] = [
   {
@@ -33,7 +34,8 @@ const routes: RouteObject[] = [
             element: <Settings />
           }
         ]
-      }
+      },
+      { path: 'BlindBox/:id', element: <BlindBoxPage /> },
     ]
   },
   {

@@ -21,6 +21,20 @@ export interface BlindBoxDetail extends BlindBox {
   products: Product[];
 }
 
+// Define ProductDTO directly here based on backend response
+export interface ProductDTO {
+  ID: string;
+  Name: string;
+  Description?: string;
+  Price: number;
+  Category: string;
+  ImageURL?: string;
+  Status: string;
+  ProductionDate: string;
+  ShelfLifeHours: number;
+  CreatedAt: string;
+}
+
 // 用于创建/更新盲盒的数据结构
 export interface BlindBoxInputData {
   name: string;
@@ -51,6 +65,26 @@ export interface BlindBoxListResponse {
   size: number;
 }
 
+// 购买盲盒响应
+export interface PurchaseResponse {
+  message: string;
+  order_id: string;
+  box_id: string;
+  price: number;
+  status: string;
+}
+
+// 开启盲盒响应
+export interface OpenBoxResponse {
+  message: string;
+  opening_id: string;
+  box_id: string;
+  product_id: string;
+  product_name: string;
+  product_info: ProductDTO; // Use the locally defined DTO
+  opened_at: string;
+}
+
 export const blindboxService = {
   // 获取盲盒列表
   async listBlindBoxes(options: BlindBoxListOptions): Promise<BlindBoxListResponse> {
@@ -78,13 +112,21 @@ export const blindboxService = {
   // 创建盲盒
   async createBlindBox(data: BlindBoxInputData): Promise<BlindBox> {
     const response = await axios.post(API_URLS.BOX.CREATE, data);
-    return response.data;
+    // Backend returns { message, box_id }, let's assume we need the box details after creation for consistency.
+    // This might require an additional getBlindBox call or backend changes.
+    // For now, returning the simple response to match backend.
+    // return response.data; 
+    // To make it work with front-end expectations (needs a BlindBox object)
+    // We return a partial object, real data needs refresh or backend change.
+    return { id: response.data.box_id, ...data } as BlindBox; 
   },
 
   // 更新盲盒
   async updateBlindBox(id: string, data: Partial<BlindBoxInputData>): Promise<BlindBox> {
     const response = await axios.put(API_URLS.BOX.UPDATE(id), data);
-    return response.data;
+     // Similar to create, backend returns { message, box_id }.
+     // Returning partial data for now.
+    return { id: id, ...data } as BlindBox;
   },
 
   // 删除盲盒
@@ -93,13 +135,13 @@ export const blindboxService = {
   },
 
   // 购买盲盒
-  async purchaseBlindBox(id: string): Promise<{ orderId: string; price: number }> {
+  async purchaseBlindBox(id: string): Promise<PurchaseResponse> {
     const response = await axios.post(API_URLS.BOX.PURCHASE(id));
     return response.data;
   },
 
   // 开启盲盒
-  async openBlindBox(id: string): Promise<{ productId: string; productName: string }> {
+  async openBlindBox(id: string): Promise<OpenBoxResponse> {
     const response = await axios.post(API_URLS.BOX.OPEN(id));
     return response.data;
   },
@@ -109,7 +151,7 @@ export const blindboxService = {
     const response = await axios.get(API_URLS.BOX.HISTORY(id));
     return response.data.openings;
   },
-  
+
   // 添加产品到盲盒
   async addProductToBlindBox(productId: string, boxId: string): Promise<void> {
     await axios.post(API_URLS.PRODUCT.ADD_TO_BOX(productId), { blind_box_id: boxId });
