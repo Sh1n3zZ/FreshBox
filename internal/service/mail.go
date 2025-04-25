@@ -5,10 +5,10 @@ import (
 	"crypto/rand"
 	"fmt"
 	"math/big"
-	"net/smtp"
 	"time"
 
 	"github.com/pkg/errors"
+	"gopkg.in/gomail.v2"
 	"gorm.io/gorm"
 )
 
@@ -38,13 +38,22 @@ type SMTPConfig struct {
 type MailService struct {
 	db         *gorm.DB
 	smtpConfig SMTPConfig
+	dialer     *gomail.Dialer
 }
 
 // NewMailService 创建邮件服务
 func NewMailService(db *gorm.DB, smtpConfig SMTPConfig) *MailService {
+	dialer := gomail.NewDialer(
+		smtpConfig.Host,
+		smtpConfig.Port,
+		smtpConfig.Username,
+		smtpConfig.Password,
+	)
+
 	return &MailService{
 		db:         db,
 		smtpConfig: smtpConfig,
+		dialer:     dialer,
 	}
 }
 
@@ -56,9 +65,12 @@ func (s *MailService) SendVerificationCode(ctx context.Context, email string) (s
 		return "", errors.Wrap(err, "生成验证码失败")
 	}
 
-	// 构建邮件内容
-	subject := s.smtpConfig.VerificationSubject
-	body := fmt.Sprintf(`
+	// 创建邮件消息
+	m := gomail.NewMessage()
+	m.SetHeader("From", fmt.Sprintf("%s <%s>", s.smtpConfig.FromName, s.smtpConfig.FromEmail))
+	m.SetHeader("To", email)
+	m.SetHeader("Subject", s.smtpConfig.VerificationSubject)
+	m.SetBody("text/html", fmt.Sprintf(`
 		<html>
 		<body>
 		<h1>FreshBox 验证码</h1>
@@ -67,10 +79,10 @@ func (s *MailService) SendVerificationCode(ctx context.Context, email string) (s
 		<p>如果您没有注册 FreshBox 账号，请忽略此邮件。</p>
 		</body>
 		</html>
-	`, code, s.smtpConfig.VerificationExpireMinutes)
+	`, code, s.smtpConfig.VerificationExpireMinutes))
 
 	// 发送邮件
-	if err := s.sendEmail(email, subject, body); err != nil {
+	if err := s.dialer.DialAndSend(m); err != nil {
 		return "", errors.Wrap(err, "发送邮件失败")
 	}
 
@@ -126,37 +138,6 @@ func (s *MailService) generateVerificationCode() (string, error) {
 		code += n.String()
 	}
 	return code, nil
-}
-
-// sendEmail 发送邮件
-func (s *MailService) sendEmail(to, subject, body string) error {
-	addr := fmt.Sprintf("%s:%d", s.smtpConfig.Host, s.smtpConfig.Port)
-	from := s.smtpConfig.FromEmail
-
-	// 设置邮件头
-	headers := make(map[string]string)
-	headers["From"] = fmt.Sprintf("%s <%s>", s.smtpConfig.FromName, from)
-	headers["To"] = to
-	headers["Subject"] = subject
-	headers["MIME-Version"] = "1.0"
-	headers["Content-Type"] = "text/html; charset=UTF-8"
-
-	// 构建邮件内容
-	message := ""
-	for k, v := range headers {
-		message += fmt.Sprintf("%s: %s\r\n", k, v)
-	}
-	message += "\r\n" + body
-
-	// 认证信息
-	auth := smtp.PlainAuth("", s.smtpConfig.Username, s.smtpConfig.Password, s.smtpConfig.Host)
-
-	// 发送邮件
-	if err := smtp.SendMail(addr, auth, from, []string{to}, []byte(message)); err != nil {
-		return errors.Wrap(err, "发送邮件失败")
-	}
-
-	return nil
 }
 
 // GetVerificationCodeByEmail 根据邮箱获取最新的未使用的验证码
