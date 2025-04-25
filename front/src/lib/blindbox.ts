@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API_URLS } from '@/conf/env';
+import { Product } from './product';
 
 export interface BlindBox {
   id: string;
@@ -13,6 +14,22 @@ export interface BlindBox {
   donationAmount: number;
   productCount: number;
   createdAt: string;
+  creatorID?: string;
+}
+
+export interface BlindBoxDetail extends BlindBox {
+  products: Product[];
+}
+
+// 用于创建/更新盲盒的数据结构
+export interface BlindBoxInputData {
+  name: string;
+  description?: string;
+  discountCoefficient: number;
+  category: string;
+  imageURL?: string;
+  donationAmount?: number;
+  expirationTime?: string;
 }
 
 export interface BlindBoxListOptions {
@@ -53,19 +70,19 @@ export const blindboxService = {
   },
 
   // 获取盲盒详情
-  async getBlindBox(id: string): Promise<BlindBox> {
+  async getBlindBox(id: string): Promise<BlindBoxDetail> {
     const response = await axios.get(API_URLS.BOX.DETAIL(id));
     return response.data;
   },
 
   // 创建盲盒
-  async createBlindBox(data: Partial<BlindBox>): Promise<BlindBox> {
+  async createBlindBox(data: BlindBoxInputData): Promise<BlindBox> {
     const response = await axios.post(API_URLS.BOX.CREATE, data);
     return response.data;
   },
 
   // 更新盲盒
-  async updateBlindBox(id: string, data: Partial<BlindBox>): Promise<BlindBox> {
+  async updateBlindBox(id: string, data: Partial<BlindBoxInputData>): Promise<BlindBox> {
     const response = await axios.put(API_URLS.BOX.UPDATE(id), data);
     return response.data;
   },
@@ -91,5 +108,23 @@ export const blindboxService = {
   async getBlindBoxOpeningHistory(id: string): Promise<any[]> {
     const response = await axios.get(API_URLS.BOX.HISTORY(id));
     return response.data.openings;
+  },
+  
+  // 添加产品到盲盒
+  async addProductToBlindBox(productId: string, boxId: string): Promise<void> {
+    await axios.post(API_URLS.PRODUCT.ADD_TO_BOX(productId), { blind_box_id: boxId });
+  },
+
+  // 从盲盒移除产品
+  async removeProductFromBlindBox(productId: string): Promise<void> {
+    await axios.post(API_URLS.PRODUCT.REMOVE_FROM_BOX(productId));
+  },
+
+  // 批量添加产品到盲盒
+  async batchAddProductsToBlindBox(productIds: string[], boxId: string): Promise<void> {
+    await axios.post(API_URLS.PRODUCT.BATCH_ADD_TO_BOX, {
+      product_ids: productIds,
+      blind_box_id: boxId,
+    });
   }
 };

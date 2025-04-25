@@ -4,14 +4,13 @@ import { blindboxService, BlindBox, BlindBoxListOptions } from '@/lib/blindbox';
 import { formatCurrency } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { CreateBox } from '@/components/CreateBox';
 
 interface BlindBoxListProps {
-  onView?: (id: string) => void;
-  onEdit?: (id: string) => void;
-  onCreate?: () => void;
+  // 移除不使用的props
 }
 
-export function BlindBoxList({ onView, onEdit, onCreate }: BlindBoxListProps) {
+export function BlindBoxList({}: BlindBoxListProps) {
   const [loading, setLoading] = React.useState(false);
   const [data, setData] = React.useState<BlindBox[]>([]);
   const [total, setTotal] = React.useState(0);
@@ -46,6 +45,10 @@ export function BlindBoxList({ onView, onEdit, onCreate }: BlindBoxListProps) {
   const handleFilterChange = (newFilters: Record<string, string>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
     setPage(1);
+  };
+
+  const handleBoxCreated = () => {
+    fetchData({ page, size, ...filters });
   };
 
   const columns = [
@@ -97,20 +100,14 @@ export function BlindBoxList({ onView, onEdit, onCreate }: BlindBoxListProps) {
       accessorKey: 'id',
       cell: (row: BlindBox) => (
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onView?.(row.id)}
-          >
-            查看
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onEdit?.(row.id)}
-          >
-            编辑
-          </Button>
+          <CreateBox
+            box={row}
+            readOnly={true}
+          />
+          <CreateBox
+            box={row}
+            onBoxCreated={handleBoxCreated}
+          />
         </div>
       ),
     },
@@ -122,9 +119,12 @@ export function BlindBoxList({ onView, onEdit, onCreate }: BlindBoxListProps) {
       label: '类别',
       options: [
         { value: '', label: '全部' },
-        { value: 'food', label: '食品' },
-        { value: 'drink', label: '饮品' },
-        { value: 'snack', label: '零食' },
+        { value: '烘焙', label: '烘焙' },
+        { value: '乳制品', label: '乳制品' },
+        { value: '零食', label: '零食' },
+        { value: '饮品', label: '饮品' },
+        { value: '果蔬', label: '果蔬' },
+        { value: '其他', label: '其他' },
       ],
     },
     {
@@ -142,9 +142,7 @@ export function BlindBoxList({ onView, onEdit, onCreate }: BlindBoxListProps) {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">盲盒列表</h2>
-        <Button onClick={onCreate}>
-          创建盲盒
-        </Button>
+        <CreateBox onBoxCreated={handleBoxCreated} />
       </div>
       <ListForm
         columns={columns}
