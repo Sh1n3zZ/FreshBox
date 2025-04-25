@@ -33,12 +33,13 @@ import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { QuickCreateManufacturer } from './QuickCreateManufacturer';
 import { QuickCreateIngredient } from './QuickCreateIngredient';
-import { PlusCircle, MinusCircle, Pencil } from "lucide-react";
+import { PlusCircle, MinusCircle, Pencil, Eye } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
 interface CreateProductProps {
   onProductCreated?: (newProduct: Product) => void;
   product?: Product;
+  readOnly?: boolean;
 }
 
 const productFormSchema = z.object({
@@ -57,7 +58,7 @@ const productFormSchema = z.object({
 
 type ProductFormValues = z.infer<typeof productFormSchema>;
 
-export function CreateProduct({ onProductCreated, product }: CreateProductProps) {
+export function CreateProduct({ onProductCreated, product, readOnly = false }: CreateProductProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
@@ -100,6 +101,8 @@ export function CreateProduct({ onProductCreated, product }: CreateProductProps)
   });
 
   const onSubmit = async (values: ProductFormValues) => {
+    if (readOnly) return;
+    
     setIsSubmitting(true);
     try {
       const productData: ProductInputData = {
@@ -148,32 +151,48 @@ export function CreateProduct({ onProductCreated, product }: CreateProductProps)
   );
 
   const handleSelectIngredient = (ingredientId: string) => {
+    if (readOnly) return;
     const currentIds = form.getValues('ingredientIds') || [];
     form.setValue('ingredientIds', [...currentIds, ingredientId], { shouldValidate: true });
   };
 
   const handleDeselectIngredient = (ingredientId: string) => {
+    if (readOnly) return;
     const currentIds = form.getValues('ingredientIds') || [];
     form.setValue('ingredientIds', currentIds.filter(id => id !== ingredientId), { shouldValidate: true });
+  };
+
+  const getManufacturerName = (id: string) => {
+    const manu = manufacturers.find(m => m.id === id);
+    return manu ? manu.name : "";
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         {product ? (
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <span className="sr-only">编辑</span>
-            <Pencil className="h-4 w-4" />
-          </Button>
+          readOnly ? (
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <span className="sr-only">查看</span>
+              <Eye className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <span className="sr-only">编辑</span>
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )
         ) : (
           <Button>创建产品</Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{product ? '编辑产品' : '创建新产品'}</DialogTitle>
+          <DialogTitle>
+            {readOnly ? '查看产品详情' : (product ? '编辑产品' : '创建新产品')}
+          </DialogTitle>
           <DialogDescription>
-            {product ? '修改产品信息。' : '填写以下信息以创建新产品。确保生产商和配料信息已预先录入系统。'}
+            {readOnly ? '产品详细信息' : (product ? '修改产品信息。' : '填写以下信息以创建新产品。确保生产商和配料信息已预先录入系统。')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -186,7 +205,7 @@ export function CreateProduct({ onProductCreated, product }: CreateProductProps)
                   <FormItem>
                     <FormLabel>名称 *</FormLabel>
                     <FormControl>
-                      <Input placeholder="产品名称" {...field} />
+                      <Input placeholder="产品名称" {...field} disabled={readOnly} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -198,21 +217,25 @@ export function CreateProduct({ onProductCreated, product }: CreateProductProps)
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>类别 *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="选择类别" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="烘焙">烘焙</SelectItem>
-                        <SelectItem value="乳制品">乳制品</SelectItem>
-                        <SelectItem value="零食">零食</SelectItem>
-                        <SelectItem value="饮品">饮品</SelectItem>
-                        <SelectItem value="果蔬">果蔬</SelectItem>
-                        <SelectItem value="其他">其他</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    {readOnly ? (
+                      <Input value={field.value} disabled />
+                    ) : (
+                      <Select onValueChange={field.onChange} defaultValue={field.value} disabled={readOnly}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="选择类别" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="烘焙">烘焙</SelectItem>
+                          <SelectItem value="乳制品">乳制品</SelectItem>
+                          <SelectItem value="零食">零食</SelectItem>
+                          <SelectItem value="饮品">饮品</SelectItem>
+                          <SelectItem value="果蔬">果蔬</SelectItem>
+                          <SelectItem value="其他">其他</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -226,7 +249,7 @@ export function CreateProduct({ onProductCreated, product }: CreateProductProps)
                 <FormItem>
                   <FormLabel>描述</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="产品描述" {...field} />
+                    <Textarea placeholder="产品描述" {...field} disabled={readOnly} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -240,8 +263,20 @@ export function CreateProduct({ onProductCreated, product }: CreateProductProps)
                 <FormItem>
                   <FormLabel>图片URL</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://..." {...field} />
+                    <Input placeholder="https://..." {...field} disabled={readOnly} />
                   </FormControl>
+                  {field.value && (
+                    <div className="mt-2">
+                      <img 
+                        src={field.value} 
+                        alt="产品图片" 
+                        className="max-h-40 max-w-full object-contain rounded-md border"
+                        onError={(e) => {
+                          e.currentTarget.src = "https://placehold.co/200x150?text=图片加载失败";
+                        }}
+                      />
+                    </div>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -255,7 +290,7 @@ export function CreateProduct({ onProductCreated, product }: CreateProductProps)
                   <FormItem>
                     <FormLabel>价格 *</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="价格" {...field} />
+                      <Input type="number" step="0.01" placeholder="价格" {...field} disabled={readOnly} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -268,7 +303,7 @@ export function CreateProduct({ onProductCreated, product }: CreateProductProps)
                   <FormItem>
                     <FormLabel>保质期 (小时) *</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="例如：72" {...field} />
+                      <Input type="number" placeholder="例如：72" {...field} disabled={readOnly} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -282,37 +317,44 @@ export function CreateProduct({ onProductCreated, product }: CreateProductProps)
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>生产日期 *</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "yyyy-MM-dd")
-                          ) : (
-                            <span>选择日期</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date: Date) =>
-                          date > new Date() || date < new Date("2020-01-01")
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  {readOnly ? (
+                    <Input 
+                      value={field.value ? format(field.value, "yyyy-MM-dd") : ""} 
+                      disabled 
+                    />
+                  ) : (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "yyyy-MM-dd")
+                            ) : (
+                              <span>选择日期</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date: Date) =>
+                            date > new Date() || date < new Date("2020-01-01")
+                          }
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -324,30 +366,34 @@ export function CreateProduct({ onProductCreated, product }: CreateProductProps)
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>生产商 *</FormLabel>
-                  <div className="flex gap-2 items-end">
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="选择生产商" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectGroup>
-                          {manufacturers.map((manu) => (
-                            <SelectItem key={manu.id} value={manu.id}>
-                              {manu.name}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                    <QuickCreateManufacturer
-                      onCreated={(newManufacturer) => {
-                        setManufacturers(prev => [...prev, newManufacturer]);
-                        form.setValue('manufacturerId', newManufacturer.id);
-                      }}
-                    />
-                  </div>
+                  {readOnly ? (
+                    <Input value={getManufacturerName(field.value)} disabled />
+                  ) : (
+                    <div className="flex gap-2 items-end">
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="选择生产商" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectGroup>
+                            {manufacturers.map((manu) => (
+                              <SelectItem key={manu.id} value={manu.id}>
+                                {manu.name}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                      <QuickCreateManufacturer
+                        onCreated={(newManufacturer) => {
+                          setManufacturers(prev => [...prev, newManufacturer]);
+                          form.setValue('manufacturerId', newManufacturer.id);
+                        }}
+                      />
+                    </div>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -359,7 +405,7 @@ export function CreateProduct({ onProductCreated, product }: CreateProductProps)
                 <FormItem>
                   <FormLabel>批次号</FormLabel>
                   <FormControl>
-                    <Input placeholder="生产批次号" {...field} />
+                    <Input placeholder="生产批次号" {...field} disabled={readOnly} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -372,18 +418,22 @@ export function CreateProduct({ onProductCreated, product }: CreateProductProps)
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>存储条件 *</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="选择存储条件" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="常温">常温</SelectItem>
-                      <SelectItem value="冷藏">冷藏</SelectItem>
-                      <SelectItem value="冷冻">冷冻</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {readOnly ? (
+                    <Input value={field.value} disabled />
+                  ) : (
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="选择存储条件" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="常温">常温</SelectItem>
+                        <SelectItem value="冷藏">冷藏</SelectItem>
+                        <SelectItem value="冷冻">冷冻</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -396,65 +446,86 @@ export function CreateProduct({ onProductCreated, product }: CreateProductProps)
                 <FormItem>
                   <div className="flex justify-between items-center mb-2">
                     <FormLabel>配料</FormLabel>
-                    <QuickCreateIngredient
-                      onCreated={(newIngredient) => {
-                        setIngredients(prev => [...prev, newIngredient]);
-                      }}
-                    />
+                    {!readOnly && (
+                      <QuickCreateIngredient
+                        onCreated={(newIngredient) => {
+                          setIngredients(prev => [...prev, newIngredient]);
+                        }}
+                      />
+                    )}
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm font-medium mb-2 block">可用配料</Label>
-                      <ScrollArea className="h-48 w-full rounded-md border p-2">
-                        {availableIngredients.length > 0 ? (
-                          availableIngredients.map((ingredient) => (
-                            <div key={ingredient.id} className="flex items-center justify-between p-1 hover:bg-accent rounded">
-                              <span className="text-sm">
-                                {ingredient.name} {ingredient.is_allergen ? "(过敏原)" : ""}
-                              </span>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleSelectIngredient(ingredient.id)}
-                                aria-label={`选择 ${ingredient.name}`}
-                              >
-                                <PlusCircle className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-sm text-muted-foreground p-1">暂无更多可用配料</p>
-                        )}
-                      </ScrollArea>
+                  {readOnly ? (
+                    <div className="rounded-md border p-2 min-h-10">
+                      {selectedIngredientsDetails.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {selectedIngredientsDetails.map((ingredient) => (
+                            <span 
+                              key={ingredient.id} 
+                              className="inline-block px-2 py-1 bg-gray-100 text-gray-800 rounded text-sm"
+                            >
+                              {ingredient.name} {ingredient.is_allergen ? "(过敏原)" : ""}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground p-1">无配料信息</p>
+                      )}
                     </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm font-medium mb-2 block">可用配料</Label>
+                        <ScrollArea className="h-48 w-full rounded-md border p-2">
+                          {availableIngredients.length > 0 ? (
+                            availableIngredients.map((ingredient) => (
+                              <div key={ingredient.id} className="flex items-center justify-between p-1 hover:bg-accent rounded">
+                                <span className="text-sm">
+                                  {ingredient.name} {ingredient.is_allergen ? "(过敏原)" : ""}
+                                </span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleSelectIngredient(ingredient.id)}
+                                  aria-label={`选择 ${ingredient.name}`}
+                                >
+                                  <PlusCircle className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-sm text-muted-foreground p-1">暂无更多可用配料</p>
+                          )}
+                        </ScrollArea>
+                      </div>
 
-                    <div>
-                      <Label className="text-sm font-medium mb-2 block">已选配料</Label>
-                      <ScrollArea className="h-48 w-full rounded-md border p-2">
-                        {selectedIngredientsDetails.length > 0 ? (
-                          selectedIngredientsDetails.map((ingredient) => (
-                            <div key={ingredient.id} className="flex items-center justify-between p-1 hover:bg-accent rounded">
-                              <span className="text-sm">
-                                {ingredient.name} {ingredient.is_allergen ? "(过敏原)" : ""}
-                              </span>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeselectIngredient(ingredient.id)}
-                                aria-label={`移除 ${ingredient.name}`}
-                              >
-                                <MinusCircle className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-sm text-muted-foreground p-1">尚未选择配料</p>
-                        )}
-                      </ScrollArea>
+                      <div>
+                        <Label className="text-sm font-medium mb-2 block">已选配料</Label>
+                        <ScrollArea className="h-48 w-full rounded-md border p-2">
+                          {selectedIngredientsDetails.length > 0 ? (
+                            selectedIngredientsDetails.map((ingredient) => (
+                              <div key={ingredient.id} className="flex items-center justify-between p-1 hover:bg-accent rounded">
+                                <span className="text-sm">
+                                  {ingredient.name} {ingredient.is_allergen ? "(过敏原)" : ""}
+                                </span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeselectIngredient(ingredient.id)}
+                                  aria-label={`移除 ${ingredient.name}`}
+                                >
+                                  <MinusCircle className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-sm text-muted-foreground p-1">尚未选择配料</p>
+                          )}
+                        </ScrollArea>
+                      </div>
                     </div>
-                  </div>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -462,11 +533,13 @@ export function CreateProduct({ onProductCreated, product }: CreateProductProps)
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isSubmitting}>
-                取消
+                {readOnly ? "关闭" : "取消"}
               </Button>
-              <Button type="submit" disabled={isSubmitting || manufacturers.length === 0}>
-                {isSubmitting ? (product ? "更新中..." : "创建中...") : (product ? "更新产品" : "创建产品")}
-              </Button>
+              {!readOnly && (
+                <Button type="submit" disabled={isSubmitting || manufacturers.length === 0}>
+                  {isSubmitting ? (product ? "更新中..." : "创建中...") : (product ? "更新产品" : "创建产品")}
+                </Button>
+              )}
             </DialogFooter>
           </form>
         </Form>

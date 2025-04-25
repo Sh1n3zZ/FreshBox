@@ -12,7 +12,7 @@ interface ProductListProps {
   onEdit?: (id: string) => void;
 }
 
-export function ProductList({ onView, onEdit }: ProductListProps) {
+export function ProductList({ }: ProductListProps) {
   const [loading, setLoading] = React.useState(false);
   const [data, setData] = React.useState<Product[]>([]);
   const [total, setTotal] = React.useState(0);
@@ -110,14 +110,10 @@ export function ProductList({ onView, onEdit }: ProductListProps) {
       accessorKey: 'id',
       cell: (row: Product) => (
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onView?.(row.id)}
-            disabled={!onView}
-          >
-            查看
-          </Button>
+          <CreateProduct 
+            product={row} 
+            readOnly={true} 
+          />
           <CreateProduct
             product={row}
             onProductCreated={handleProductUpdated}
