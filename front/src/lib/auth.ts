@@ -6,6 +6,7 @@ export interface User {
   username: string;
   email: string;
   avatar?: string;
+  role: string;
   access_token: string;
   refresh_token: string;
 }
@@ -62,21 +63,17 @@ export async function registerUser(username: string, email: string, password: st
 
     console.log('注册响应:', response.data)
 
-    // 检查响应结构，处理两种可能的格式
     let userData: User;
     
     if (response.data.code !== undefined) {
-      // 标准AuthResponse格式
       if (response.data.code !== 200) {
         throw new Error(response.data.msg || '注册失败');
       }
       userData = response.data.data;
     } else {
-      // 直接返回用户数据对象
       userData = response.data;
     }
 
-    // 验证返回的用户数据是否包含必要的字段
     if (!userData || !userData.access_token || !userData.refresh_token) {
       console.error('注册响应缺少必要的token信息:', userData)
       throw new Error('服务器返回数据格式异常');
@@ -87,14 +84,11 @@ export async function registerUser(username: string, email: string, password: st
     console.error('注册失败:', error)
     
     if (axios.isAxiosError(error)) {
-      // 处理网络错误
       if (!error.response) {
         throw new Error('网络连接失败，请检查网络设置');
       }
-      
-      // 处理HTTP状态码异常的情况
+
       if (error.response.status !== 200) {
-        // 尝试从不同的响应结构中获取错误信息
         const errorData = error.response.data;
         let errorMessage = '注册失败';
         
@@ -136,23 +130,17 @@ export async function loginUser(login: string, password: string): Promise<User> 
 
     console.log('登录响应:', response.data)
 
-    // 检查响应结构，处理两种可能的格式：
-    // 1. 直接返回用户数据对象（当前后端实际情况）
-    // 2. 返回AuthResponse格式（包含code, msg, data字段）
     let userData: User;
     
     if (response.data.code !== undefined) {
-      // 标准AuthResponse格式
       if (response.data.code !== 200) {
         throw new Error(response.data.msg || '登录失败');
       }
       userData = response.data.data;
     } else {
-      // 直接返回用户数据对象
       userData = response.data;
     }
 
-    // 验证返回的用户数据是否包含必要的字段
     if (!userData || !userData.access_token || !userData.refresh_token) {
       console.error('登录响应缺少必要的token信息:', userData)
       throw new Error('服务器返回数据格式异常');
@@ -212,21 +200,17 @@ export async function refreshToken(refreshToken: string): Promise<User> {
 
     console.log('刷新token响应:', response.data)
 
-    // 检查响应结构，处理两种可能的格式
     let userData: User;
     
     if (response.data.code !== undefined) {
-      // 标准AuthResponse格式
       if (response.data.code !== 200) {
         throw new Error(response.data.msg || '刷新令牌失败');
       }
       userData = response.data.data;
     } else {
-      // 直接返回用户数据对象
       userData = response.data;
     }
 
-    // 验证返回的用户数据是否包含必要的字段
     if (!userData || !userData.access_token || !userData.refresh_token) {
       console.error('刷新令牌响应缺少必要的token信息:', userData)
       throw new Error('服务器返回数据格式异常');
@@ -237,14 +221,11 @@ export async function refreshToken(refreshToken: string): Promise<User> {
     console.error('刷新令牌失败:', error)
     
     if (axios.isAxiosError(error)) {
-      // 处理网络错误
       if (!error.response) {
         throw new Error('网络连接失败，请检查网络设置');
       }
       
-      // 处理HTTP状态码异常的情况
       if (error.response.status !== 200) {
-        // 尝试从不同的响应结构中获取错误信息
         const errorData = error.response.data;
         let errorMessage = '刷新令牌失败';
         
@@ -267,6 +248,49 @@ export async function refreshToken(refreshToken: string): Promise<User> {
   }
 }
 
+/**
+ * 获取用户实时数据
+ */
+export async function fetchUserProfile(token: string): Promise<User> {
+  try {
+    const response = await axios.get(
+      API_URLS.USER.PROFILE,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    // 检查响应结构
+    let userData: User;
+    if (response.data.code !== undefined) {
+      if (response.data.code !== 200) {
+        throw new Error(response.data.msg || '获取用户信息失败');
+      }
+      userData = response.data.data;
+    } else {
+      userData = response.data;
+    }
+
+    if (!userData.role) {
+      userData.role = 'user'; // 默认角色
+    }
+
+    return userData;
+  } catch (error) {
+    console.error('获取用户实时数据失败:', error);
+    if (axios.isAxiosError(error)) {
+      if (!error.response) {
+        throw new Error('网络连接失败，请检查网络设置');
+      }
+      throw new Error(error.response.data?.msg || '获取用户信息失败');
+    }
+    throw error;
+  }
+}
+
 // 本地存储相关常量
 export const TOKEN_KEY = 'access_token';
 export const REFRESH_TOKEN_KEY = 'refresh_token';
@@ -276,16 +300,14 @@ export const USER_KEY = 'user_info';
  * 保存用户信息到本地存储
  */
 export function saveUserToLocalStorage(userData: User): void {
-  // 保存访问令牌
   localStorage.setItem(TOKEN_KEY, userData.access_token);
-  // 保存刷新令牌
   localStorage.setItem(REFRESH_TOKEN_KEY, userData.refresh_token);
-  // 保存用户基本信息
   const userInfo = {
     user_id: userData.user_id,
     username: userData.username,
     email: userData.email,
     avatar: userData.avatar,
+    role: userData.role,
   };
   localStorage.setItem(USER_KEY, JSON.stringify(userInfo));
 }
@@ -302,7 +324,7 @@ export function removeUserFromLocalStorage(): void {
 /**
  * 从本地存储中获取用户信息
  */
-export function getUserFromLocalStorage(): User | null {
+export async function getUserFromLocalStorage(): Promise<User | null> {
   const savedUser = localStorage.getItem(USER_KEY);
   const savedToken = localStorage.getItem(TOKEN_KEY);
   const savedRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
@@ -310,11 +332,36 @@ export function getUserFromLocalStorage(): User | null {
   if (savedUser && savedToken && savedRefreshToken) {
     try {
       const userInfo = JSON.parse(savedUser);
-      return {
+      const userData = {
         ...userInfo,
         access_token: savedToken,
         refresh_token: savedRefreshToken,
       };
+
+      try {
+        const freshUserData = await fetchUserProfile(savedToken);
+        
+        const hasChanges = 
+          freshUserData.username !== userInfo.username ||
+          freshUserData.email !== userInfo.email ||
+          freshUserData.avatar !== userInfo.avatar ||
+          freshUserData.role !== userInfo.role;
+
+        if (hasChanges) {
+          const updatedUser = {
+            ...freshUserData,
+            access_token: savedToken,
+            refresh_token: savedRefreshToken,
+          };
+          
+          saveUserToLocalStorage(updatedUser);
+          return updatedUser;
+        }
+      } catch (error) {
+        console.error('同步远程数据失败，使用本地数据:', error);
+      }
+
+      return userData;
     } catch (error) {
       console.error('Failed to parse user data', error);
       return null;

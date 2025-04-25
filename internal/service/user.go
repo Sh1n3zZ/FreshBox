@@ -16,6 +16,7 @@ type User struct {
 	Email     string    `json:"email" gorm:"uniqueIndex"`
 	Password  string    `json:"-" gorm:"not null"`
 	Avatar    string    `json:"avatar,omitempty"`
+	Role      string    `json:"role" gorm:"type:varchar(20);default:'user'"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -26,6 +27,7 @@ type RegisterRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=6"`
 	Code     string `json:"code" binding:"required"`
+	Role     string `json:"role" binding:"omitempty,oneof=admin user"`
 }
 
 // UserService 用户服务
@@ -82,6 +84,7 @@ func (s *UserService) Register(ctx context.Context, req *RegisterRequest) (*User
 		Username:  req.Username,
 		Email:     req.Email,
 		Password:  string(hashedPassword),
+		Role:      req.Role,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -132,6 +135,7 @@ func (s *UserService) UpdateProfile(ctx context.Context, user *User) error {
 		"username":   user.Username,
 		"email":      user.Email,
 		"avatar":     user.Avatar,
+		"role":       user.Role,
 		"updated_at": time.Now(),
 	}
 

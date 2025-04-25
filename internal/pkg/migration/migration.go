@@ -2,7 +2,9 @@ package migration
 
 import (
 	"log"
+	"time"
 
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
 	"FreshBox/internal/model"
@@ -28,6 +30,34 @@ func autoMigrate(db *gorm.DB) error {
 	log.Println("迁移用户表...")
 	if err := db.AutoMigrate(&model.User{}); err != nil {
 		return err
+	}
+
+	// 确保默认管理员用户存在
+	var count int64
+	if err := db.Model(&model.User{}).Where("role = ?", model.RoleAdmin).Count(&count).Error; err != nil {
+		return err
+	}
+	if count == 0 {
+		// 加密默认管理员密码
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("FreshBox123456"), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+
+		// 创建默认管理员用户
+		adminUser := &model.User{
+			ID:        "admin",
+			Username:  "admin",
+			Email:     "admin@freshbox.com",
+			Password:  string(hashedPassword),
+			Role:      model.RoleAdmin,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+		if err := db.Create(adminUser).Error; err != nil {
+			return err
+		}
+		log.Println("已创建默认管理员用户")
 	}
 
 	log.Println("迁移商品表...")

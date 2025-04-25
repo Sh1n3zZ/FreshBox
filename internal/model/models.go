@@ -4,6 +4,14 @@ import (
 	"time"
 )
 
+// UserRole 用户角色类型
+type UserRole string
+
+const (
+	RoleAdmin UserRole = "admin"
+	RoleUser  UserRole = "user"
+)
+
 // User 用户模型
 type User struct {
 	ID        string    `gorm:"primarykey;type:varchar(36)"`
@@ -14,6 +22,7 @@ type User struct {
 	Password  string    `gorm:"size:255"`
 	Nickname  string    `gorm:"size:50"`
 	Avatar    string    `gorm:"size:255"`
+	Role      UserRole  `gorm:"type:varchar(20);default:'user'"`
 }
 
 // Product 商品模型

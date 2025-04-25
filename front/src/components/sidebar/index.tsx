@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/providers/auth-provider'
+import { useTranslation } from 'react-i18next'
 import { 
   Home, 
   User, 
@@ -8,7 +9,8 @@ import {
   FileText,
   Package,
   BarChart,
-  X
+  X,
+  Shield
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -42,9 +44,8 @@ function SidebarItem({ href, icon, title, isActive }: SidebarItemProps) {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { pathname } = useLocation()
-  const { user } = useAuth()
-  
-  const isAdmin = user?.role === 'admin'
+  const { user, isAdmin } = useAuth()
+  const { t } = useTranslation()
   
   return (
     <>
@@ -83,42 +84,42 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             <SidebarItem
               href="/"
               icon={<Home className="h-4 w-4" />}
-              title="首页"
+              title={t('home')}
               isActive={pathname === '/'}
             />
             
             <SidebarItem
               href="/ocr"
               icon={<FileText className="h-4 w-4" />}
-              title="OCR识别"
+              title={t('ocr-recognition')}
               isActive={pathname.startsWith('/ocr')}
-            />
-            
-            <SidebarItem
-              href="/profile"
-              icon={<User className="h-4 w-4" />}
-              title="个人资料"
-              isActive={pathname === '/profile'}
             />
             
             {isAdmin && (
               <>
                 <div className="my-2 px-3 text-xs font-medium text-muted-foreground">
-                  管理
+                  {t('dashboard.admin-panel')}
                 </div>
                 
                 <SidebarItem
-                  href="/dashboard"
+                  href="/admin/dashboard"
                   icon={<BarChart className="h-4 w-4" />}
-                  title="仪表盘"
-                  isActive={pathname === '/dashboard'}
+                  title={t('dashboard.title')}
+                  isActive={pathname.startsWith('/admin/dashboard')}
                 />
                 
                 <SidebarItem
-                  href="/settings"
+                  href="/admin/settings"
                   icon={<Settings className="h-4 w-4" />}
-                  title="系统设置"
-                  isActive={pathname === '/settings'}
+                  title={t('dashboard.quickActions.system.title')}
+                  isActive={pathname.startsWith('/admin/settings')}
+                />
+                
+                <SidebarItem
+                  href="/admin/users"
+                  icon={<Shield className="h-4 w-4" />}
+                  title={t('dashboard.quickActions.users.title')}
+                  isActive={pathname.startsWith('/admin/users')}
                 />
               </>
             )}
@@ -131,7 +132,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               {user?.avatar ? (
                 <img
                   src={user.avatar}
-                  alt={user.name}
+                  alt={user.username}
                   className="h-full w-full object-cover"
                 />
               ) : (
@@ -139,7 +140,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               )}
             </div>
             <div>
-              <div className="text-sm font-medium">{user?.name}</div>
+              <div className="text-sm font-medium">{user?.username}</div>
               <div className="text-xs text-muted-foreground">{user?.email}</div>
             </div>
           </div>
@@ -147,4 +148,4 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       </aside>
     </>
   )
-} 
+}

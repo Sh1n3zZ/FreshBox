@@ -211,6 +211,7 @@ func (h *UserHandler) GetProfile(c *gin.Context) {
 		Username: user.Username,
 		Email:    user.Email,
 		Avatar:   user.Avatar,
+		Role:     user.Role,
 	})
 }
 
@@ -271,6 +272,7 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 		Username: user.Username,
 		Email:    user.Email,
 		Avatar:   user.Avatar,
+		Role:     user.Role,
 	})
 }
 
@@ -323,6 +325,7 @@ type UserProfileResponse struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Avatar   string `json:"avatar,omitempty"`
+	Role     string `json:"role"`
 }
 
 // UpdateProfileRequest 更新用户信息请求
@@ -338,4 +341,5 @@ type UpdateProfileResponse struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Avatar   string `json:"avatar,omitempty"`
+	Role     string `json:"role"`
 }

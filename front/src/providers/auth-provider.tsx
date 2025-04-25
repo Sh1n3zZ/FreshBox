@@ -12,10 +12,14 @@ import {
   refreshToken
 } from '@/lib/auth'
 
+// 用户角色类型
+export type UserRole = 'admin' | 'user'
+
 interface AuthContextType {
   user: User | null
   isAuthenticated: boolean
   isLoading: boolean
+  isAdmin: boolean
   login: (login: string, password: string) => Promise<void>
   register: (username: string, email: string, password: string, code: string) => Promise<void>
   sendCode: (email: string) => Promise<void>
@@ -35,16 +39,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const navigate = useNavigate()
   const location = useLocation()
 
-  // 验证token是否有效
+  const isAdmin = user?.role === 'admin'
+
   const validateToken = async (userData: User): Promise<boolean> => {
     try {
-      // 检查token结构是否正确
       if (!userData.access_token || !userData.access_token.includes('.')) {
         console.error('Token格式不正确')
         return false
       }
       
-      // 安全地解析token
       try {
         const parts = userData.access_token.split('.')
         if (parts.length !== 3) {
@@ -57,11 +60,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const tokenExp = decodedPayload.exp
         const now = Math.floor(Date.now() / 1000)
         
-        // token已过期
         if (tokenExp <= now) {
           console.log('Token已过期，尝试刷新')
           try {
             const newUserData = await refreshToken(userData.refresh_token)
+            if (!newUserData.role) {
+              newUserData.role = 'user'
+            }
             saveUserToLocalStorage(newUserData)
             setUser(newUserData)
             return true
@@ -71,24 +76,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
           }
         }
         
-        // 如果token还有5分钟过期，尝试刷新
         if (tokenExp - now < 300) {
           console.log('Token即将过期，尝试刷新')
           try {
             const newUserData = await refreshToken(userData.refresh_token)
+            if (!newUserData.role) {
+              newUserData.role = 'user'
+            }
             saveUserToLocalStorage(newUserData)
             setUser(newUserData)
             return true
           } catch (refreshError) {
             console.error('刷新token失败，但原token仍有效:', refreshError)
-            return true // 原token仍然有效，不影响用户使用
+            return true
           }
         }
         
         return true
       } catch (parseError) {
         console.error('解析token失败:', parseError)
-        // 如果只是解析失败但token可能仍然有效，返回true
         return true
       }
     } catch (error) {
@@ -99,18 +105,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     const loadUser = async () => {
-      const userObj = getUserFromLocalStorage()
+      const userObj = await getUserFromLocalStorage()
       
       if (userObj) {
-        // 验证token
         const isValid = await validateToken(userObj)
         if (isValid) {
           setUser(userObj)
         } else {
-          // token无效，清除登录信息
           removeUserFromLocalStorage()
           setUser(null)
-          // 如果当前不在登录页面，跳转到登录页
           if (!location.pathname.startsWith('/auth')) {
             navigate('/auth/login', { 
               state: { from: location },
@@ -126,7 +129,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     loadUser()
   }, [location, navigate])
 
-  // 添加token刷新定时器
   useEffect(() => {
     if (!user) return
 
@@ -143,7 +145,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     }
 
-    // 每5分钟检查一次token
     const interval = setInterval(checkToken, 5 * 60 * 1000)
     return () => clearInterval(interval)
   }, [user, location, navigate])
@@ -153,19 +154,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     
     try {
       const userData = await loginUser(login, password)
-      console.log('登录成功，收到用户数据:', userData)
       
       if (!userData || !userData.access_token || !userData.refresh_token) {
-        console.error('登录响应中缺少必要的token信息')
         throw new Error('登录响应异常，请联系管理员')
       }
-      
-      // 保存用户信息到本地存储
+
       saveUserToLocalStorage(userData)
       setUser(userData)
       toast.success('登录成功')
 
-      // 获取登录前的页面路径，如果没有则跳转到首页
       const from = location.state?.from?.pathname || '/'
       navigate(from, { replace: true })
     } catch (error) {
@@ -227,6 +224,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     user,
     isAuthenticated: !!user,
     isLoading,
+    isAdmin,
     login,
     register,
     sendCode,

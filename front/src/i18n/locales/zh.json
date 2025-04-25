@@ -7,7 +7,7 @@
   "open-menu": "打开菜单",
   "switch-language": "切换语言",
   "toggle-theme": "切换主题",
-  
+
   "auth": {
     "login_title": "登录账户",
     "login_description": "欢迎回来，请登录您的账户",
@@ -22,8 +22,8 @@
     "no_account": "没有账户？",
     "register": "注册"
   },
-  
   "dashboard": {
+    "admin-panel": "管理面板",
     "title": "仪表盘",
     "welcome": "欢迎，{{name}}！查看系统运行状态和关键指标。",
     "tabs": {
@@ -95,4 +95,4 @@
       "description": "此功能正在开发中，敬请期待！"
     }
   }
-} 
+}
