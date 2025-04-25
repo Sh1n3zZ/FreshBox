@@ -1,100 +1,116 @@
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react';
+import { BlindBox } from '@/components/BlindBox';
+import { blindboxService, BlindBox as BlindBoxType } from '@/lib/blindbox';
+import { Button } from '@/components/ui/button';
+import { ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function Home() {
+  const [blindBoxes, setBlindBoxes] = useState<BlindBoxType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchBlindBoxes = async () => {
+      try {
+        setLoading(true);
+        const response = await blindboxService.listBlindBoxes({ 
+          page: 1, 
+          size: 8, 
+          status: 'active',
+          sortBy: 'createdAt',
+          order: 'desc'
+        });
+        setBlindBoxes(response.boxes || []);
+      } catch (err) {
+        console.error('获取盲盒列表失败', err);
+        setError('获取盲盒列表失败，请稍后再试');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBlindBoxes();
+  }, []);
+
+  const defaultImageUrl = "https://placehold.co/400x300?text=盲盒";
+
   return (
-    <div className="container mx-auto max-w-7xl py-6">
-      <div className="mb-8 text-center">
-        <h1 className="mb-4 text-4xl font-bold tracking-tight">欢迎使用 FreshBox</h1>
-        <p className="mx-auto max-w-2xl text-muted-foreground">
-          FreshBox 是一个功能强大的OCR识别系统，能够快速准确地识别图片中的文本内容。
-        </p>
+    <div className="container mx-auto py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">精选盲盒</h1>
+        <Link to="/blind-boxes">
+          <Button variant="ghost" className="flex items-center">
+            查看更多 <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        </Link>
       </div>
-      
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-lg border bg-card p-6 shadow-sm">
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-6 w-6"
-            >
-              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-              <polyline points="14 2 14 8 20 8" />
-            </svg>
-          </div>
-          <h3 className="mb-2 text-xl font-bold">OCR文本识别</h3>
-          <p className="mb-4 text-muted-foreground">
-            上传图片，自动识别其中的文本内容，支持多种语言和格式。
-          </p>
-          <Link
-            to="/ocr"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            开始使用
-          </Link>
+
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <p className="text-lg text-muted-foreground">加载盲盒中...</p>
         </div>
-        
-        <div className="rounded-lg border bg-card p-6 shadow-sm">
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-6 w-6"
-            >
-              <rect width="18" height="18" x="3" y="3" rx="2" />
-              <circle cx="9" cy="9" r="2" />
-              <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-            </svg>
-          </div>
-          <h3 className="mb-2 text-xl font-bold">批量处理</h3>
-          <p className="mb-4 text-muted-foreground">
-            一次上传多张图片，批量识别处理，提高工作效率。
-          </p>
-          <Link
-            to="/ocr/batch"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            批量处理
-          </Link>
+      ) : error ? (
+        <div className="flex justify-center items-center h-64">
+          <p className="text-lg text-destructive">{error}</p>
         </div>
-        
-        <div className="rounded-lg border bg-card p-6 shadow-sm">
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-6 w-6"
-            >
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
-          </div>
-          <h3 className="mb-2 text-xl font-bold">安全可靠</h3>
-          <p className="mb-4 text-muted-foreground">
-            数据加密传输，确保您的文档安全，支持私有部署。
+      ) : blindBoxes.length === 0 ? (
+        <div className="flex justify-center items-center h-64">
+          <p className="text-lg text-muted-foreground">暂无盲盒，敬请期待</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {blindBoxes.map((box) => (
+            <Link to={`/BlindBox/${box.id}`} key={box.id}>
+              <BlindBox
+                title={box.name}
+                imageUrl={box.imageURL || defaultImageUrl}
+                alt={`${box.name} 盲盒图片`}
+              />
+            </Link>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-16">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">最新优惠活动</h2>
+        </div>
+
+        <div className="bg-muted rounded-lg p-8 text-center">
+          <h3 className="text-xl font-bold mb-4">首次购买，享受9折优惠！</h3>
+          <p className="text-muted-foreground mb-6">
+            使用优惠码 <span className="font-semibold">FIRSTBOX</span> 获得10%折扣
           </p>
-          <Link
-            to="/about"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            了解更多
-          </Link>
+          <Button size="lg">立即选购</Button>
+        </div>
+      </div>
+
+      <div className="mt-16">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">关于我们的盲盒</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="p-6 border rounded-lg">
+            <h3 className="text-lg font-bold mb-2">优质食品</h3>
+            <p className="text-muted-foreground">
+              我们精选各种新鲜、优质的食品，确保您每次开启盲盒都是惊喜体验。
+            </p>
+          </div>
+          <div className="p-6 border rounded-lg">
+            <h3 className="text-lg font-bold mb-2">惊喜折扣</h3>
+            <p className="text-muted-foreground">
+              盲盒内的商品总价值通常高于盲盒价格，让您在享受惊喜的同时，也能获得实惠。
+            </p>
+          </div>
+          <div className="p-6 border rounded-lg">
+            <h3 className="text-lg font-bold mb-2">公益捐赠</h3>
+            <p className="text-muted-foreground">
+              每个盲盒的销售都会贡献一部分金额用于公益事业，让购物也能成为一种善行。
+            </p>
+          </div>
         </div>
       </div>
     </div>
-  )
-} 
+  );
+}

@@ -5,6 +5,18 @@ import { formatCurrency } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CreateBox } from '@/components/CreateBox';
+import { Trash2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 interface BlindBoxListProps {
   // 移除不使用的props
@@ -17,6 +29,9 @@ export function BlindBoxList({}: BlindBoxListProps) {
   const [page, setPage] = React.useState(1);
   const [size, setSize] = React.useState(10);
   const [filters, setFilters] = React.useState<Record<string, string>>({});
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
+  const [deleteTarget, setDeleteTarget] = React.useState<BlindBox | null>(null);
+  const [isDeleting, setIsDeleting] = React.useState(false);
 
   const fetchData = async (options: BlindBoxListOptions) => {
     setLoading(true);
@@ -49,6 +64,31 @@ export function BlindBoxList({}: BlindBoxListProps) {
 
   const handleBoxCreated = () => {
     fetchData({ page, size, ...filters });
+  };
+
+  const handleDeleteClick = (box: BlindBox) => {
+    setDeleteTarget(box);
+    setIsDeleteAlertOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    
+    setIsDeleting(true);
+    try {
+      await blindboxService.deleteBlindBox(deleteTarget.id);
+      toast.success("盲盒删除成功");
+      // 刷新列表
+      fetchData({ page, size, ...filters });
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.details || error.message;
+      toast.error(`删除盲盒失败: ${errorMsg}`);
+      console.error('删除盲盒失败:', error);
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteAlertOpen(false);
+      setDeleteTarget(null);
+    }
   };
 
   const columns = [
@@ -108,6 +148,15 @@ export function BlindBoxList({}: BlindBoxListProps) {
             box={row}
             onBoxCreated={handleBoxCreated}
           />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
+            onClick={() => handleDeleteClick(row)}
+          >
+            <span className="sr-only">删除</span>
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
       ),
     },
@@ -157,6 +206,27 @@ export function BlindBoxList({}: BlindBoxListProps) {
         filters={filterOptions}
         loading={loading}
       />
+
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认删除盲盒</AlertDialogTitle>
+            <AlertDialogDescription>
+              您确定要删除盲盒 "{deleteTarget?.name}" 吗？此操作不可撤销，且只有当盲盒中没有商品且没有相关订单时才能删除。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>取消</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "删除中..." : "确认删除"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

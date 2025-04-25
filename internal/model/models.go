@@ -76,7 +76,7 @@ type Product struct {
 	ProductionDate   time.Time        `json:"production_date" gorm:"type:datetime;not null"`
 	ShelfLifeHours   int              `json:"shelfLifeHours" gorm:"not null"`
 	Status           string           `json:"status" gorm:"size:20;default:'available'"` // available, in_blind_box, sold
-	BlindBoxID       string           `json:"blind_box_id" gorm:"type:varchar(36);index"`
+	BlindBoxID       string           `json:"BlindBoxID" gorm:"type:varchar(36);index"`
 	BlindBox         *BlindBox        `json:"blind_box" gorm:"foreignKey:BlindBoxID"`
 	CreatorID        string           `json:"creator_id" gorm:"type:varchar(36);index"`
 	Creator          User             `json:"creator" gorm:"foreignKey:CreatorID"`
@@ -127,7 +127,7 @@ type BlindBoxOpening struct {
 	ID                string    `json:"id" gorm:"primarykey;type:varchar(36)"`
 	UserID            string    `json:"user_id" gorm:"type:varchar(36);index;not null"`
 	User              User      `json:"user" gorm:"foreignKey:UserID"`
-	BlindBoxID        string    `json:"blind_box_id" gorm:"type:varchar(36);index;not null"`
+	BlindBoxID        string    `json:"BlindBoxID" gorm:"type:varchar(36);index;not null"`
 	BlindBox          BlindBox  `json:"blind_box" gorm:"foreignKey:BlindBoxID"`
 	ObtainedProductID string    `json:"obtained_product_id" gorm:"type:varchar(36);not null"`
 	ObtainedProduct   Product   `json:"obtained_product" gorm:"foreignKey:ObtainedProductID"`
