@@ -5,6 +5,7 @@ import { formatCurrency } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CreateProduct } from '@/components/CreateProduct';
+import { Pencil } from 'lucide-react';
 
 interface ProductListProps {
   onView?: (id: string) => void;
@@ -18,6 +19,7 @@ export function ProductList({ onView, onEdit }: ProductListProps) {
   const [page, setPage] = React.useState(1);
   const [size, setSize] = React.useState(10);
   const [filters, setFilters] = React.useState<Record<string, string>>({});
+  const [editingProduct, setEditingProduct] = React.useState<Product | null>(null);
 
   const fetchData = React.useCallback(async (options: ProductListOptions) => {
     setLoading(true);
@@ -49,6 +51,15 @@ export function ProductList({ onView, onEdit }: ProductListProps) {
   };
 
   const handleProductCreated = () => {
+    fetchData({ page, size, ...filters });
+  };
+
+  const handleEdit = (product: Product) => {
+    setEditingProduct(product);
+  };
+
+  const handleProductUpdated = () => {
+    setEditingProduct(null);
     fetchData({ page, size, ...filters });
   };
 
@@ -107,14 +118,10 @@ export function ProductList({ onView, onEdit }: ProductListProps) {
           >
             查看
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onEdit?.(row.id)}
-            disabled={!onEdit}
-          >
-            编辑
-          </Button>
+          <CreateProduct
+            product={row}
+            onProductCreated={handleProductUpdated}
+          />
         </div>
       ),
     },

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from "@/components/ui/button";
@@ -30,15 +30,15 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { productService, Product, ProductInputData, Manufacturer, Ingredient } from '@/lib/product';
 import { toast } from "sonner";
-import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { QuickCreateManufacturer } from './QuickCreateManufacturer';
 import { QuickCreateIngredient } from './QuickCreateIngredient';
-import { ChevronsUpDown, Check, PlusCircle, MinusCircle } from "lucide-react";
+import { PlusCircle, MinusCircle, Pencil } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
 interface CreateProductProps {
   onProductCreated?: (newProduct: Product) => void;
+  product?: Product;
 }
 
 const productFormSchema = z.object({
@@ -57,7 +57,7 @@ const productFormSchema = z.object({
 
 type ProductFormValues = z.infer<typeof productFormSchema>;
 
-export function CreateProduct({ onProductCreated }: CreateProductProps) {
+export function CreateProduct({ onProductCreated, product }: CreateProductProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
@@ -85,17 +85,17 @@ export function CreateProduct({ onProductCreated }: CreateProductProps) {
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
-      name: "",
-      description: "",
-      price: 0,
-      category: "",
-      imageURL: "",
-      productionDate: undefined,
-      shelfLifeHours: undefined,
-      manufacturerId: "",
-      batchNumber: "",
-      storageCondition: "常温",
-      ingredientIds: [],
+      name: product?.name || "",
+      description: product?.description || "",
+      price: product?.price || 0,
+      category: product?.category || "",
+      imageURL: product?.imageURL || "",
+      productionDate: product?.productionDate ? new Date(product.productionDate) : undefined,
+      shelfLifeHours: product?.shelfLifeHours || undefined,
+      manufacturerId: product?.manufacturerId || "",
+      batchNumber: product?.batchNumber || "",
+      storageCondition: (product?.storageCondition as '常温' | '冷藏' | '冷冻') || "常温",
+      ingredientIds: product?.ingredients?.map(ing => ing.id) || [],
     },
   });
 
@@ -116,15 +116,22 @@ export function CreateProduct({ onProductCreated }: CreateProductProps) {
         ingredientIds: values.ingredientIds,
       };
 
-      const newProduct = await productService.createProduct(productData);
-      toast.success("产品创建成功。", { id: 'create-product-success' });
+      let newProduct;
+      if (product) {
+        newProduct = await productService.updateProduct(product.id, productData);
+        toast.success("产品更新成功。", { id: 'update-product-success' });
+      } else {
+        newProduct = await productService.createProduct(productData);
+        toast.success("产品创建成功。", { id: 'create-product-success' });
+      }
+      
       setIsOpen(false);
       form.reset();
       onProductCreated?.(newProduct);
     } catch (error: any) {
       const errorMsg = error.response?.data?.details || error.message;
-      toast.error(`创建产品失败: ${errorMsg}`, { id: 'create-product-error' });
-      console.error('创建产品失败:', error.response || error);
+      toast.error(`${product ? '更新' : '创建'}产品失败: ${errorMsg}`, { id: 'product-error' });
+      console.error(`${product ? '更新' : '创建'}产品失败:`, error.response || error);
     } finally {
       setIsSubmitting(false);
     }
@@ -153,13 +160,20 @@ export function CreateProduct({ onProductCreated }: CreateProductProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button>创建产品</Button>
+        {product ? (
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+            <span className="sr-only">编辑</span>
+            <Pencil className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button>创建产品</Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>创建新产品</DialogTitle>
+          <DialogTitle>{product ? '编辑产品' : '创建新产品'}</DialogTitle>
           <DialogDescription>
-            填写以下信息以创建新产品。确保生产商和配料信息已预先录入系统。
+            {product ? '修改产品信息。' : '填写以下信息以创建新产品。确保生产商和配料信息已预先录入系统。'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -265,40 +279,40 @@ export function CreateProduct({ onProductCreated }: CreateProductProps) {
             <FormField
               control={form.control}
               name="productionDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
                   <FormLabel>生产日期 *</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
                             format(field.value, "yyyy-MM-dd")
-                            ) : (
-                              <span>选择日期</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date: Date) =>
+                          ) : (
+                            <span>选择日期</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date: Date) =>
                           date > new Date() || date < new Date("2020-01-01")
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
@@ -451,7 +465,7 @@ export function CreateProduct({ onProductCreated }: CreateProductProps) {
                 取消
               </Button>
               <Button type="submit" disabled={isSubmitting || manufacturers.length === 0}>
-                {isSubmitting ? "创建中..." : "创建产品"}
+                {isSubmitting ? (product ? "更新中..." : "创建中...") : (product ? "更新产品" : "创建产品")}
               </Button>
             </DialogFooter>
           </form>
