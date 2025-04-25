@@ -1,22 +1,26 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Mail } from 'lucide-react'
 import { useAuth } from '@/providers/auth-provider'
+import { sendVerificationCode } from '@/lib/auth'
 
 export default function Register() {
   const { register, isLoading } = useAuth()
   
-  const [name, setName] = useState('')
+  const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [code, setCode] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [countdown, setCountdown] = useState(0)
   const [errors, setErrors] = useState({
-    name: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: '',
+    code: '',
     general: ''
   })
 
@@ -25,15 +29,43 @@ export default function Register() {
     return re.test(email)
   }
 
+  const handleSendCode = async () => {
+    if (!email) {
+      setErrors(prev => ({ ...prev, email: '请输入邮箱地址' }))
+      return
+    }
+    if (!validateEmail(email)) {
+      setErrors(prev => ({ ...prev, email: '请输入有效的邮箱地址' }))
+      return
+    }
+
+    try {
+      await sendVerificationCode(email)
+      setCountdown(60)
+      const timer = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(timer)
+            return 0
+          }
+          return prev - 1
+        })
+      }, 1000)
+    } catch (error: any) {
+      setErrors(prev => ({ ...prev, general: error.message || '发送验证码失败' }))
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     // 重置错误
     setErrors({
-      name: '',
+      username: '',
       email: '',
       password: '',
       confirmPassword: '',
+      code: '',
       general: ''
     })
 
@@ -41,8 +73,8 @@ export default function Register() {
     let hasError = false
     const newErrors = { ...errors }
 
-    if (!name.trim()) {
-      newErrors.name = '请输入姓名'
+    if (!username.trim()) {
+      newErrors.username = '请输入用户名'
       hasError = true
     }
 
@@ -70,18 +102,31 @@ export default function Register() {
       hasError = true
     }
 
+    if (!code) {
+      newErrors.code = '请输入验证码'
+      hasError = true
+    }
+
     if (hasError) {
       setErrors(newErrors)
       return
     }
 
     try {
-      await register(email, password, name)
-    } catch (error: any) {
-      setErrors({
-        ...newErrors,
-        general: error.message || '注册失败，请稍后再试'
-      })
+      await register(username, email, password, code)
+    } catch (error) {
+      if (error instanceof Error) {
+        const errorMessage = error.message
+        if (errorMessage.includes('用户名')) {
+          setErrors(prev => ({ ...prev, username: errorMessage }))
+        } else if (errorMessage.includes('邮箱')) {
+          setErrors(prev => ({ ...prev, email: errorMessage }))
+        } else if (errorMessage.includes('验证码')) {
+          setErrors(prev => ({ ...prev, code: errorMessage }))
+        } else {
+          setErrors(prev => ({ ...prev, general: errorMessage }))
+        }
+      }
     }
   }
 
@@ -103,20 +148,20 @@ export default function Register() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="name" className="text-sm font-medium">
-              姓名
+            <label htmlFor="username" className="text-sm font-medium">
+              用户名
             </label>
             <input
-              id="name"
+              id="username"
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className={`w-full rounded-md border ${
-                errors.name ? 'border-destructive' : 'border-input'
+                errors.username ? 'border-destructive' : 'border-input'
               } bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring`}
-              placeholder="请输入姓名"
+              placeholder="请输入用户名"
             />
-            {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
+            {errors.username && <p className="text-sm text-destructive">{errors.username}</p>}
           </div>
 
           <div className="space-y-2">
@@ -134,6 +179,33 @@ export default function Register() {
               placeholder="example@example.com"
             />
             {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="code" className="text-sm font-medium">
+              验证码
+            </label>
+            <div className="flex gap-2">
+              <input
+                id="code"
+                type="text"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                className={`flex-1 rounded-md border ${
+                  errors.code ? 'border-destructive' : 'border-input'
+                } bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring`}
+                placeholder="请输入验证码"
+              />
+              <button
+                type="button"
+                onClick={handleSendCode}
+                disabled={countdown > 0}
+                className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {countdown > 0 ? `${countdown}秒后重试` : '获取验证码'}
+              </button>
+            </div>
+            {errors.code && <p className="text-sm text-destructive">{errors.code}</p>}
           </div>
 
           <div className="space-y-2">

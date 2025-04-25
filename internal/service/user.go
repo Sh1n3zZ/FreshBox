@@ -94,10 +94,11 @@ func (s *UserService) Register(ctx context.Context, req *RegisterRequest) (*User
 	return user, nil
 }
 
-// LoginByEmail 使用邮箱登录
-func (s *UserService) LoginByEmail(ctx context.Context, email, password string) (*User, error) {
+// Login 用户登录
+func (s *UserService) Login(ctx context.Context, login, password string) (*User, error) {
 	var user User
-	if err := s.db.Where("email = ?", email).First(&user).Error; err != nil {
+	// 同时查询用户名和邮箱
+	if err := s.db.Where("username = ? OR email = ?", login, login).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, errors.New("用户不存在")
 		}

@@ -20,7 +20,7 @@ export default function Login() {
 
   // 定义表单验证模式
   const formSchema = z.object({
-    email: z.string().email(t('auth.email_invalid')),
+    login: z.string().min(1, t('auth.login_required')),
     password: z.string().min(1, t('auth.password_required')),
   })
 
@@ -28,7 +28,7 @@ export default function Login() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: '',
+      login: '',
       password: '',
     },
   })
@@ -37,10 +37,13 @@ export default function Login() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setFormError(null)
     try {
-      await login(values.email, values.password)
-      // 登录成功后的逻辑 (如果需要可以添加)
+      await login(values.login, values.password)
     } catch (error) {
-      // 登录失败，错误已在auth-provider中处理
+      if (error instanceof Error) {
+        setFormError(error.message)
+      } else {
+        setFormError('登录失败，请稍后重试')
+      }
     }
   }
 
@@ -61,12 +64,12 @@ export default function Login() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField
             control={form.control}
-            name="email"
+            name="login"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('auth.email')}</FormLabel>
+                <FormLabel>{t('auth.login')}</FormLabel>
                 <FormControl>
-                  <Input placeholder={t('auth.email_placeholder')} {...field} />
+                  <Input placeholder={t('auth.login_placeholder')} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

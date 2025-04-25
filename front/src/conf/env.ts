@@ -111,6 +111,14 @@ export const API_URLS = {
   BASE: config.apiBaseUrl,
   UPLOAD: `${config.apiBaseUrl}/upload`,
   
+  // 认证相关API
+  AUTH: {
+    SEND_CODE: `${config.apiBaseUrl}/auth/verification-code`,
+    REGISTER: `${config.apiBaseUrl}/auth/register`,
+    LOGIN: `${config.apiBaseUrl}/auth/login`,
+    REFRESH: `${config.apiBaseUrl}/auth/refresh`,
+  },
+  
   // OCR相关API
   OCR: {
     PROCESS: `${config.ocrApiUrl}/process`,
@@ -120,9 +128,6 @@ export const API_URLS = {
   
   // 用户相关API
   USER: {
-    LOGIN: `${config.apiBaseUrl}/auth/login`,
-    REGISTER: `${config.apiBaseUrl}/auth/register`,
-    REFRESH_TOKEN: `${config.apiBaseUrl}/auth/refresh`,
     PROFILE: `${config.apiBaseUrl}/user/profile`,
   },
   

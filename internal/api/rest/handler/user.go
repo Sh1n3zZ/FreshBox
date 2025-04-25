@@ -98,7 +98,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 	}
 
 	// 调用服务层进行登录
-	user, err := h.userService.LoginByEmail(c, req.Email, req.Password)
+	user, err := h.userService.Login(c, req.Login, req.Password)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -293,7 +293,7 @@ type RegisterResponse struct {
 
 // LoginRequest 登录请求
 type LoginRequest struct {
-	Email    string `json:"email" binding:"required,email"`
+	Login    string `json:"login" binding:"required"` // 可以是邮箱或用户名
 	Password string `json:"password" binding:"required"`
 }
 
