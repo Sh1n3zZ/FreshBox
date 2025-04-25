@@ -14,20 +14,31 @@ import (
 
 // ProductService 商品服务
 type ProductService struct {
-	db     *gorm.DB
-	logger *zap.Logger
+	db          *gorm.DB
+	logger      *zap.Logger
+	userService *UserService
 }
 
 // NewProductService 创建商品服务
-func NewProductService(db *gorm.DB, logger *zap.Logger) *ProductService {
+func NewProductService(db *gorm.DB, logger *zap.Logger, userService *UserService) *ProductService {
 	return &ProductService{
-		db:     db,
-		logger: logger,
+		db:          db,
+		logger:      logger,
+		userService: userService,
 	}
 }
 
 // CreateProduct 创建商品
-func (s *ProductService) CreateProduct(ctx context.Context, product *model.Product) error {
+func (s *ProductService) CreateProduct(ctx context.Context, product *model.Product, userID string) error {
+	// 检查用户权限
+	isAdmin, err := s.userService.IsAdmin(ctx, userID)
+	if err != nil {
+		return errors.Wrap(err, "检查用户权限失败")
+	}
+	if !isAdmin {
+		return errors.New("只有管理员可以创建商品")
+	}
+
 	// 设置商品基本信息
 	product.ID = GenerateUniqueID()
 	product.Status = "available" // 初始状态为可用
@@ -55,7 +66,16 @@ func (s *ProductService) GetProduct(ctx context.Context, id string) (*model.Prod
 }
 
 // UpdateProduct 更新商品信息
-func (s *ProductService) UpdateProduct(ctx context.Context, id string, productData *model.Product) error {
+func (s *ProductService) UpdateProduct(ctx context.Context, id string, productData *model.Product, userID string) error {
+	// 检查用户权限
+	isAdmin, err := s.userService.IsAdmin(ctx, userID)
+	if err != nil {
+		return errors.Wrap(err, "检查用户权限失败")
+	}
+	if !isAdmin {
+		return errors.New("只有管理员可以更新商品")
+	}
+
 	// 首先检查商品是否存在
 	var existingProduct model.Product
 	if err := s.db.First(&existingProduct, "id = ?", id).Error; err != nil {
@@ -86,7 +106,16 @@ func (s *ProductService) UpdateProduct(ctx context.Context, id string, productDa
 }
 
 // DeleteProduct 删除商品
-func (s *ProductService) DeleteProduct(ctx context.Context, id string) error {
+func (s *ProductService) DeleteProduct(ctx context.Context, id string, userID string) error {
+	// 检查用户权限
+	isAdmin, err := s.userService.IsAdmin(ctx, userID)
+	if err != nil {
+		return errors.Wrap(err, "检查用户权限失败")
+	}
+	if !isAdmin {
+		return errors.New("只有管理员可以删除商品")
+	}
+
 	// 检查商品状态
 	var product model.Product
 	if err := s.db.First(&product, "id = ?", id).Error; err != nil {

@@ -157,3 +157,12 @@ func (s *UserService) GetUserByID(ctx context.Context, id string) (*User, error)
 	}
 	return &user, nil
 }
+
+// IsAdmin 判断用户是否为管理员
+func (s *UserService) IsAdmin(ctx context.Context, userID string) (bool, error) {
+	user, err := s.GetUserByID(ctx, userID)
+	if err != nil {
+		return false, err
+	}
+	return user.Role == "admin", nil
+}

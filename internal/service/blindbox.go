@@ -11,7 +11,6 @@ import (
 	"gorm.io/gorm"
 
 	"FreshBox/internal/core/pricing"
-	"FreshBox/internal/core/vision"
 	"FreshBox/internal/model"
 )
 
@@ -19,8 +18,8 @@ import (
 type BlindBoxService struct {
 	db            *gorm.DB
 	pricingEngine pricing.Engine
-	ocrService    *vision.OCRService
 	logger        *zap.Logger
+	userService   *UserService
 }
 
 // NewBlindBoxService 创建盲盒服务
@@ -28,16 +27,27 @@ func NewBlindBoxService(
 	db *gorm.DB,
 	pricingEngine pricing.Engine,
 	logger *zap.Logger,
+	userService *UserService,
 ) *BlindBoxService {
 	return &BlindBoxService{
 		db:            db,
 		pricingEngine: pricingEngine,
 		logger:        logger,
+		userService:   userService,
 	}
 }
 
 // CreateBlindBox 创建盲盒
-func (s *BlindBoxService) CreateBlindBox(ctx context.Context, boxData *model.BlindBox) error {
+func (s *BlindBoxService) CreateBlindBox(ctx context.Context, boxData *model.BlindBox, userID string) error {
+	// 检查用户权限
+	isAdmin, err := s.userService.IsAdmin(ctx, userID)
+	if err != nil {
+		return errors.Wrap(err, "检查用户权限失败")
+	}
+	if !isAdmin {
+		return errors.New("只有管理员可以创建盲盒")
+	}
+
 	// 设置盲盒信息
 	boxData.ID = GenerateUniqueID()
 	boxData.Status = "active"
@@ -69,7 +79,16 @@ func (s *BlindBoxService) GetBlindBox(ctx context.Context, id string) (*model.Bl
 }
 
 // UpdateBlindBox 更新盲盒信息
-func (s *BlindBoxService) UpdateBlindBox(ctx context.Context, id string, boxData *model.BlindBox) error {
+func (s *BlindBoxService) UpdateBlindBox(ctx context.Context, id string, boxData *model.BlindBox, userID string) error {
+	// 检查用户权限
+	isAdmin, err := s.userService.IsAdmin(ctx, userID)
+	if err != nil {
+		return errors.Wrap(err, "检查用户权限失败")
+	}
+	if !isAdmin {
+		return errors.New("只有管理员可以更新盲盒")
+	}
+
 	// 首先检查盲盒是否存在
 	var existingBox model.BlindBox
 	if err := s.db.First(&existingBox, "id = ?", id).Error; err != nil {
@@ -97,9 +116,18 @@ func (s *BlindBoxService) UpdateBlindBox(ctx context.Context, id string, boxData
 
 // DeleteBlindBox 删除盲盒
 func (s *BlindBoxService) DeleteBlindBox(ctx context.Context, id string, userID string) error {
+	// 检查用户权限
+	isAdmin, err := s.userService.IsAdmin(ctx, userID)
+	if err != nil {
+		return errors.Wrap(err, "检查用户权限失败")
+	}
+	if !isAdmin {
+		return errors.New("只有管理员可以删除盲盒")
+	}
+
 	// 验证盲盒所有权（只有创建者或管理员可以删除）
 	var box model.BlindBox
-	err := s.db.First(&box, "id = ?", id).Error
+	err = s.db.First(&box, "id = ?", id).Error
 	if err != nil {
 		return errors.Wrap(err, "查询盲盒失败")
 	}
