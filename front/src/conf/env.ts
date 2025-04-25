@@ -133,12 +133,28 @@ export const API_URLS = {
   
   // 盲盒相关API
   BOX: {
-    LIST: `${config.apiBaseUrl}/boxes`,
-    DETAIL: (id: string) => `${config.apiBaseUrl}/boxes/${id}`,
-    CREATE: `${config.apiBaseUrl}/boxes`,
-    UPDATE: (id: string) => `${config.apiBaseUrl}/boxes/${id}`,
-    DELETE: (id: string) => `${config.apiBaseUrl}/boxes/${id}`,
-    PURCHASE: (id: string) => `${config.apiBaseUrl}/boxes/${id}/purchase`,
+    LIST: `${config.apiBaseUrl}/blind-boxes`,
+    DETAIL: (id: string) => `${config.apiBaseUrl}/blind-boxes/${id}`,
+    CREATE: `${config.apiBaseUrl}/blind-boxes`,
+    UPDATE: (id: string) => `${config.apiBaseUrl}/blind-boxes/${id}`,
+    DELETE: (id: string) => `${config.apiBaseUrl}/blind-boxes/${id}`,
+    PURCHASE: (id: string) => `${config.apiBaseUrl}/blind-boxes/${id}/purchase`,
+    OPEN: (id: string) => `${config.apiBaseUrl}/blind-boxes/${id}/open`,
+    HISTORY: (id: string) => `${config.apiBaseUrl}/blind-boxes/${id}/history`,
+  },
+  
+  // 产品相关API
+  PRODUCT: {
+    LIST: `${config.apiBaseUrl}/products`,
+    DETAIL: (id: string) => `${config.apiBaseUrl}/products/${id}`,
+    CREATE: `${config.apiBaseUrl}/products`,
+    UPDATE: (id: string) => `${config.apiBaseUrl}/products/${id}`,
+    DELETE: (id: string) => `${config.apiBaseUrl}/products/${id}`,
+    BY_STATUS: `${config.apiBaseUrl}/products/status`,
+    BY_BOX: (boxId: string) => `${config.apiBaseUrl}/products/box/${boxId}`,
+    ADD_TO_BOX: (id: string) => `${config.apiBaseUrl}/products/${id}/add-to-box`,
+    REMOVE_FROM_BOX: (id: string) => `${config.apiBaseUrl}/products/${id}/remove-from-box`,
+    BATCH_ADD_TO_BOX: `${config.apiBaseUrl}/products/batch-add-to-box`,
   },
   
   // 任务相关API

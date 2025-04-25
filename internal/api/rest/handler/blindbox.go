@@ -50,7 +50,7 @@ func (h *BlindBoxHandler) CreateBlindBox(c *gin.Context) {
 		box.ExpirationTime = time.Now().Add(72 * time.Hour) // 默认3天后过期
 	}
 
-	err := h.blindBoxService.CreateBlindBox(c.Request.Context(), &box)
+	err := h.blindBoxService.CreateBlindBox(c.Request.Context(), &box, userID)
 	if err != nil {
 		h.logger.Error("创建盲盒失败", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "创建盲盒失败", "details": err.Error()})
@@ -201,7 +201,14 @@ func (h *BlindBoxHandler) UpdateBlindBox(c *gin.Context) {
 	// 设置ID
 	box.ID = id
 
-	err := h.blindBoxService.UpdateBlindBox(c.Request.Context(), id, &box)
+	// 获取用户ID
+	userID := c.GetString("user_id")
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未授权"})
+		return
+	}
+
+	err := h.blindBoxService.UpdateBlindBox(c.Request.Context(), id, &box, userID)
 	if err != nil {
 		h.logger.Error("更新盲盒失败", zap.Error(err), zap.String("box_id", id))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新盲盒失败", "details": err.Error()})

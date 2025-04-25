@@ -1,5 +1,3 @@
-import React from 'react'
-
 export default function About() {
   return (
     <div className="container mx-auto max-w-7xl py-10">

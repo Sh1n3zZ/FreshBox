@@ -84,7 +84,7 @@ export default function Dashboard() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">{t('dashboard.title')}</h1>
         <p className="text-muted-foreground mt-2">
-          {t('dashboard.welcome', { name: user?.name || t('admin') })}
+          {t('dashboard.welcome', { name: user?.username || t('admin') })}
         </p>
       </div>
 

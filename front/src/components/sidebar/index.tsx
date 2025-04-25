@@ -7,7 +7,6 @@ import {
   User, 
   Settings,
   FileText,
-  Package,
   BarChart,
   X,
   Shield

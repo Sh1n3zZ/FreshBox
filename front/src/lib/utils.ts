@@ -117,3 +117,13 @@ export function setMemory<T>(key: string, value: T): void {
     console.error(`Error setting memory for key: ${key}`, e)
   }
 }
+
+/**
+ * 格式化货币
+ */
+export function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('zh-CN', {
+    style: 'currency',
+    currency: 'CNY',
+  }).format(amount);
+}

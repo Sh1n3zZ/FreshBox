@@ -10,6 +10,7 @@ const OCR = lazy(() => import('@/pages/OCR'))
 const Login = lazy(() => import('@/pages/auth/Login'))
 const Register = lazy(() => import('@/pages/auth/Register'))
 const Dashboard = lazy(() => import('@/pages/dashboard/Dashboard'))
+const Settings = lazy(() => import('@/pages/admin/Settings'))
 const NotFound = lazy(() => import('@/pages/NotFound'))
 
 const routes: RouteObject[] = [
@@ -23,6 +24,15 @@ const routes: RouteObject[] = [
       {
         path: 'dashboard',
         element: <Dashboard />
+      },
+      {
+        path: 'admin',
+        children: [
+          {
+            path: 'settings',
+            element: <Settings />
+          }
+        ]
       }
     ]
   },

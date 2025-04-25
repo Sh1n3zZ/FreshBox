@@ -42,7 +42,7 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	}
 	product.CreatorID = userID
 
-	err := h.productService.CreateProduct(c.Request.Context(), &product)
+	err := h.productService.CreateProduct(c.Request.Context(), &product, userID)
 	if err != nil {
 		h.logger.Error("创建商品失败", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "创建商品失败", "details": err.Error()})
@@ -163,7 +163,14 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 	// 设置ID
 	product.ID = id
 
-	err := h.productService.UpdateProduct(c.Request.Context(), id, &product)
+	// 获取用户ID
+	userID := c.GetString("user_id")
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未授权"})
+		return
+	}
+
+	err := h.productService.UpdateProduct(c.Request.Context(), id, &product, userID)
 	if err != nil {
 		h.logger.Error("更新商品失败", zap.Error(err), zap.String("product_id", id))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新商品失败", "details": err.Error()})
@@ -184,7 +191,14 @@ func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 		return
 	}
 
-	err := h.productService.DeleteProduct(c.Request.Context(), id)
+	// 获取用户ID
+	userID := c.GetString("user_id")
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未授权"})
+		return
+	}
+
+	err := h.productService.DeleteProduct(c.Request.Context(), id, userID)
 	if err != nil {
 		h.logger.Error("删除商品失败", zap.Error(err), zap.String("product_id", id))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除商品失败", "details": err.Error()})
