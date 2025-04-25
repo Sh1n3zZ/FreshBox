@@ -46,7 +46,7 @@ func autoMigrate(db *gorm.DB) error {
 
 		// 创建默认管理员用户
 		adminUser := &model.User{
-			ID:        "admin",
+			ID:        service.GenerateUniqueID(),
 			Username:  "admin",
 			Email:     "admin@freshbox.com",
 			Password:  string(hashedPassword),
@@ -58,6 +58,16 @@ func autoMigrate(db *gorm.DB) error {
 			return err
 		}
 		log.Println("已创建默认管理员用户")
+	}
+
+	log.Println("迁移生产商表...")
+	if err := db.AutoMigrate(&model.Manufacturer{}); err != nil {
+		return err
+	}
+
+	log.Println("迁移配料表...")
+	if err := db.AutoMigrate(&model.Ingredient{}); err != nil {
+		return err
 	}
 
 	log.Println("迁移商品表...")

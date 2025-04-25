@@ -17,6 +17,8 @@ func SetupRouter(
 	userHandler *handler.UserHandler,
 	blindBoxHandler *handler.BlindBoxHandler,
 	productHandler *handler.ProductHandler,
+	manufacturerHandler *handler.ManufacturerHandler,
+	ingredientHandler *handler.IngredientHandler,
 	taskHandler *handler.TaskHandler,
 	mailHandler *handler.MailHandler,
 ) *gin.Engine {
@@ -155,6 +157,40 @@ func SetupRouter(
 				productsAuth.POST("/:id/add-to-box", productHandler.AddProductToBlindBox)           // 添加商品到盲盒
 				productsAuth.POST("/:id/remove-from-box", productHandler.RemoveProductFromBlindBox) // 从盲盒移除商品
 				productsAuth.POST("/batch-add-to-box", productHandler.BatchAddProductsToBlindBox)   // 批量添加商品到盲盒
+			}
+		}
+
+		// 生产商接口 - 部分需要认证
+		manufacturers := v1.Group("/manufacturers")
+		{
+			// 公开接口 (列表和详情通常是公开的)
+			manufacturers.GET("", manufacturerHandler.ListManufacturers)   // 获取生产商列表
+			manufacturers.GET("/:id", manufacturerHandler.GetManufacturer) // 获取生产商详情
+
+			// 需要认证的接口 (通常是管理员操作)
+			manufacturersAuth := manufacturers.Group("")
+			manufacturersAuth.Use(middleware.Auth())
+			{
+				manufacturersAuth.POST("", manufacturerHandler.CreateManufacturer)       // 创建生产商
+				manufacturersAuth.PUT("/:id", manufacturerHandler.UpdateManufacturer)    // 更新生产商
+				manufacturersAuth.DELETE("/:id", manufacturerHandler.DeleteManufacturer) // 删除生产商
+			}
+		}
+
+		// 配料接口 - 部分需要认证
+		ingredients := v1.Group("/ingredients")
+		{
+			// 公开接口
+			ingredients.GET("", ingredientHandler.ListIngredients)   // 获取配料列表
+			ingredients.GET("/:id", ingredientHandler.GetIngredient) // 获取配料详情
+
+			// 需要认证的接口
+			ingredientsAuth := ingredients.Group("")
+			ingredientsAuth.Use(middleware.Auth())
+			{
+				ingredientsAuth.POST("", ingredientHandler.CreateIngredient)       // 创建配料
+				ingredientsAuth.PUT("/:id", ingredientHandler.UpdateIngredient)    // 更新配料
+				ingredientsAuth.DELETE("/:id", ingredientHandler.DeleteIngredient) // 删除配料
 			}
 		}
 

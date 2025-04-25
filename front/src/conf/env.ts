@@ -157,6 +157,24 @@ export const API_URLS = {
     BATCH_ADD_TO_BOX: `${config.apiBaseUrl}/products/batch-add-to-box`,
   },
   
+  // 生产商相关API
+  MANUFACTURER: {
+    LIST: `${config.apiBaseUrl}/manufacturers`,
+    DETAIL: (id: string) => `${config.apiBaseUrl}/manufacturers/${id}`,
+    CREATE: `${config.apiBaseUrl}/manufacturers`,
+    UPDATE: (id: string) => `${config.apiBaseUrl}/manufacturers/${id}`,
+    DELETE: (id: string) => `${config.apiBaseUrl}/manufacturers/${id}`,
+  },
+  
+  // 配料相关API
+  INGREDIENT: {
+    LIST: `${config.apiBaseUrl}/ingredients`,
+    DETAIL: (id: string) => `${config.apiBaseUrl}/ingredients/${id}`,
+    CREATE: `${config.apiBaseUrl}/ingredients`,
+    UPDATE: (id: string) => `${config.apiBaseUrl}/ingredients/${id}`,
+    DELETE: (id: string) => `${config.apiBaseUrl}/ingredients/${id}`,
+  },
+  
   // 任务相关API
   TASK: {
     LIST: `${config.apiBaseUrl}/tasks`,

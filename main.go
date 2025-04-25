@@ -124,10 +124,15 @@ func main() {
 	taskManager := social.NewDefaultTaskManager(db)
 	contentManager := social.NewDefaultContentManager(db)
 
+	manufacturerService := service.NewManufacturerService(db, logger, userService)
+	ingredientService := service.NewIngredientService(db, logger, userService)
+
 	// 初始化处理器
 	userHandler := handler.NewUserHandler(userService)
 	blindBoxHandler := handler.NewBlindBoxHandler(blindBoxService, productService)
 	productHandler := handler.NewProductHandler(productService)
+	manufacturerHandler := handler.NewManufacturerHandler(manufacturerService)
+	ingredientHandler := handler.NewIngredientHandler(ingredientService)
 	taskHandler := handler.NewTaskHandler(taskManager, contentManager)
 	mailHandler := handler.NewMailHandler(mailService)
 
@@ -137,7 +142,15 @@ func main() {
 	}
 
 	// 设置路由
-	r := rest.SetupRouter(userHandler, blindBoxHandler, productHandler, taskHandler, mailHandler)
+	r := rest.SetupRouter(
+		userHandler,
+		blindBoxHandler,
+		productHandler,
+		manufacturerHandler,
+		ingredientHandler,
+		taskHandler,
+		mailHandler,
+	)
 
 	// 服务前端构建文件
 	r.Static("/assets", frontendDir+"/assets")

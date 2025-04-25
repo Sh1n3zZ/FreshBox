@@ -4,14 +4,14 @@ import { productService, Product, ProductListOptions } from '@/lib/product';
 import { formatCurrency } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { CreateProduct } from '@/components/CreateProduct';
 
 interface ProductListProps {
   onView?: (id: string) => void;
   onEdit?: (id: string) => void;
-  onCreate?: () => void;
 }
 
-export function ProductList({ onView, onEdit, onCreate }: ProductListProps) {
+export function ProductList({ onView, onEdit }: ProductListProps) {
   const [loading, setLoading] = React.useState(false);
   const [data, setData] = React.useState<Product[]>([]);
   const [total, setTotal] = React.useState(0);
@@ -19,7 +19,7 @@ export function ProductList({ onView, onEdit, onCreate }: ProductListProps) {
   const [size, setSize] = React.useState(10);
   const [filters, setFilters] = React.useState<Record<string, string>>({});
 
-  const fetchData = async (options: ProductListOptions) => {
+  const fetchData = React.useCallback(async (options: ProductListOptions) => {
     setLoading(true);
     try {
       const response = await productService.listProducts(options);
@@ -32,11 +32,11 @@ export function ProductList({ onView, onEdit, onCreate }: ProductListProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   React.useEffect(() => {
     fetchData({ page, size, ...filters });
-  }, [page, size, filters]);
+  }, [page, size, filters, fetchData]);
 
   const handleSearch = (keyword: string) => {
     setFilters(prev => ({ ...prev, keyword }));
@@ -46,6 +46,10 @@ export function ProductList({ onView, onEdit, onCreate }: ProductListProps) {
   const handleFilterChange = (newFilters: Record<string, string>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
     setPage(1);
+  };
+
+  const handleProductCreated = () => {
+    fetchData({ page, size, ...filters });
   };
 
   const columns = [
@@ -71,7 +75,10 @@ export function ProductList({ onView, onEdit, onCreate }: ProductListProps) {
       accessorKey: 'status',
       cell: (row: Product) => (
         <Badge variant={row.status === 'active' ? 'default' : 'secondary'}>
-          {row.status === 'active' ? '活跃' : '已下架'}
+          {row.status === 'available' ? '可用' : 
+           row.status === 'in_blind_box' ? '盲盒中' : 
+           row.status === 'sold' ? '已售' : 
+           row.status === 'expired' ? '已过期' : '未知'}
         </Badge>
       ),
     },
@@ -96,6 +103,7 @@ export function ProductList({ onView, onEdit, onCreate }: ProductListProps) {
             variant="outline"
             size="sm"
             onClick={() => onView?.(row.id)}
+            disabled={!onView}
           >
             查看
           </Button>
@@ -103,6 +111,7 @@ export function ProductList({ onView, onEdit, onCreate }: ProductListProps) {
             variant="outline"
             size="sm"
             onClick={() => onEdit?.(row.id)}
+            disabled={!onEdit}
           >
             编辑
           </Button>
@@ -127,8 +136,10 @@ export function ProductList({ onView, onEdit, onCreate }: ProductListProps) {
       label: '状态',
       options: [
         { value: '', label: '全部' },
-        { value: 'active', label: '活跃' },
-        { value: 'inactive', label: '已下架' },
+        { value: 'available', label: '可用' },
+        { value: 'in_blind_box', label: '盲盒中' },
+        { value: 'sold', label: '已售' },
+        { value: 'expired', label: '已过期' },
       ],
     },
   ];
@@ -137,9 +148,7 @@ export function ProductList({ onView, onEdit, onCreate }: ProductListProps) {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">产品列表</h2>
-        <Button onClick={onCreate}>
-          创建产品
-        </Button>
+        <CreateProduct onProductCreated={handleProductCreated} />
       </div>
       <ListForm
         columns={columns}

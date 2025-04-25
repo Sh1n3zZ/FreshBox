@@ -25,23 +25,68 @@ type User struct {
 	Role      UserRole  `gorm:"type:varchar(20);default:'user'"`
 }
 
+// StorageCondition 商品存储条件类型
+type StorageCondition string
+
+const (
+	StorageRoomTemp StorageCondition = "常温"
+	StorageChilled  StorageCondition = "冷藏"
+	StorageFrozen   StorageCondition = "冷冻"
+)
+
+// Manufacturer 生产商模型
+type Manufacturer struct {
+	ID                  string    `json:"id" gorm:"primarykey;type:varchar(36)"`
+	Name                string    `json:"name" gorm:"size:255;not null;uniqueIndex"`
+	ContactPhone        string    `json:"contact_phone" gorm:"size:20"`
+	Address             string    `json:"address" gorm:"size:512"`
+	CertificationNumber string    `json:"certification_number" gorm:"size:100"`
+	CreatedAt           time.Time `json:"created_at" gorm:"type:datetime"`
+}
+
+// IngredientCategory 配料分类类型
+type IngredientCategory string
+
+const (
+	CategoryCereal   IngredientCategory = "谷物"
+	CategoryFruitVeg IngredientCategory = "果蔬"
+	CategoryProtein  IngredientCategory = "蛋白质"
+	CategoryAdditive IngredientCategory = "添加剂"
+	CategoryOther    IngredientCategory = "其他" // 添加一个默认或其他分类
+)
+
+// Ingredient 配料模型
+type Ingredient struct {
+	ID          string             `json:"id" gorm:"primarykey;type:varchar(36)"`
+	Name        string             `json:"name" gorm:"size:255;not null;uniqueIndex"`
+	Category    IngredientCategory `json:"category" gorm:"type:varchar(50);not null;index"`
+	IsAllergen  bool               `json:"is_allergen" gorm:"default:false"`
+	Description string             `json:"description" gorm:"type:text"`
+	Products    []*Product         `json:"-" gorm:"many2many:product_ingredients;"`
+}
+
 // Product 商品模型
 type Product struct {
-	ID             string    `json:"id" gorm:"primarykey;type:varchar(36)"`
-	Name           string    `json:"name" gorm:"size:255;not null"`
-	Category       string    `json:"category" gorm:"size:50;not null;index"`
-	Description    string    `json:"description" gorm:"size:500"`
-	ImageURL       string    `json:"image_url" gorm:"size:255"`
-	Price          float64   `json:"price" gorm:"not null"`
-	ProductionDate time.Time `json:"production_date" gorm:"type:datetime;not null"`
-	ShelfLifeHours int       `json:"shelf_life_hours" gorm:"not null"`
-	Status         string    `json:"status" gorm:"size:20;default:'available'"` // available, in_blind_box, sold
-	BlindBoxID     string    `json:"blind_box_id" gorm:"type:varchar(36);index"`
-	BlindBox       *BlindBox `json:"blind_box" gorm:"foreignKey:BlindBoxID"`
-	CreatorID      string    `json:"creator_id" gorm:"type:varchar(36);index"`
-	Creator        User      `json:"creator" gorm:"foreignKey:CreatorID"`
-	CreatedAt      time.Time `json:"created_at" gorm:"type:datetime"`
-	UpdatedAt      time.Time `json:"updated_at" gorm:"type:datetime"`
+	ID               string           `json:"id" gorm:"primarykey;type:varchar(36)"`
+	Name             string           `json:"name" gorm:"size:255;not null"`
+	Category         string           `json:"category" gorm:"size:50;not null;index"`
+	Description      string           `json:"description" gorm:"size:500"`
+	ImageURL         string           `json:"image_url" gorm:"size:255"`
+	Price            float64          `json:"price" gorm:"not null"`
+	ProductionDate   time.Time        `json:"production_date" gorm:"type:datetime;not null"`
+	ShelfLifeHours   int              `json:"shelfLifeHours" gorm:"not null"`
+	Status           string           `json:"status" gorm:"size:20;default:'available'"` // available, in_blind_box, sold
+	BlindBoxID       string           `json:"blind_box_id" gorm:"type:varchar(36);index"`
+	BlindBox         *BlindBox        `json:"blind_box" gorm:"foreignKey:BlindBoxID"`
+	CreatorID        string           `json:"creator_id" gorm:"type:varchar(36);index"`
+	Creator          User             `json:"creator" gorm:"foreignKey:CreatorID"`
+	ManufacturerID   string           `json:"manufacturerId" gorm:"type:varchar(36);not null;index"`
+	Manufacturer     Manufacturer     `json:"manufacturer" gorm:"foreignKey:ManufacturerID"`
+	BatchNumber      string           `json:"batch_number" gorm:"size:50"`
+	StorageCondition StorageCondition `json:"storage_condition" gorm:"type:varchar(20);not null;default:'常温'"`
+	Ingredients      []*Ingredient    `json:"ingredients" gorm:"many2many:product_ingredients;"`
+	CreatedAt        time.Time        `json:"created_at" gorm:"type:datetime"`
+	UpdatedAt        time.Time        `json:"updated_at" gorm:"type:datetime"`
 }
 
 // BlindBox 盲盒模型
@@ -155,17 +200,30 @@ type BlindBoxDetailDTO struct {
 
 // ProductDTO 商品数据传输对象
 type ProductDTO struct {
-	ID             string  `json:"id"`
-	Name           string  `json:"name"`
-	Description    string  `json:"description"`
-	Price          float64 `json:"price"`
-	Category       string  `json:"category"`
-	ImageURL       string  `json:"imageUrl"`
-	Status         string  `json:"status"`
-	ProductionDate string  `json:"productionDate"`
-	ShelfLifeHours int     `json:"shelfLifeHours"`
-	CreatorName    string  `json:"creatorName,omitempty"`
-	CreatedAt      string  `json:"createdAt"`
+	ID               string           `json:"id"`
+	Name             string           `json:"name"`
+	Description      string           `json:"description"`
+	Price            float64          `json:"price"`
+	Category         string           `json:"category"`
+	ImageURL         string           `json:"imageUrl"`
+	Status           string           `json:"status"`
+	ProductionDate   string           `json:"productionDate"`
+	ShelfLifeHours   int              `json:"shelfLifeHours"`
+	CreatorName      string           `json:"creatorName,omitempty"`
+	CreatedAt        string           `json:"createdAt"`
+	ManufacturerName string           `json:"manufacturerName,omitempty"`
+	BatchNumber      string           `json:"batchNumber,omitempty"`
+	StorageCondition StorageCondition `json:"storageCondition,omitempty"`
+	Ingredients      []*IngredientDTO `json:"ingredients,omitempty"`
+}
+
+// IngredientDTO 配料数据传输对象
+type IngredientDTO struct {
+	ID          string             `json:"id"`
+	Name        string             `json:"name"`
+	Category    IngredientCategory `json:"category"`
+	IsAllergen  bool               `json:"isAllergen"`
+	Description string             `json:"description,omitempty"`
 }
 
 // NutritionFacts 营养成分信息

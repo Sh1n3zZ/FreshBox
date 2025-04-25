@@ -28,10 +28,6 @@ export default function Settings() {
     navigate(`/admin/products/${id}/edit`);
   };
 
-  const handleProductCreate = () => {
-    navigate('/admin/products/new');
-  };
-
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -62,7 +58,6 @@ export default function Settings() {
           <ProductList
             onView={handleProductView}
             onEdit={handleProductEdit}
-            onCreate={handleProductCreate}
           />
         </TabsContent>
       </Tabs>
