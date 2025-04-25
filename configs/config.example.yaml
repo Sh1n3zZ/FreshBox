@@ -42,6 +42,16 @@ blockchain:
     contract_address: ""
     private_key: ""
 
+smtp:
+  host: "smtp.example.com"
+  port: 587
+  username: "your-email@example.com"
+  password: "your-password"
+  from_email: "noreply@freshbox.com"
+  from_name: "FreshBox"
+  verification_subject: "FreshBox 验证码"
+  verification_expire_minutes: 10
+
 jwt:
   secret: "your-secret-key"
   expire_hours: 24

@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 
 	"FreshBox/internal/model"
+	"FreshBox/internal/service"
 )
 
 // Run 执行数据库迁移
@@ -51,6 +52,11 @@ func autoMigrate(db *gorm.DB) error {
 
 	log.Println("迁移交易记录表...")
 	if err := db.AutoMigrate(&model.Transaction{}); err != nil {
+		return err
+	}
+
+	log.Println("迁移验证码表...")
+	if err := db.AutoMigrate(&service.VerificationCode{}); err != nil {
 		return err
 	}
 

@@ -15,8 +15,10 @@ import (
 // SetupRouter 设置路由
 func SetupRouter(
 	userHandler *handler.UserHandler,
-	boxHandler *handler.BoxHandler,
+	blindBoxHandler *handler.BlindBoxHandler,
+	productHandler *handler.ProductHandler,
 	taskHandler *handler.TaskHandler,
+	mailHandler *handler.MailHandler,
 ) *gin.Engine {
 	r := gin.Default()
 
@@ -102,10 +104,6 @@ func SetupRouter(
 			ocr.POST("/save", ocrHandler.SaveImageOCR)
 		}
 
-		// 公开的盲盒接口 - 不需要认证
-		v1.GET("/boxes", boxHandler.ListBoxes)
-		v1.GET("/boxes/:id", boxHandler.GetBox)
-
 		// 仪表盘接口 - 公开接口（在实际生产环境中应该加上认证）
 		dashboard := v1.Group("/dashboard")
 		{
@@ -116,6 +114,48 @@ func SetupRouter(
 			dashboard.GET("/donations", dashboardHandler.GetDonationStats)
 			dashboard.GET("/recent-boxes", dashboardHandler.GetRecentBoxes)
 			dashboard.GET("/top-tasks", dashboardHandler.GetTopPerformingTasks)
+		}
+
+		// 盲盒接口 - 部分需要认证
+		blindBoxes := v1.Group("/blind-boxes")
+		{
+			// 公开接口
+			blindBoxes.GET("", blindBoxHandler.ListBlindBoxes)                        // 获取盲盒列表
+			blindBoxes.GET("/:id", blindBoxHandler.GetBlindBox)                       // 获取盲盒详情
+			blindBoxes.GET("/:id/history", blindBoxHandler.GetBlindBoxOpeningHistory) // 获取盲盒开启历史
+
+			// 需要认证的接口
+			blindBoxesAuth := blindBoxes.Group("")
+			blindBoxesAuth.Use(middleware.Auth())
+			{
+				blindBoxesAuth.POST("", blindBoxHandler.CreateBlindBox)                // 创建盲盒
+				blindBoxesAuth.PUT("/:id", blindBoxHandler.UpdateBlindBox)             // 更新盲盒
+				blindBoxesAuth.DELETE("/:id", blindBoxHandler.DeleteBlindBox)          // 删除盲盒
+				blindBoxesAuth.POST("/:id/purchase", blindBoxHandler.PurchaseBlindBox) // 购买盲盒
+				blindBoxesAuth.POST("/:id/open", blindBoxHandler.OpenBlindBox)         // 开启盲盒
+			}
+		}
+
+		// 商品接口 - 部分需要认证
+		products := v1.Group("/products")
+		{
+			// 公开接口
+			products.GET("", productHandler.ListProducts)                      // 获取商品列表
+			products.GET("/:id", productHandler.GetProduct)                    // 获取商品详情
+			products.GET("/status", productHandler.GetProductsByStatus)        // 根据状态获取商品
+			products.GET("/box/:box_id", productHandler.GetProductsByBlindBox) // 获取盲盒内商品
+
+			// 需要认证的接口
+			productsAuth := products.Group("")
+			productsAuth.Use(middleware.Auth())
+			{
+				productsAuth.POST("", productHandler.CreateProduct)                                 // 创建商品
+				productsAuth.PUT("/:id", productHandler.UpdateProduct)                              // 更新商品
+				productsAuth.DELETE("/:id", productHandler.DeleteProduct)                           // 删除商品
+				productsAuth.POST("/:id/add-to-box", productHandler.AddProductToBlindBox)           // 添加商品到盲盒
+				productsAuth.POST("/:id/remove-from-box", productHandler.RemoveProductFromBlindBox) // 从盲盒移除商品
+				productsAuth.POST("/batch-add-to-box", productHandler.BatchAddProductsToBlindBox)   // 批量添加商品到盲盒
+			}
 		}
 
 		// 社交任务接口 - 部分公开
@@ -145,6 +185,7 @@ func SetupRouter(
 			auth.POST("/register", userHandler.Register)
 			auth.POST("/login", userHandler.Login)
 			auth.POST("/refresh", userHandler.RefreshToken)
+			auth.POST("/verification-code", mailHandler.SendVerificationCode)
 		}
 
 		// 需要认证的接口
@@ -154,12 +195,6 @@ func SetupRouter(
 			// 用户相关
 			protected.GET("/user/profile", userHandler.GetProfile)
 			protected.PUT("/user/profile", userHandler.UpdateProfile)
-
-			// 盲盒相关 - 需要认证
-			protected.POST("/boxes", boxHandler.CreateBox)
-			protected.PUT("/boxes/:id", boxHandler.UpdateBox)
-			protected.DELETE("/boxes/:id", boxHandler.DeleteBox)
-			protected.POST("/boxes/:id/purchase", boxHandler.PurchaseBox)
 
 			// 上传图片 - 需要认证的上传（可选，如果需要认证）
 			protected.POST("/upload/auth", imageHandler.UploadImage)

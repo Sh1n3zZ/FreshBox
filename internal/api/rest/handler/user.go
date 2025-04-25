@@ -7,7 +7,6 @@ import (
 	"github.com/pkg/errors"
 
 	"FreshBox/internal/pkg/jwt"
-	"FreshBox/internal/pkg/validator"
 	"FreshBox/internal/service"
 )
 
@@ -24,137 +23,141 @@ func NewUserHandler(userService *service.UserService) *UserHandler {
 }
 
 // Register 用户注册
+// @Summary 用户注册
+// @Description 注册新用户
+// @Tags 用户
+// @Accept json
+// @Produce json
+// @Param request body RegisterRequest true "注册请求"
+// @Success 200 {object} RegisterResponse "注册成功"
+// @Failure 400 {object} ErrorResponse "参数错误"
+// @Failure 500 {object} ErrorResponse "服务器内部错误"
+// @Router /api/v1/auth/register [post]
 func (h *UserHandler) Register(c *gin.Context) {
-	var req struct {
-		Username string `json:"username" binding:"required"`
-		Email    string `json:"email" binding:"required,email"`
-		Password string `json:"password" binding:"required,min=6"`
-	}
-
+	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"code":    "INVALID_PARAMS",
-			"message": "无效的请求参数",
+			"error": "请求参数无效",
 		})
 		return
 	}
 
-	// 创建用户
-	user := &service.User{
+	// 创建注册请求
+	registerReq := &service.RegisterRequest{
 		Username: req.Username,
 		Email:    req.Email,
 		Password: req.Password,
+		Code:     req.Code,
 	}
 
-	if err := h.userService.Register(c.Request.Context(), user); err != nil {
+	// 调用服务层进行注册（包含验证码验证）
+	user, err := h.userService.Register(c, registerReq)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"code":    "REGISTER_FAILED",
-			"message": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
 
-	// 生成令牌
+	// 生成JWT令牌
 	accessToken, refreshToken, err := jwt.GenerateTokenPair(user.ID, user.Username)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"code":    "TOKEN_GENERATION_FAILED",
-			"message": "生成令牌失败",
+			"error": "生成令牌失败",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"accessToken":  accessToken,
-		"refreshToken": refreshToken,
-		"user": gin.H{
-			"id":        user.ID,
-			"username":  user.Username,
-			"email":     user.Email,
-			"avatar":    user.Avatar,
-			"createdAt": user.CreatedAt,
-		},
+	c.JSON(http.StatusOK, RegisterResponse{
+		UserID:       user.ID,
+		Username:     user.Username,
+		Email:        user.Email,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
 	})
 }
 
 // Login 用户登录
+// @Summary 用户登录
+// @Description 用户登录并返回token
+// @Tags 用户
+// @Accept json
+// @Produce json
+// @Param request body LoginRequest true "登录请求"
+// @Success 200 {object} LoginResponse "登录成功"
+// @Failure 400 {object} ErrorResponse "参数错误"
+// @Failure 500 {object} ErrorResponse "服务器内部错误"
+// @Router /api/v1/auth/login [post]
 func (h *UserHandler) Login(c *gin.Context) {
-	var req struct {
-		Email    string `json:"email" binding:"required,email"`
-		Password string `json:"password" binding:"required"`
-	}
-
+	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"code":    "INVALID_PARAMS",
-			"message": "无效的请求参数",
+			"error": "请求参数无效",
 		})
 		return
 	}
 
-	// 验证用户
-	user, err := h.userService.LoginByEmail(c.Request.Context(), req.Email, req.Password)
+	// 调用服务层进行登录
+	user, err := h.userService.LoginByEmail(c, req.Email, req.Password)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"code":    "LOGIN_FAILED",
-			"message": err.Error(),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
 		})
 		return
 	}
 
-	// 生成令牌
+	// 生成JWT令牌
 	accessToken, refreshToken, err := jwt.GenerateTokenPair(user.ID, user.Username)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"code":    "TOKEN_GENERATION_FAILED",
-			"message": "生成令牌失败",
+			"error": "生成令牌失败",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"accessToken":  accessToken,
-		"refreshToken": refreshToken,
-		"user": gin.H{
-			"id":        user.ID,
-			"username":  user.Username,
-			"email":     user.Email,
-			"avatar":    user.Avatar,
-			"createdAt": user.CreatedAt,
-		},
+	c.JSON(http.StatusOK, LoginResponse{
+		UserID:       user.ID,
+		Username:     user.Username,
+		Email:        user.Email,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
 	})
 }
 
-// RefreshToken 刷新令牌
+// RefreshToken 刷新Token
+// @Summary 刷新认证Token
+// @Description 使用旧Token刷新获取新Token
+// @Tags 用户
+// @Accept json
+// @Produce json
+// @Param request body RefreshTokenRequest true "刷新Token请求"
+// @Success 200 {object} RefreshTokenResponse "刷新成功"
+// @Failure 400 {object} ErrorResponse "参数错误"
+// @Failure 500 {object} ErrorResponse "服务器内部错误"
+// @Router /api/v1/auth/refresh [post]
 func (h *UserHandler) RefreshToken(c *gin.Context) {
-	var req struct {
-		RefreshToken string `json:"refreshToken" binding:"required"`
-	}
-
+	var req RefreshTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"code":    "INVALID_PARAMS",
-			"message": "无效的请求参数",
+			"error": "请求参数无效",
 		})
 		return
 	}
 
 	// 验证刷新令牌
-	claims, err := jwt.ValidateRefreshToken(req.RefreshToken)
+	claims, err := jwt.ValidateRefreshToken(req.Token)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"code":    "INVALID_REFRESH_TOKEN",
-			"message": "无效的刷新令牌",
+			"error": "无效的刷新令牌",
 		})
 		return
 	}
 
 	// 获取用户信息
-	user, err := h.userService.GetUserByID(c.Request.Context(), claims.UserID)
+	user, err := h.userService.GetUserByID(c, claims.UserID)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"code":    "USER_NOT_FOUND",
-			"message": "用户不存在",
+			"error": "用户不存在",
 		})
 		return
 	}
@@ -163,94 +166,176 @@ func (h *UserHandler) RefreshToken(c *gin.Context) {
 	accessToken, refreshToken, err := jwt.GenerateTokenPair(user.ID, user.Username)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"code":    "TOKEN_GENERATION_FAILED",
-			"message": "生成令牌失败",
+			"error": "生成令牌失败",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"accessToken":  accessToken,
-		"refreshToken": refreshToken,
+	c.JSON(http.StatusOK, RefreshTokenResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
 	})
 }
 
 // GetProfile 获取用户信息
+// @Summary 获取用户信息
+// @Description 获取当前登录用户的信息
+// @Tags 用户
+// @Accept json
+// @Produce json
+// @Success 200 {object} UserProfileResponse "获取成功"
+// @Failure 400 {object} ErrorResponse "参数错误"
+// @Failure 500 {object} ErrorResponse "服务器内部错误"
+// @Router /api/v1/user/profile [get]
 func (h *UserHandler) GetProfile(c *gin.Context) {
+	// 从上下文中获取用户ID（中间件已经验证并设置）
 	userID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"code":    "UNAUTHORIZED",
-			"message": "未认证",
+			"error": "未授权",
 		})
 		return
 	}
 
-	user, err := h.userService.GetProfile(c.Request.Context(), userID.(string))
+	// 获取用户信息
+	user, err := h.userService.GetProfile(c, userID.(string))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"code":    "PROFILE_FETCH_FAILED",
-			"message": err.Error(),
+			"error": errors.Wrap(err, "获取用户信息失败").Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"user": gin.H{
-			"id":        user.ID,
-			"username":  user.Username,
-			"email":     user.Email,
-			"avatar":    user.Avatar,
-			"createdAt": user.CreatedAt,
-		},
+	c.JSON(http.StatusOK, UserProfileResponse{
+		UserID:   user.ID,
+		Username: user.Username,
+		Email:    user.Email,
+		Avatar:   user.Avatar,
 	})
 }
 
 // UpdateProfile 更新用户信息
+// @Summary 更新用户信息
+// @Description 更新当前登录用户的信息
+// @Tags 用户
+// @Accept json
+// @Produce json
+// @Param request body UpdateProfileRequest true "更新信息请求"
+// @Success 200 {object} UpdateProfileResponse "更新成功"
+// @Failure 400 {object} ErrorResponse "参数错误"
+// @Failure 500 {object} ErrorResponse "服务器内部错误"
+// @Router /api/v1/user/profile [put]
 func (h *UserHandler) UpdateProfile(c *gin.Context) {
+	var req UpdateProfileRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "请求参数无效",
+		})
+		return
+	}
+
+	// 从上下文中获取用户ID（中间件已经验证并设置）
 	userID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"code": 401,
-			"msg":  "未认证",
+			"error": "未授权",
 		})
 		return
 	}
 
-	var req validator.UpdateProfileRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  "无效的请求参数",
-		})
-		return
-	}
-
-	// 验证请求参数
-	if err := validator.Validate(req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  err.Error(),
-		})
-		return
-	}
-
-	user := &service.User{
-		ID:    userID.(string),
-		Email: req.Email,
-	}
-
-	if err := h.userService.UpdateProfile(c.Request.Context(), user); err != nil {
+	// 获取当前用户信息
+	user, err := h.userService.GetUserByID(c, userID.(string))
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"code": 500,
-			"msg":  errors.Wrap(err, "更新用户信息失败").Error(),
+			"error": errors.Wrap(err, "获取用户信息失败").Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"code": 200,
-		"data": user,
-		"msg":  "更新成功",
+	// 更新用户信息
+	user.Username = req.Username
+	user.Email = req.Email
+	if req.Avatar != "" {
+		user.Avatar = req.Avatar
+	}
+
+	if err := h.userService.UpdateProfile(c, user); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": errors.Wrap(err, "更新用户信息失败").Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, UpdateProfileResponse{
+		UserID:   user.ID,
+		Username: user.Username,
+		Email:    user.Email,
+		Avatar:   user.Avatar,
 	})
+}
+
+// RegisterRequest 注册请求
+type RegisterRequest struct {
+	Username string `json:"username" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,min=6"`
+	Code     string `json:"code" binding:"required"` // 验证码
+}
+
+// RegisterResponse 注册响应
+type RegisterResponse struct {
+	UserID       string `json:"user_id"`
+	Username     string `json:"username"`
+	Email        string `json:"email"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
+// LoginRequest 登录请求
+type LoginRequest struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
+}
+
+// LoginResponse 登录响应
+type LoginResponse struct {
+	UserID       string `json:"user_id"`
+	Username     string `json:"username"`
+	Email        string `json:"email"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
+// RefreshTokenRequest 刷新Token请求
+type RefreshTokenRequest struct {
+	Token string `json:"token" binding:"required"`
+}
+
+// RefreshTokenResponse 刷新Token响应
+type RefreshTokenResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
+// UserProfileResponse 用户信息响应
+type UserProfileResponse struct {
+	UserID   string `json:"user_id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Avatar   string `json:"avatar,omitempty"`
+}
+
+// UpdateProfileRequest 更新用户信息请求
+type UpdateProfileRequest struct {
+	Username string `json:"username" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
+	Avatar   string `json:"avatar,omitempty"`
+}
+
+// UpdateProfileResponse 更新用户信息响应
+type UpdateProfileResponse struct {
+	UserID   string `json:"user_id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Avatar   string `json:"avatar,omitempty"`
 }

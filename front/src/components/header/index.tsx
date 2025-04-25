@@ -46,7 +46,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               className="h-9"
             >
               <Link to="/">
-                {t('Home')}
+                {t('home')}
               </Link>
             </Button>
             <Button
@@ -56,7 +56,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               className="h-9"
             >
               <Link to="/ocr">
-                {t('OCR Recognition')}
+                {t('ocr-recognition')}
               </Link>
             </Button>
             <Button
@@ -66,7 +66,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               className="h-9"
             >
               <Link to="/about">
-                {t('About Us')}
+                {t('about-us')}
               </Link>
             </Button>
           </nav>

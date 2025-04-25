@@ -1,20 +1,87 @@
 package jwt
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/spf13/viper"
+	"go.uber.org/zap"
 )
 
 var (
-	// 密钥应该通过配置注入
-	secretKey = []byte("your-256-bit-secret")
-
+	// secretKey 秘钥，从配置文件中读取，如果为空则自动生成
+	secretKey []byte
 	// TokenExpiry 令牌过期时间
 	TokenExpiry = 24 * time.Hour
+	// logger 日志记录器
+	logger *zap.Logger
 )
+
+// SetLogger 设置日志记录器
+func SetLogger(l *zap.Logger) {
+	logger = l
+}
+
+// InitJWTSecret 初始化JWT秘钥
+func InitJWTSecret() error {
+	if logger == nil {
+		return fmt.Errorf("日志记录器未初始化")
+	}
+
+	secretStr := viper.GetString("jwt.secret")
+	logger.Info("初始化JWT秘钥",
+		zap.String("config_secret", secretStr),
+		zap.Bool("is_empty", secretStr == ""),
+		zap.Bool("is_default", secretStr == " your-secret-key"))
+
+	if secretStr == "" || secretStr == "your-secret-key" {
+		key, err := generateRandomKey(32)
+		if err != nil {
+			logger.Error("生成随机秘钥失败", zap.Error(err))
+			return fmt.Errorf("生成JWT秘钥失败: %v", err)
+		}
+		secretKey = key
+		viper.Set("jwt.secret", hex.EncodeToString(key))
+		logger.Info("已生成新的随机秘钥", zap.String("new_secret", hex.EncodeToString(key)))
+
+		// 保存配置到文件
+		if err := viper.WriteConfig(); err != nil {
+			logger.Error("保存配置到文件失败", zap.Error(err))
+			return fmt.Errorf("保存JWT秘钥到配置文件失败: %v", err)
+		}
+		logger.Info("已保存新的JWT秘钥到配置文件")
+	} else {
+		secretKey = []byte(secretStr)
+		logger.Info("使用配置中的秘钥")
+	}
+
+	expireHours := viper.GetInt("jwt.expire_hours")
+	if expireHours > 0 {
+		TokenExpiry = time.Duration(expireHours) * time.Hour
+		logger.Info("设置令牌过期时间",
+			zap.Int("hours", expireHours),
+			zap.Duration("duration", TokenExpiry))
+	} else {
+		logger.Info("使用默认令牌过期时间",
+			zap.Duration("default_duration", TokenExpiry))
+	}
+
+	return nil
+}
+
+// 生成随机秘钥
+func generateRandomKey(length int) ([]byte, error) {
+	key := make([]byte, length)
+	_, err := rand.Read(key)
+	if err != nil {
+		return nil, err
+	}
+	return key, nil
+}
 
 // Claims 自定义JWT声明
 type Claims struct {

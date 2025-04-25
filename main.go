@@ -22,6 +22,7 @@ import (
 	"FreshBox/internal/api/rest/handler"
 	"FreshBox/internal/core/pricing"
 	"FreshBox/internal/core/social"
+	"FreshBox/internal/pkg/jwt"
 	"FreshBox/internal/pkg/migration"
 	"FreshBox/internal/service"
 )
@@ -36,6 +37,14 @@ func main() {
 		panic(fmt.Sprintf("初始化日志失败: %v", err))
 	}
 	defer logger.Sync()
+
+	// 设置JWT日志记录器
+	jwt.SetLogger(logger)
+
+	// 初始化JWT秘钥
+	if err := jwt.InitJWTSecret(); err != nil {
+		logger.Fatal("初始化JWT秘钥失败", zap.Error(err))
+	}
 
 	// 检查前端构建目录是否存在
 	frontendDir := "./front/dist"
@@ -58,8 +67,21 @@ func main() {
 	pricingStrategy := pricing.NewTimeBasedStrategy(0.8, 72) // 最大折扣80%，72小时阈值
 	pricingEngine := pricing.NewDefaultEngine(redisClient, pricingStrategy)
 
+	// 初始化SMTP配置
+	smtpConfig := service.SMTPConfig{
+		Host:                      viper.GetString("smtp.host"),
+		Port:                      viper.GetInt("smtp.port"),
+		Username:                  viper.GetString("smtp.username"),
+		Password:                  viper.GetString("smtp.password"),
+		FromEmail:                 viper.GetString("smtp.from_email"),
+		FromName:                  viper.GetString("smtp.from_name"),
+		VerificationSubject:       viper.GetString("smtp.verification_subject"),
+		VerificationExpireMinutes: viper.GetInt("smtp.verification_expire_minutes"),
+	}
+
 	// 初始化业务服务
-	userService := service.NewUserService(db)
+	mailService := service.NewMailService(db, smtpConfig)
+	userService := service.NewUserService(db, mailService)
 	// // 初始化以太坊客户端
 	// ethClient, err := ethclient.Dial(viper.GetString("blockchain.polygon.rpc_url"))
 	// if err != nil {
@@ -107,6 +129,7 @@ func main() {
 	blindBoxHandler := handler.NewBlindBoxHandler(blindBoxService, productService)
 	productHandler := handler.NewProductHandler(productService)
 	taskHandler := handler.NewTaskHandler(taskManager, contentManager)
+	mailHandler := handler.NewMailHandler(mailService)
 
 	// 设置运行模式
 	if viper.GetString("app.mode") == "production" {
@@ -114,7 +137,7 @@ func main() {
 	}
 
 	// 设置路由
-	r := rest.SetupRouter(userHandler, blindBoxHandler, productHandler, taskHandler)
+	r := rest.SetupRouter(userHandler, blindBoxHandler, productHandler, taskHandler, mailHandler)
 
 	// 服务前端构建文件
 	r.Static("/assets", frontendDir+"/assets")
