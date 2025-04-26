@@ -19,6 +19,9 @@ services:
       - mysql
       - redis
       - vision
+    volumes:
+      - ./configs:/configs
+      - ./data:/data
 
   mysql:
     image: mysql:8.0
