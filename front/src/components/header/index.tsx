@@ -32,7 +32,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           </Button>
           
           <Link to="/" className="flex items-center space-x-2">
-            <img src="/vite.svg" alt="FreshBox" className="h-6 w-6" />
+            <img src="/FreshBoxLogo.jpg" alt="FreshBox" className="h-6 w-6" />
             <span className="hidden text-xl font-bold sm:inline-block">
               FreshBox
             </span>

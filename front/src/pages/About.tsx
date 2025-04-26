@@ -4,7 +4,7 @@ export default function About() {
       <div className="mb-10 text-center">
         <h1 className="mb-4 text-4xl font-bold">关于我们</h1>
         <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-          FreshBox 是一个先进的文档管理系统，专注于图像识别和内容分析。我们的使命是为您提供智能、高效的文档处理解决方案。
+          FreshBox 是一个创新解决市场痛点与食品浪费的临期食品盲盒社交化系统，我们致力于为用户提供一个便捷、高效且有趣的购物平台，让每个人都能轻松享受美味的临期食品，同时为可持续发展贡献一份力量。
         </p>
       </div>
 
@@ -12,21 +12,22 @@ export default function About() {
         <div className="rounded-lg border p-6 shadow-sm">
           <h2 className="mb-4 text-2xl font-semibold">我们的愿景</h2>
           <p className="text-muted-foreground">
-            我们致力于通过人工智能和机器学习技术，简化文档管理和处理流程。我们相信技术应该为人服务，而不是增加复杂性。FreshBox 旨在提供一个直观、高效的平台，让用户能够轻松地管理、分析和利用他们的文档数据。
+            我们的目标是针对临期食品滞销的市场痛点，通过数字化技术将食品减损与社交价值创造有机结合，用数字科技赋能盲盒形式创意能够促进解决食品滞销问题，同时满足新生代消费者的社交互动需求，实现经济效益与社会价值的双重优化。
           </p>
         </div>
 
         <div className="rounded-lg border p-6 shadow-sm">
-          <h2 className="mb-4 text-2xl font-semibold">核心技术</h2>
+          <h2 className="mb-4 text-2xl font-semibold">技术创新</h2>
           <p className="text-muted-foreground">
-            我们的系统基于最先进的OCR（光学字符识别）技术和自然语言处理算法，能够准确地从各种格式的文档中提取关键信息。结合云计算和高效的数据存储技术，我们提供了一个安全、可靠且高性能的文档处理解决方案。
+            FreshBox采用全栈数字化解决方案，通过独创动态算法+盲盒营销+社交广场的销售方式，提供了解决临期食品滞销浪费的新方案，同时满足了新生代消费者的社交互动需求，开创了"消费+社交+公益"的新范式。
+
           </p>
         </div>
 
         <div className="rounded-lg border p-6 shadow-sm">
           <h2 className="mb-4 text-2xl font-semibold">我们的团队</h2>
           <p className="text-muted-foreground">
-            FreshBox 团队由来自人工智能、软件工程和用户体验设计领域的专业人士组成。我们拥有丰富的经验和专业知识，致力于不断改进和创新我们的产品，以满足用户不断变化的需求。
+            FreshBox 团队由来自广东省珠海市的三位热爱人工智能创新的高中生组成。我致力于不断改进和创新我们的产品，以满足用户不断变化的需求，并为可持续发展做出贡献。我们相信，科技可以改变生活，我们希望通过 FreshBox 为可持续发展贡献自己的一份力量。
           </p>
         </div>
 
@@ -37,13 +38,13 @@ export default function About() {
           </p>
           <div className="mt-4">
             <p className="mb-2">
-              <span className="font-semibold">邮箱：</span> support@freshbox.com
+              <span className="font-semibold">邮箱：</span> 2838821172@qq.com
             </p>
             <p className="mb-2">
-              <span className="font-semibold">电话：</span> +86 123 4567 8910
+              <span className="font-semibold">电话：</span> +86 133 9252 2245
             </p>
             <p>
-              <span className="font-semibold">地址：</span> 中国北京市朝阳区科技园区88号
+              <span className="font-semibold">地址：</span> 广东省珠海市香洲区梅华西路2180号
             </p>
           </div>
         </div>
