@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { API_URLS } from '@/conf/env';
-import apiClient, { apiService } from './api';
+import apiClient from './api';
 
 // 新增：配料接口定义
 export interface Ingredient {

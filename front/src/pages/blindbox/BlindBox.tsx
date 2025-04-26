@@ -1,19 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { blindboxService, BlindBoxDetail, PurchaseResponse, OpenBoxResponse, ProductDTO } from '@/lib/blindbox';
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { blindboxService, BlindBoxDetail, ProductDTO } from '@/lib/blindbox';
 import { BlindBoxDetailDisplay } from './BlindBoxDetail';
 import { BlindBoxOpenDisplay } from './BlindBoxOpen';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
-import { AxiosError } from 'axios';
 
 type PurchaseStatus = 'idle' | 'pending' | 'success' | 'error';
 
 export default function BlindBoxPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const [boxDetail, setBoxDetail] = useState<BlindBoxDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -145,7 +143,6 @@ export default function BlindBoxPage() {
   }
 
   const canPurchase = boxDetail.status === 'active' && purchaseStatus !== 'success';
-  const canOpen = purchaseStatus === 'success' && !openingResult;
 
   return (
     <div className="container mx-auto py-8 space-y-8">

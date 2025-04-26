@@ -1,9 +1,9 @@
-import { BlindBoxDetail, ProductDTO } from '@/lib/blindbox';
+import { BlindBoxDetail } from '@/lib/blindbox';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { Info, ShoppingCart, Gift } from 'lucide-react';
+import { ShoppingCart, Gift } from 'lucide-react';
 
 interface BlindBoxDetailProps {
   box: BlindBoxDetail;

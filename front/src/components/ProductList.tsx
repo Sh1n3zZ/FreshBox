@@ -3,9 +3,7 @@ import { ListForm } from './ListForm';
 import { productService, Product, ProductListOptions } from '@/lib/product';
 import { formatCurrency } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { CreateProduct } from '@/components/CreateProduct';
-import { Pencil } from 'lucide-react';
 
 interface ProductListProps {
   onView?: (id: string) => void;
@@ -19,7 +17,7 @@ export function ProductList({ }: ProductListProps) {
   const [page, setPage] = React.useState(1);
   const [size, setSize] = React.useState(10);
   const [filters, setFilters] = React.useState<Record<string, string>>({});
-  const [editingProduct, setEditingProduct] = React.useState<Product | null>(null);
+  const [_, setEditingProduct] = React.useState<Product | null>(null);
 
   const fetchData = React.useCallback(async (options: ProductListOptions) => {
     setLoading(true);
@@ -52,10 +50,6 @@ export function ProductList({ }: ProductListProps) {
 
   const handleProductCreated = () => {
     fetchData({ page, size, ...filters });
-  };
-
-  const handleEdit = (product: Product) => {
-    setEditingProduct(product);
   };
 
   const handleProductUpdated = () => {

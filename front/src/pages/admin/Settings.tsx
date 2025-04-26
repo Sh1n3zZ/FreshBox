@@ -8,18 +8,6 @@ export default function Settings() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const handleBlindBoxView = (id: string) => {
-    navigate(`/admin/blind-boxes/${id}`);
-  };
-
-  const handleBlindBoxEdit = (id: string) => {
-    navigate(`/admin/blind-boxes/${id}/edit`);
-  };
-
-  const handleBlindBoxCreate = () => {
-    navigate('/admin/blind-boxes/new');
-  };
-
   const handleProductView = (id: string) => {
     navigate(`/admin/products/${id}`);
   };
@@ -47,11 +35,7 @@ export default function Settings() {
         </TabsList>
 
         <TabsContent value="blind-boxes">
-          <BlindBoxList
-            onView={handleBlindBoxView}
-            onEdit={handleBlindBoxEdit}
-            onCreate={handleBlindBoxCreate}
-          />
+          <BlindBoxList />
         </TabsContent>
 
         <TabsContent value="products">

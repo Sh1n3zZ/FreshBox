@@ -28,7 +28,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { CalendarIcon, PlusCircle, MinusCircle, Pencil, Eye } from "lucide-react";
 import { format, addDays } from "date-fns";
-import { blindboxService, BlindBox, BlindBoxInputData, BlindBoxDetail } from '@/lib/blindbox';
+import { blindboxService, BlindBox, BlindBoxInputData } from '@/lib/blindbox';
 import { productService, Product } from '@/lib/product';
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";

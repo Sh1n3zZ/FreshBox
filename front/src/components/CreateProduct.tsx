@@ -442,7 +442,7 @@ export function CreateProduct({ onProductCreated, product, readOnly = false }: C
             <FormField
               control={form.control}
               name="ingredientIds"
-              render={({ field }) => (
+              render={() => (
                 <FormItem>
                   <div className="flex justify-between items-center mb-2">
                     <FormLabel>配料</FormLabel>
