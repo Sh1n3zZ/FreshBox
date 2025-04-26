@@ -1,6 +1,7 @@
 {
   "home": "首页",
   "ocr-recognition": "OCR识别",
+  "challenge": "社区挑战",
   "about-us": "关于我们",
   "login-and-register": "登录 / 注册",
   "logout": "退出",
@@ -91,6 +92,20 @@
         "blindBoxes": "盲盒列表",
         "products": "产品列表"
       }
+    },
+    "tasks": {
+      "explore-title": "盲盒挑战广场",
+      "explore-description": "探索各种有趣的料理挑战，使用盲盒食材创造美味",
+      "search-placeholder": "搜索挑战...",
+      "filter-difficulty": "难度筛选",
+      "difficulty-all": "全部难度",
+      "difficulty-easy": "初级",
+      "difficulty-medium": "中级",
+      "difficulty-hard": "高级",
+      "deadline": "截止日期",
+      "join": "参与挑战",
+      "blindbox-required": "需要盲盒",
+      "buy-blindbox": "购买盲盒"
     },
     "inDevelopment": {
       "title": "{{module}}功能开发中",

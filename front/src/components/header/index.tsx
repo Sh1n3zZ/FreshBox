@@ -87,6 +87,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                 <Button
                   variant="outline"
                   size="sm"
+                  onClick={() => navigate('/admin/dashboard')}
                   className="h-9 w-9 p-0 rounded-full"
                 >
                   {user?.avatar ? (

@@ -1,6 +1,7 @@
 {
   "home": "Home",
   "ocr-recognition": "OCR Recognition",
+  "challenge": "Challenge Tasks",
   "about-us": "About Us",
   "login-and-register": "Login / Register",
   "logout": "Logout",
@@ -91,6 +92,20 @@
         "blindBoxes": "Blind Box List",
         "products": "Product List"
       }
+    },
+    "tasks": {
+      "explore-title": "Blind Box Challenge Square",
+      "explore-description": "Explore various exciting cooking challenges using blind box ingredients",
+      "search-placeholder": "Search challenges...",
+      "filter-difficulty": "Filter by difficulty",
+      "difficulty-all": "All difficulties",
+      "difficulty-easy": "Beginner",
+      "difficulty-medium": "Intermediate",
+      "difficulty-hard": "Advanced",
+      "deadline": "Deadline",
+      "join": "Join Challenge",
+      "blindbox-required": "Blind Box Required",
+      "buy-blindbox": "Buy Blind Box"
     },
     "inDevelopment": {
       "title": "{{module}} in Development",
