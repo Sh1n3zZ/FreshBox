@@ -65,7 +65,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       >
         <div className="flex h-16 items-center justify-between border-b px-4">
           <Link to="/" className="flex items-center space-x-2">
-            <img src="/FreshBoxLogo.jpg" alt="FreshBox" className="h-6 w-6" />
+            <img src="/FreshBoxLogo.svg" alt="FreshBox" className="h-6 w-6" />
             <span className="text-xl font-bold">FreshBox</span>
           </Link>
           
@@ -101,10 +101,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 </div>
                 
                 <SidebarItem
-                  href="/admin/dashboard"
+                  href="/dashboard"  // 修改这里，使用直接路径
                   icon={<BarChart className="h-4 w-4" />}
                   title={t('dashboard.title')}
-                  isActive={pathname.startsWith('/admin/dashboard')}
+                  isActive={pathname === '/dashboard'}
                 />
                 
                 <SidebarItem

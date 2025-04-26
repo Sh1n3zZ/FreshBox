@@ -69,7 +69,7 @@ export default function Login() {
               <FormItem>
                 <FormLabel>{t('auth.login')}</FormLabel>
                 <FormControl>
-                  <Input placeholder={t('auth.login_placeholder')} {...field} />
+                  <Input placeholder={t('请输入账号')} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

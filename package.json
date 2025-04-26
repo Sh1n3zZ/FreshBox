@@ -1,10 +1,18 @@
 {
   "dependencies": {
+    "@nivo/bar": "^0.89.1",
+    "@nivo/core": "^0.89.1",
+    "@nivo/line": "^0.89.1",
+    "@nivo/pie": "^0.89.1",
+    "@types/recharts": "^2.0.1",
+    "date-fns": "^3.0.0",
     "i18next": "^25.0.1",
     "i18next-browser-languagedetector": "^8.0.5",
     "i18next-http-backend": "^3.0.2",
     "lucide": "^0.482.0",
-    "react-i18next": "^15.5.1"
+    "react-countup": "^6.5.3",
+    "react-i18next": "^15.5.1",
+    "recharts": "^2.15.3"
   },
   "devDependencies": {
     "@types/node": "^22.14.1",

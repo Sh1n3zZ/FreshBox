@@ -6,7 +6,7 @@ export function Footer() {
       <div className="container mx-auto max-w-7xl flex flex-col items-center justify-between gap-4 py-6 md:flex-row md:py-8">
         <div className="flex flex-col items-center gap-4 md:flex-row md:gap-6">
           <Link to="/" className="flex items-center space-x-2">
-            <img src="/FreshBoxLogo.jpg" alt="FreshBox" className="h-6 w-6" />
+            <img src="/FreshBoxLogo.svg" alt="FreshBox" className="h-6 w-6" />
             <span className="text-xl font-bold">FreshBox</span>
           </Link>
           

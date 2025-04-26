@@ -22,19 +22,7 @@ const routes: RouteObject[] = [
       { index: true, element: <Home /> },
       { path: 'about', element: <About /> },
       { path: 'ocr', element: <OCR /> },
-      {
-        path: 'dashboard',
-        element: <Dashboard />
-      },
-      {
-        path: 'admin',
-        children: [
-          {
-            path: 'settings',
-            element: <Settings />
-          }
-        ]
-      },
+      { path: 'dashboard', element: <Dashboard /> },
       { path: 'BlindBox/:id', element: <BlindBoxPage /> },
     ]
   },

@@ -17,7 +17,7 @@ const AuthLayout = () => {
     <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
       <div className="mb-6 flex items-center">
         <Link to="/" className="flex items-center space-x-2">
-          <img src="/FreshBoxLogo.jpg" alt="FreshBox" className="h-8 w-8" />
+          <img src="/FreshBoxLogo.svg" alt="FreshBox" className="h-8 w-8" />
           <span className="text-2xl font-bold">FreshBox</span>
         </Link>
       </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/providers/auth-provider'
 import { toast } from 'sonner'
@@ -12,7 +12,9 @@ import {
   ChevronUp,
   ChevronDown,
   Plus,
-  RefreshCw
+  RefreshCw,
+  Package,
+  Heart
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -23,59 +25,97 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { dashboardService } from '@/lib/dashboard'
+import { formatCurrency } from '@/lib/utils'
+import type { DashboardData } from '@/lib/dashboard'
 
-// 示例数据
-const statsData = [
-  { 
-    key: 'totalUsers',
-    value: '1,284', 
-    change: '+12.5%', 
-    isPositive: true,
-    icon: <Users className="h-4 w-4" />
-  },
-  { 
-    key: 'recognitionCount',
-    value: '12,543', 
-    change: '+24.3%', 
-    isPositive: true,
-    icon: <FileText className="h-4 w-4" />
-  },
-  { 
-    key: 'todayRecognition',
-    value: '487', 
-    change: '-3.2%', 
-    isPositive: false,
-    icon: <Clock className="h-4 w-4" />
-  },
-  { 
-    key: 'accuracy',
-    value: '96.8%', 
-    change: '+1.2%', 
-    isPositive: true,
-    icon: <BarChart3 className="h-4 w-4" />
-  }
-]
+interface ActivityItem {
+  id: number;
+  user: string;
+  avatar: string;
+  action: 'purchased' | 'opened' | 'donated';
+  time: number;
+  timeUnit: 'minutesAgo' | 'hoursAgo' | 'daysAgo';
+  boxCount?: number;
+  donationAmount?: number;
+}
 
-const recentActivity = [
-  { id: 1, user: '张三', avatar: 'Z', action: 'recognized', time: 10, timeUnit: 'minutesAgo', imageCount: 1 },
-  { id: 2, user: '李四', avatar: 'L', action: 'batchProcessed', time: 30, timeUnit: 'minutesAgo', imageCount: 12 },
-  { id: 3, user: '王五', avatar: 'W', action: 'registered', time: 1, timeUnit: 'hoursAgo', imageCount: 0 },
-  { id: 4, user: '赵六', avatar: 'Z', action: 'recognized', time: 2, timeUnit: 'hoursAgo', imageCount: 1 },
-  { id: 5, user: '钱七', avatar: 'Q', action: 'batchProcessed', time: 3, timeUnit: 'hoursAgo', imageCount: 5 }
-]
+// 更新示例数据为盲盒相关的活动
+const recentActivity: ActivityItem[] = [
+  { id: 1, user: '张三', avatar: 'Z', action: 'purchased', time: 10, timeUnit: 'minutesAgo', boxCount: 2 },
+  { id: 2, user: '李四', avatar: 'L', action: 'opened', time: 30, timeUnit: 'minutesAgo', boxCount: 1 },
+  { id: 3, user: '王五', avatar: 'W', action: 'donated', time: 1, timeUnit: 'hoursAgo', donationAmount: 100 },
+  { id: 4, user: '赵六', avatar: 'Z', action: 'purchased', time: 2, timeUnit: 'hoursAgo', boxCount: 1 },
+  { id: 5, user: '钱七', avatar: 'Q', action: 'opened', time: 3, timeUnit: 'hoursAgo', boxCount: 3 }
+];
 
 export default function Dashboard() {
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState("overview")
-  const [selectedPeriod, setSelectedPeriod] = useState("monthly")
+  const [selectedPeriod, setSelectedPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>("monthly")
   const { t } = useTranslation()
 
-  const refreshStats = () => {
+  // 修改statsData为盲盒相关的统计数据
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const data = await dashboardService.getAllDashboardData();
+        setDashboardData(data);
+      } catch (error) {
+        console.error('获取仪表盘数据失败:', error);
+        toast.error('获取数据失败，请稍后重试');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  const statsData = dashboardData ? [
+    { 
+      key: 'dailyRevenue',
+      value: formatCurrency(dashboardData.stats.dailyRevenue), 
+      change: '+12.5%', 
+      isPositive: true,
+      icon: <BarChart3 className="h-4 w-4" />
+    },
+    { 
+      key: 'totalBoxes',
+      value: dashboardData.stats.totalBoxes.toString(), 
+      change: '+24.3%', 
+      isPositive: true,
+      icon: <Package className="h-4 w-4" />
+    },
+    { 
+      key: 'totalUsers',
+      value: dashboardData.stats.totalUsers.toString(), 
+      change: '+8.2%', 
+      isPositive: true,
+      icon: <Users className="h-4 w-4" />
+    },
+    { 
+      key: 'totalDonations',
+      value: formatCurrency(dashboardData.stats.totalDonations), 
+      change: '+15.3%', 
+      isPositive: true,
+      icon: <Heart className="h-4 w-4" />
+    }
+  ] : [];
+
+  const refreshStats = async () => {
     toast.info("正在刷新数据...");
-    // 模拟刷新后的成功通知
-    setTimeout(() => {
+    try {
+      const data = await dashboardService.getAllDashboardData();
+      setDashboardData(data);
       toast.success("数据已更新");
-    }, 1500);
+    } catch (error) {
+      toast.error("刷新数据失败");
+    }
   };
 
   return (
@@ -160,7 +200,7 @@ export default function Dashboard() {
                 <div>
                   <Select
                     value={selectedPeriod}
-                    onValueChange={setSelectedPeriod}
+                    onValueChange={(value) => setSelectedPeriod(value as 'daily' | 'weekly' | 'monthly' | 'yearly')}
                   >
                     <SelectTrigger className="w-[140px]">
                       <SelectValue placeholder={t('Select period')} />
@@ -175,13 +215,27 @@ export default function Dashboard() {
                 </div>
               </CardHeader>
               <CardContent>
-                {/* 图表占位 */}
-                <div className="h-[300px] w-full rounded-md bg-muted/30">
-                  <div className="flex h-full flex-col items-center justify-center">
-                    <BarChart3 className="mb-2 h-8 w-8 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">{t('dashboard.charts.loading')}</p>
+                {loading ? (
+                  <div className="h-[300px] w-full rounded-md bg-muted/30 flex items-center justify-center">
+                    <p className="text-sm text-muted-foreground">加载中...</p>
                   </div>
-                </div>
+                ) : dashboardData?.charts ? (
+                  <div className="h-[300px] w-full p-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      {dashboardData.charts[selectedPeriod].map((item, index) => (
+                        <div key={index} className="p-4 border rounded-lg">
+                          <p className="font-medium">{item.name}</p>
+                          <p className="text-lg">营收：{formatCurrency(item.value)}</p>
+                          <p>盲盒数：{item.boxes}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-[300px] w-full rounded-md bg-muted/30 flex items-center justify-center">
+                    <p className="text-sm text-muted-foreground">暂无数据</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -214,12 +268,18 @@ export default function Dashboard() {
                     </Avatar>
                     <div className="flex-1 space-y-1">
                       <p className="text-sm font-medium">
-                        <span className="font-semibold">{activity.user}</span> {t(`dashboard.activity.actions.${activity.action}`)}
-                        {activity.imageCount > 1 && 
+                        <span className="font-semibold">{activity.user}</span>{' '}
+                        {t(`dashboard.activity.actions.${activity.action}`)}
+                        {activity.boxCount && (
                           <Badge variant="secondary" className="ml-2 py-0">
-                            {t('dashboard.activity.imageCount', { count: activity.imageCount })}
+                            {t('dashboard.activity.boxCount', { count: activity.boxCount })}
                           </Badge>
-                        }
+                        )}
+                        {activity.donationAmount && (
+                          <Badge variant="secondary" className="ml-2 py-0">
+                            {formatCurrency(activity.donationAmount)}
+                          </Badge>
+                        )}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {t(`dashboard.activity.time.${activity.timeUnit}`, { count: activity.time })}
@@ -347,4 +407,4 @@ export default function Dashboard() {
       </Tabs>
     </div>
   )
-} 
+}
