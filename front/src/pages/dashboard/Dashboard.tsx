@@ -4,9 +4,8 @@ import { useAuth } from '@/providers/auth-provider'
 import { toast } from 'sonner'
 import { 
   BarChart3, 
-  Users, 
-  FileText, 
-  Clock, 
+  Users,
+  FileText,
   MoreHorizontal,
   ArrowUpRight,
   ChevronUp,

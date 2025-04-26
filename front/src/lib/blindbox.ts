@@ -123,7 +123,7 @@ export const blindboxService = {
 
   // 更新盲盒
   async updateBlindBox(id: string, data: Partial<BlindBoxInputData>): Promise<BlindBox> {
-    // const response = await axios.put(API_URLS.BOX.UPDATE(id), data);
+     // const response = await axios.put(API_URLS.BOX.UPDATE(id), data);
      // Similar to create, backend returns { message, box_id }.
      // Returning partial data for now.
     return { id: id, ...data } as BlindBox;
