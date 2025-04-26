@@ -7,6 +7,7 @@ const AuthLayout = lazy(() => import('@/layouts/AuthLayout'))
 const Home = lazy(() => import('@/pages/Home'))
 const About = lazy(() => import('@/pages/About'))
 const OCR = lazy(() => import('@/pages/OCR'))
+const Explore = lazy(() => import('@/pages/task/Explore'))
 const Login = lazy(() => import('@/pages/auth/Login'))
 const Register = lazy(() => import('@/pages/auth/Register'))
 const Dashboard = lazy(() => import('@/pages/dashboard/Dashboard'))
@@ -36,6 +37,15 @@ const routes: RouteObject[] = [
         ]
       },
       { path: 'BlindBox/:id', element: <BlindBoxPage /> },
+      { 
+        path: '/task',
+        children: [
+          {
+            path: 'explore',
+            element: <Explore />
+          }
+        ]
+      }
     ]
   },
   {

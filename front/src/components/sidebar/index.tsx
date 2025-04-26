@@ -6,10 +6,11 @@ import {
   Home, 
   User, 
   Settings,
-  FileText,
+  Scan,
   BarChart,
   X,
-  Shield
+  Shield,
+  Trophy
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -89,9 +90,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             
             <SidebarItem
               href="/ocr"
-              icon={<FileText className="h-4 w-4" />}
+              icon={<Scan className="h-4 w-4" />}
               title={t('ocr-recognition')}
               isActive={pathname.startsWith('/ocr')}
+            />
+
+            <SidebarItem
+              href="/task/explore"
+              icon={<Trophy className="h-4 w-4" />}
+              title={t('challenge')}
+              isActive={pathname.startsWith('/task/explore')}
             />
             
             {isAdmin && (
