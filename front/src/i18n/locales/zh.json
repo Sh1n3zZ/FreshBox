@@ -36,25 +36,41 @@
     },
     "actions": {
       "refresh": "刷新",
+      "refreshing": "正在刷新...",
       "new": "新建",
       "viewAll": "查看全部",
       "Export Data": "导出数据"
     },
     "stats": {
+      "dailyRevenue": "日营收",
+      "totalBoxes": "盲盒总数",
       "totalUsers": "用户总数",
-      "recognitionCount": "识别总数",
-      "todayRecognition": "今日识别",
-      "accuracy": "识别准确率"
+      "totalDonations": "捐赠总数"
     },
     "charts": {
-      "title": "使用趋势",
-      "description": "近期识别数量统计",
+      "noData": "暂无数据",
       "loading": "图表加载中...",
       "periods": {
         "daily": "每日",
         "weekly": "每周",
         "monthly": "每月",
         "yearly": "每年"
+      },
+      "periodRange": {
+        "lastSevenDays": "过去7天",
+        "lastEightWeeks": "过去8周",
+        "lastSixMonths": "过去6个月"
+      },
+      "revenue": {
+        "title": "收入趋势",
+        "description": "近期收入统计",
+        "stable": "盲盒开启趋势稳定",
+        "trendingUp": "盲盒开启趋势上升",
+        "trendingDown": "盲盒开启趋势下降"
+      },
+      "openingTrend": {
+        "title": "盲盒开启趋势",
+        "description": "近期盲盒开启数量统计"
       }
     },
     "activity": {
