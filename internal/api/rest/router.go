@@ -234,6 +234,7 @@ func SetupRouter(
 			admin := protected.Group("/admin")
 			{
 				admin.GET("/users", userHandler.ListUsers)
+				admin.POST("/users", userHandler.CreateUser)
 				admin.PUT("/users/:user_id", userHandler.UpdateUser)
 				admin.DELETE("/users/:user_id", userHandler.DeleteUser)
 

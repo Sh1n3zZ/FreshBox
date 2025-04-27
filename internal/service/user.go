@@ -228,3 +228,57 @@ func (s *UserService) DeleteUser(ctx context.Context, userID string) error {
 
 	return nil
 }
+
+// CreateUserByAdmin 管理员创建用户
+func (s *UserService) CreateUserByAdmin(ctx context.Context, req *CreateUserRequest) (*User, error) {
+	// 检查用户名是否已存在
+	var count int64
+	if err := s.db.Model(&User{}).Where("username = ?", req.Username).Count(&count).Error; err != nil {
+		return nil, errors.Wrap(err, "检查用户名失败")
+	}
+	if count > 0 {
+		return nil, errors.New("用户名已存在")
+	}
+
+	// 检查邮箱是否已存在
+	if err := s.db.Model(&User{}).Where("email = ?", req.Email).Count(&count).Error; err != nil {
+		return nil, errors.Wrap(err, "检查邮箱失败")
+	}
+	if count > 0 {
+		return nil, errors.New("邮箱已被注册")
+	}
+
+	// 加密密码
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, errors.Wrap(err, "加密密码失败")
+	}
+
+	// 创建用户
+	user := &User{
+		ID:        GenerateUniqueID(),
+		Username:  req.Username,
+		Email:     req.Email,
+		Password:  string(hashedPassword),
+		Role:      req.Role,
+		Avatar:    req.Avatar,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	// 保存到数据库
+	if err := s.db.Create(user).Error; err != nil {
+		return nil, errors.Wrap(err, "创建用户失败")
+	}
+
+	return user, nil
+}
+
+// CreateUserRequest 管理员创建用户请求
+type CreateUserRequest struct {
+	Username string `json:"username" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,min=6"`
+	Role     string `json:"role" binding:"required,oneof=admin user"`
+	Avatar   string `json:"avatar,omitempty"`
+}

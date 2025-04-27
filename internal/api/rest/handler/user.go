@@ -553,3 +553,58 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 		Message: "用户删除成功",
 	})
 }
+
+// CreateUser 创建用户（管理员功能）
+// @Summary 创建用户
+// @Description 管理员创建新用户
+// @Tags 用户管理
+// @Accept json
+// @Produce json
+// @Param request body service.CreateUserRequest true "创建用户请求"
+// @Success 200 {object} UserInfo
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v1/admin/users [post]
+func (h *UserHandler) CreateUser(c *gin.Context) {
+	// 验证是否为管理员
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "未授权",
+		})
+		return
+	}
+
+	isAdmin, err := h.userService.IsAdmin(c, userID.(string))
+	if err != nil || !isAdmin {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "无权限访问",
+		})
+		return
+	}
+
+	var req service.CreateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "请求参数无效",
+		})
+		return
+	}
+
+	// 调用服务层创建用户
+	user, err := h.userService.CreateUserByAdmin(c, &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, UserInfo{
+		ID:       user.ID,
+		Username: user.Username,
+		Email:    user.Email,
+		Role:     user.Role,
+		Avatar:   user.Avatar,
+	})
+}
