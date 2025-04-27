@@ -13,51 +13,61 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { useNavigate } from 'react-router-dom'
-import { API_URLS } from '@/conf/env'
+import { apiService } from '@/lib/api'
 
 // 定义挑战接口
+interface ApiResponse {
+  data: Challenge[];
+  msg: string;
+  trace_id: string;
+}
+
 interface Challenge {
-  id: number;
+  id: string;
+  user_id: string;
+  type: string;
   title: string;
   description: string;
-  difficulty: string;
-  participants: number;
+  status: 'pending' | 'ongoing' | 'completed';
+  created_at: string;
   deadline: string;
-  tags: string[];
-  image: string;
+  reward: number;
 }
 
 // Mock数据
-const mockChallenges = [
+const mockChallenges: Challenge[] = [
   {
-    id: 1,
-    title: "夏日清凉料理挑战",
-    description: "使用盲盒食材制作清爽的夏日料理，赢取丰厚奖励",
-    difficulty: "easy",
-    participants: 246,
-    deadline: "2024-08-31",
-    tags: ["夏季限定", "清凉料理"],
-    image: "/images/ximilu.jpg"
+    id: "e3246257-aec5-4cf6-a338-f4ef229b5704",
+    user_id: "mock-user-id-1",
+    type: "recipe_challenge",
+    title: "创意料理挑战",
+    description: "使用盲盒食材制作一道创意料理，并分享照片和做法",
+    status: "ongoing",
+    created_at: "2025-04-26T23:34:38.7470149+08:00",
+    deadline: "2025-05-03T23:34:38.7470149+08:00",
+    reward: 50
   },
   {
-    id: 2,
-    title: "家常菜改造挑战",
-    description: "用盲盒中的神秘食材改造传统家常菜，焕发新活力",
-    difficulty: "medium",
-    participants: 178,
-    deadline: "2024-09-15",
-    tags: ["创意料理", "家常菜"],
-    image: "/images/homeusualfood.jpeg"
+    id: "a56b3dcc-8ad2-4a0c-8eb8-bd407159322f",
+    user_id: "mock-user-id-2",
+    type: "food_rescue",
+    title: "食物拯救行动",
+    description: "收集并分享5个减少食物浪费的实用技巧",
+    status: "pending",
+    created_at: "2025-04-25T23:34:38.7470149+08:00",
+    deadline: "2025-04-30T23:34:38.7470149+08:00",
+    reward: 30
   },
   {
-    id: 3,
-    title: "米其林风格料理挑战",
-    description: "使用盲盒食材制作高级餐厅风格的精致料理",
-    difficulty: "hard",
-    participants: 92,
-    deadline: "2024-10-01",
-    tags: ["高级料理", "精致摆盘"],
-    image: "/images/beefmql.jpg"
+    id: "4c3307b3-5f64-4f44-9fb2-0a377b1784a6",
+    user_id: "mock-user-id-3",
+    type: "community_sharing",
+    title: "社区分享会",
+    description: "组织一次小型的临期食品分享活动，并记录过程",
+    status: "completed",
+    created_at: "2025-04-20T23:34:38.7470149+08:00",
+    deadline: "2025-04-25T23:34:38.7470149+08:00",
+    reward: 100
   }
 ];
 
@@ -70,9 +80,10 @@ export default function Explore() {
   const [filteredChallenges, setFilteredChallenges] = useState<Challenge[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
-  const [difficulty, setDifficulty] = useState('all')
+  const [status, setStatus] = useState('all')
   const [loading, setLoading] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   
   // 搜索防抖
   useEffect(() => {
@@ -90,56 +101,70 @@ export default function Explore() {
   // 获取挑战数据
   useEffect(() => {
     const fetchChallenges = async () => {
-      setLoading(true)
+      setLoading(true);
+      setError(null);
       
       try {
-        // 真实API调用
-        if (process.env.NODE_ENV === 'production') {
-          const response = await fetch(API_URLS.TASK.LIST)
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
-          }
-          const data = await response.json()
-          setChallenges(data)
-          setFilteredChallenges(data)
+        const response = await apiService.get<ApiResponse>('/tasks');
+        
+        // 验证返回的数据是否正确
+        if (response && response.data && Array.isArray(response.data)) {
+          setChallenges(response.data);
+          setFilteredChallenges(response.data);
         } else {
-          // Mock数据
-          setTimeout(() => {
-            setChallenges(mockChallenges)
-            setFilteredChallenges(mockChallenges)
-          }, 300)
+          console.error('API返回的数据格式不正确:', response);
+          setError('获取数据格式不正确，请稍后再试');
+          
+          // 开发环境下使用mock数据
+          if (import.meta.env.DEV) {
+            setChallenges(mockChallenges);
+            setFilteredChallenges(mockChallenges);
+          }
         }
       } catch (error) {
-        console.error('Failed to fetch challenges:', error)
+        console.error('获取挑战数据失败:', error);
+        setError('获取挑战数据失败，请稍后再试');
+        
+        // 加载失败时使用Mock数据作为备用
+        if (import.meta.env.DEV) {
+          setChallenges(mockChallenges);
+          setFilteredChallenges(mockChallenges);
+        }
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
     
-    fetchChallenges()
-  }, [])
+    fetchChallenges();
+  }, []);
   
   // 筛选逻辑 - 使用防抖后的搜索关键词
   useEffect(() => {
-    let result = challenges
+    // 确保challenges是一个数组
+    if (!Array.isArray(challenges)) {
+      setFilteredChallenges([]);
+      return;
+    }
     
-    // 筛选难度
-    if (difficulty !== 'all') {
-      result = result.filter(challenge => challenge.difficulty === difficulty)
+    let result = [...challenges];
+    
+    // 筛选状态
+    if (status !== 'all') {
+      result = result.filter(challenge => challenge.status === status);
     }
     
     // 搜索关键词
     if (debouncedSearchQuery.trim()) {
-      const query = debouncedSearchQuery.toLowerCase().trim()
+      const query = debouncedSearchQuery.toLowerCase().trim();
       result = result.filter(challenge => 
         challenge.title.toLowerCase().includes(query) || 
         challenge.description.toLowerCase().includes(query) ||
-        challenge.tags.some(tag => tag.toLowerCase().includes(query))
-      )
+        challenge.type.toLowerCase().includes(query)
+      );
     }
     
-    setFilteredChallenges(result)
-  }, [challenges, difficulty, debouncedSearchQuery])
+    setFilteredChallenges(result);
+  }, [challenges, status, debouncedSearchQuery]);
   
   // 处理搜索输入
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,56 +178,52 @@ export default function Explore() {
   }, [])
   
   // 处理难度筛选
-  const handleDifficultyChange = (value: string) => {
-    setDifficulty(value)
+  const handleStatusChange = (value: string) => {
+    setStatus(value);
   }
   
   // 重置筛选
   const resetFilters = useCallback(() => {
-    handleClearSearch()
-    setDifficulty('all')
-  }, [handleClearSearch])
+    handleClearSearch();
+    setStatus('all');
+  }, [handleClearSearch]);
 
-  const getDifficultyLabel = (difficulty: string) => {
-    switch(difficulty) {
-      case 'easy': return t('dashboard.tasks.difficulty-easy');
-      case 'medium': return t('dashboard.tasks.difficulty-medium');
-      case 'hard': return t('dashboard.tasks.difficulty-hard');
-      default: return t('dashboard.tasks.difficulty-all');
+  const getStatusLabel = (status: string) => {
+    switch(status) {
+      case 'pending': return '待开始';
+      case 'ongoing': return '进行中';
+      case 'completed': return '已完成';
+      default: return '全部状态';
     }
   };
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch(difficulty) {
-      case 'easy': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      case 'hard': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+  const getStatusColor = (status: string) => {
+    switch(status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+      case 'ongoing': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+      case 'completed': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
       default: return '';
     }
   };
 
-  const handleTaskClick = (taskId: number) => {
-    navigate(`/task/detail/${taskId}`)
+  const getTaskIcon = (type: string) => {
+    switch(type) {
+      case 'recipe_challenge': return <Utensils className="h-3 w-3 mr-1" />;
+      case 'food_rescue': return <ShoppingBag className="h-3 w-3 mr-1" />;
+      case 'community_sharing': return <Users className="h-3 w-3 mr-1" />;
+      default: return <Trophy className="h-3 w-3 mr-1" />;
+    }
   }
-  
-  // 购买盲盒
-  const handleBuyBlindbox = (e: React.MouseEvent) => {
-    e.stopPropagation() // 阻止事件冒泡
-    navigate('/blindbox/detail/summer-special')
+
+  const handleTaskClick = (taskId: string) => {
+    navigate(`/task/detail/${taskId}`);
   }
   
   // 参与挑战
-  const handleJoinChallenge = (e: React.MouseEvent, challengeId: number) => {
-    e.stopPropagation() // 阻止事件冒泡
-    navigate(`/task/detail/${challengeId}`)
+  const handleJoinChallenge = (e: React.MouseEvent, challengeId: string) => {
+    e.stopPropagation(); // 阻止事件冒泡
+    navigate(`/task/detail/${challengeId}`);
   }
-
-  // 添加图片错误处理函数
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    const target = e.currentTarget;
-    target.onerror = null; // 防止循环加载
-    target.src = '/images/placeholder.jpg';
-  };
 
   return (
     <div className="container mx-auto py-6">
@@ -235,22 +256,22 @@ export default function Explore() {
           )}
         </div>
         <div className="flex gap-2">
-          <Select value={difficulty} onValueChange={handleDifficultyChange}>
+          <Select value={status} onValueChange={handleStatusChange}>
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder={t('dashboard.tasks.filter-difficulty')} />
+              <SelectValue placeholder={t('dashboard.tasks.filter-status')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t('dashboard.tasks.difficulty-all')}</SelectItem>
-              <SelectItem value="easy">{t('dashboard.tasks.difficulty-easy')}</SelectItem>
-              <SelectItem value="medium">{t('dashboard.tasks.difficulty-medium')}</SelectItem>
-              <SelectItem value="hard">{t('dashboard.tasks.difficulty-hard')}</SelectItem>
+              <SelectItem value="all">{t('dashboard.tasks.status-all')}</SelectItem>
+              <SelectItem value="pending">{t('dashboard.tasks.status-pending')}</SelectItem>
+              <SelectItem value="ongoing">{t('dashboard.tasks.status-ongoing')}</SelectItem>
+              <SelectItem value="completed">{t('dashboard.tasks.status-completed')}</SelectItem>
             </SelectContent>
           </Select>
           <Button 
             variant="outline" 
             size="icon" 
             onClick={resetFilters} 
-            disabled={difficulty === 'all' && !searchQuery}
+            disabled={status === 'all' && !searchQuery}
             title="重置筛选"
           >
             <Filter className="h-4 w-4" />
@@ -259,16 +280,16 @@ export default function Explore() {
       </div>
 
       {/* 筛选结果提示 */}
-      {(difficulty !== 'all' || debouncedSearchQuery) && (
+      {(status !== 'all' || debouncedSearchQuery) && (
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <span className="text-sm text-muted-foreground">筛选结果:</span>
-          {difficulty !== 'all' && (
+          {status !== 'all' && (
             <Badge variant="secondary" className="flex items-center">
-              <span>难度: {getDifficultyLabel(difficulty)}</span>
+              <span>状态: {getStatusLabel(status)}</span>
               <button 
                 className="ml-1 p-1 hover:bg-muted rounded-full" 
-                onClick={() => setDifficulty('all')}
-                aria-label="移除难度筛选"
+                onClick={() => setStatus('all')}
+                aria-label="移除状态筛选"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -303,18 +324,35 @@ export default function Explore() {
         </div>
       ) : null}
 
+      {/* 错误提示 */}
+      {error && !loading && (
+        <div className="py-6 text-center">
+          <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+            <p className="text-red-600 dark:text-red-400">{error}</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-2"
+              onClick={() => window.location.reload()}
+            >
+              重新加载
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* 无结果提示 */}
-      {!loading && !isSearching && filteredChallenges.length === 0 && (
+      {!loading && !isSearching && !error && filteredChallenges.length === 0 && (
         <div className="py-12 text-center">
           <div className="mb-4">
             <Trophy className="h-12 w-12 text-muted-foreground mx-auto" />
           </div>
           <h3 className="text-xl font-medium mb-2">未找到匹配的挑战</h3>
           <p className="text-muted-foreground mb-4">
-            {difficulty !== 'all' && debouncedSearchQuery 
+            {status !== 'all' && debouncedSearchQuery 
               ? '尝试调整您的筛选条件或搜索关键词' 
-              : difficulty !== 'all' 
-                ? '尝试选择其他难度等级' 
+              : status !== 'all' 
+                ? '尝试选择其他状态' 
                 : '尝试使用其他搜索关键词'}
           </p>
           <Button onClick={resetFilters}>
@@ -324,7 +362,7 @@ export default function Explore() {
       )}
 
       {/* 挑战卡片列表 */}
-      {!loading && !isSearching && filteredChallenges.length > 0 && (
+      {!loading && !isSearching && !error && filteredChallenges.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredChallenges.map((challenge) => (
             <Card 
@@ -335,31 +373,30 @@ export default function Explore() {
               <div className="h-40 overflow-hidden relative">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10" />
                 <div className="absolute top-2 left-2 z-20">
-                  <Badge className={getDifficultyColor(challenge.difficulty)}>
-                    {getDifficultyLabel(challenge.difficulty)}
+                  <Badge className={getStatusColor(challenge.status)}>
+                    {getStatusLabel(challenge.status)}
                   </Badge>
                 </div>
                 <div className="absolute top-2 right-2 z-20 flex items-center text-white bg-black/30 rounded-full px-2 py-1 text-xs">
-                  <Users className="h-3 w-3 mr-1" />
-                  <span>{challenge.participants}</span>
+                  {getTaskIcon(challenge.type)}
+                  <span>{challenge.reward} 积分</span>
                 </div>
-                <img 
-                  src={challenge.image} 
-                  alt={challenge.title}
-                  className="w-full h-full object-cover transition-transform hover:scale-105"
-                  onError={handleImageError}
-                />
+                <div className="w-full h-full bg-gradient-to-r from-primary/10 to-primary/30 flex items-center justify-center">
+                  {getTaskIcon(challenge.type)}
+                  <span className="text-lg font-medium ml-2">{challenge.type}</span>
+                </div>
               </div>
               
               <CardContent className="pt-4">
                 <h3 className="text-xl font-semibold mb-2">{challenge.title}</h3>
                 <p className="text-muted-foreground mb-3">{challenge.description}</p>
                 <div className="flex flex-wrap gap-2 mb-2">
-                  {challenge.tags.map((tag, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
+                  <Badge variant="outline" className="text-xs">
+                    {challenge.type}
+                  </Badge>
+                  <Badge variant="outline" className="text-xs">
+                    奖励: {challenge.reward} 积分
+                  </Badge>
                 </div>
               </CardContent>
               
@@ -367,28 +404,31 @@ export default function Explore() {
                 <div className="flex justify-between items-center w-full">
                   <div className="flex items-center text-sm text-muted-foreground">
                     <Calendar className="h-3 w-3 mr-1" />
-                    <span>{t('dashboard.tasks.deadline')}: {challenge.deadline}</span>
+                    <span>截止日期: {formatDate(challenge.deadline)}</span>
                   </div>
                   <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <ShoppingBag className="h-3 w-3" />
-                    <span>{t('dashboard.tasks.blindbox-required')}</span>
+                    <Trophy className="h-3 w-3" />
+                    <span>奖励: {challenge.reward} 积分</span>
                   </div>
                 </div>
                 <div className="flex justify-between w-full">
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={handleBuyBlindbox}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/task/detail/${challenge.id}`);
+                    }}
                   >
-                    <ShoppingBag className="mr-1 h-3 w-3" />
-                    {t('dashboard.tasks.buy-blindbox')}
+                    <Trophy className="mr-1 h-3 w-3" />
+                    查看详情
                   </Button>
                   <Button 
                     size="sm"
                     onClick={(e) => handleJoinChallenge(e, challenge.id)}
                   >
-                    <Utensils className="mr-1 h-3 w-3" />
-                    {t('dashboard.tasks.join')}
+                    {getTaskIcon(challenge.type)}
+                    参与挑战
                   </Button>
                 </div>
               </CardFooter>
@@ -398,4 +438,19 @@ export default function Explore() {
       )}
     </div>
   )
+}
+
+// 格式化日期函数
+function formatDate(dateString: string): string {
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+  } catch (error) {
+    console.error('日期格式化错误:', error);
+    return dateString;
+  }
 }

@@ -16,20 +16,39 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { API_URLS } from '@/conf/env'
+import { apiService } from '@/lib/api'
+
+// API响应接口
+interface ApiResponse {
+  data: TaskInfo;
+  msg: string;
+  trace_id: string;
+}
 
 // 任务简要信息接口
 interface TaskInfo {
   id: string;
+  user_id: string;
+  type: string;
   title: string;
-  image: string;
+  description: string;
+  status: 'pending' | 'ongoing' | 'completed';
+  created_at: string;
+  deadline: string;
+  reward: number;
 }
 
 // Mock数据
 const mockTaskInfo: TaskInfo = {
   id: '1',
+  user_id: 'mock-user-id',
+  type: 'recipe_challenge',
   title: "夏日清凉料理挑战",
-  image: "/images/challenge1.jpg"
+  description: "使用盲盒食材制作清爽的夏日料理，赢取丰厚奖励",
+  status: 'pending',
+  created_at: "2025-04-26T23:34:38.7470149+08:00",
+  deadline: "2025-05-03T23:34:38.7470149+08:00",
+  reward: 50
 };
 
 export default function TaskSubmit() {
@@ -52,27 +71,20 @@ export default function TaskSubmit() {
       setLoading(true);
       
       try {
-        // 真实API调用
-        if (process.env.NODE_ENV === 'production') {
-          const response = await fetch(API_URLS.TASK.DETAIL(id || ''));
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          const data = await response.json();
-          setTaskInfo({
-            id: data.id,
-            title: data.title,
-            image: data.image
-          });
+        const response = await apiService.get<ApiResponse>(`/tasks/${id}`);
+        if (response && response.data) {
+          setTaskInfo(response.data);
         } else {
-          // Mock数据
-          setTimeout(() => {
-            setTaskInfo(mockTaskInfo);
-          }, 500);
+          throw new Error('无效的API响应');
         }
       } catch (err) {
-        console.error('Failed to fetch task info:', err);
+        console.error('获取挑战信息失败:', err);
         setError('获取挑战信息失败，请稍后再试');
+        
+        // 开发环境下使用Mock数据
+        if (import.meta.env.DEV) {
+          setTaskInfo(mockTaskInfo);
+        }
       } finally {
         setLoading(false);
       }
@@ -155,56 +167,38 @@ export default function TaskSubmit() {
     setSubmitting(true);
     
     try {
-      // 真实API调用
-      if (process.env.NODE_ENV === 'production') {
-        // 准备表单数据
-        const formData = new FormData();
-        formData.append('title', title);
-        formData.append('description', description);
-        
-        // 添加所有图片
-        images.forEach(image => {
-          formData.append('images[]', image);
-        });
-        
-        // 发送请求
-        const response = await fetch(API_URLS.TASK.UPLOAD_CONTENT(id || ''), {
-          method: 'POST',
-          body: formData
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        // 更新任务状态为已完成
-        await fetch(API_URLS.TASK.UPDATE_STATUS(id || ''), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ status: 'completed' })
-        });
-        
-        // 提交成功
-        toast.success("提交成功", {
-          description: "您的作品已成功提交！"
-        });
-        
-        // 导航到详情页
-        navigate(`/task/detail/${id}`);
-      } else {
-        // Mock数据 - 模拟提交延迟
-        setTimeout(() => {
-          toast.success("提交成功", {
-            description: "您的作品已成功提交！"
-          });
-          
-          navigate(`/task/detail/${id}`);
-        }, 1500);
+      // 准备表单数据
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('description', description);
+      
+      // 添加所有图片
+      images.forEach(image => {
+        formData.append('images[]', image);
+      });
+      
+      // 发送请求 - 使用原生fetch，因为apiService不直接支持FormData
+      const response = await fetch(`/api/v1/tasks/${id}/content`, {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
+      // 更新任务状态为已完成
+      await apiService.put(`/tasks/${id}/status`, { status: 'completed' });
+      
+      // 提交成功
+      toast.success("提交成功", {
+        description: "您的作品已成功提交！"
+      });
+      
+      // 导航到详情页
+      navigate(`/task/detail/${id}`);
     } catch (err) {
-      console.error('Failed to submit result:', err);
+      console.error('提交失败:', err);
       toast.error("提交失败", {
         description: "作品提交失败，请稍后再试"
       });
