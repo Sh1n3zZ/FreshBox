@@ -241,3 +241,31 @@ type UserInfo struct {
 	Avatar  string `json:"avatar,omitempty"`
 	Address string `json:"address,omitempty"`
 }
+
+// BlindBoxOpeningTrend 盲盒开启趋势数据
+type BlindBoxOpeningTrend struct {
+	Date  string `json:"date"`
+	Count int    `json:"count"`
+}
+
+// BlindBoxOpeningTrendResponse 盲盒开启趋势响应
+type BlindBoxOpeningTrendResponse struct {
+	Data            []BlindBoxOpeningTrend `json:"data"`
+	TrendPercentage float64                `json:"trendPercentage"`
+}
+
+// DashboardStats 仪表盘统计数据
+type DashboardStats struct {
+	DailyRevenue             float64 `json:"dailyRevenue"`
+	DailyRevenueChange       float64 `json:"dailyRevenueChange"`
+	DailyRevenueIsPositive   bool    `json:"dailyRevenueIsPositive"`
+	TotalBoxes               int     `json:"totalBoxes"`
+	TotalBoxesChange         float64 `json:"totalBoxesChange"`
+	TotalBoxesIsPositive     bool    `json:"totalBoxesIsPositive"`
+	TotalUsers               int     `json:"totalUsers"`
+	TotalUsersChange         float64 `json:"totalUsersChange"`
+	TotalUsersIsPositive     bool    `json:"totalUsersIsPositive"`
+	TotalDonations           float64 `json:"totalDonations"`
+	TotalDonationsChange     float64 `json:"totalDonationsChange"`
+	TotalDonationsIsPositive bool    `json:"totalDonationsIsPositive"`
+}

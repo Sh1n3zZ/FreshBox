@@ -366,3 +366,35 @@ func (h *BlindBoxHandler) GetBlindBoxOpeningHistory(c *gin.Context) {
 		"total":    len(openingDTOs),
 	})
 }
+
+// GetBlindBoxOpeningTrend 获取盲盒开启趋势
+func (h *BlindBoxHandler) GetBlindBoxOpeningTrend(c *gin.Context) {
+	// 获取时间范围参数
+	startTimeStr := c.DefaultQuery("startTime", "")
+	endTimeStr := c.DefaultQuery("endTime", "")
+
+	// 解析时间
+	startTime, err := time.Parse("2006-01-02", startTimeStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "开始时间格式错误"})
+		return
+	}
+
+	endTime, err := time.Parse("2006-01-02", endTimeStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "结束时间格式错误"})
+		return
+	}
+
+	// 获取趋势数据
+	trendData, err := h.blindBoxService.GetBlindBoxOpeningTrend(c.Request.Context(), startTime, endTime)
+	if err != nil {
+		h.logger.Error("获取盲盒开启趋势失败", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取盲盒开启趋势失败", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": trendData,
+	})
+}

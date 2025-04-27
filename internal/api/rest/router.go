@@ -10,6 +10,7 @@ import (
 
 	"FreshBox/internal/api/rest/handler"
 	"FreshBox/internal/api/rest/middleware"
+	"FreshBox/internal/service"
 )
 
 // SetupRouter 设置路由
@@ -21,6 +22,7 @@ func SetupRouter(
 	ingredientHandler *handler.IngredientHandler,
 	taskHandler *handler.TaskHandler,
 	mailHandler *handler.MailHandler,
+	blindBoxService *service.BlindBoxService,
 ) *gin.Engine {
 	r := gin.Default()
 
@@ -90,7 +92,7 @@ func SetupRouter(
 	}
 
 	// 仪表盘处理器
-	dashboardHandler := handler.NewDashboardHandler()
+	dashboardHandler := handler.NewDashboardHandler(blindBoxService)
 
 	// API v1
 	v1 := r.Group("/api/v1")
@@ -109,13 +111,9 @@ func SetupRouter(
 		// 仪表盘接口 - 公开接口（在实际生产环境中应该加上认证）
 		dashboard := v1.Group("/dashboard")
 		{
-			dashboard.GET("/summary", dashboardHandler.GetSummary)
-			dashboard.GET("/revenue", dashboardHandler.GetRevenueStats)
-			dashboard.GET("/categories", dashboardHandler.GetBoxCategories)
-			dashboard.GET("/user-activity", dashboardHandler.GetUserActivity)
-			dashboard.GET("/donations", dashboardHandler.GetDonationStats)
-			dashboard.GET("/recent-boxes", dashboardHandler.GetRecentBoxes)
-			dashboard.GET("/top-tasks", dashboardHandler.GetTopPerformingTasks)
+			dashboard.GET("/summary", dashboardHandler.GetDashboardStats)
+			dashboard.GET("/blind-box-trend", dashboardHandler.GetBlindBoxOpeningTrend)
+			dashboard.GET("/recent-activity", dashboardHandler.GetRecentActivity)
 		}
 
 		// 盲盒接口 - 部分需要认证

@@ -383,3 +383,132 @@ func (s *BlindBoxService) GetBlindBoxOpeningHistory(ctx context.Context, boxID s
 
 	return openings, nil
 }
+
+// GetBlindBoxOpeningTrend 获取盲盒开启趋势
+func (s *BlindBoxService) GetBlindBoxOpeningTrend(ctx context.Context, startTime, endTime time.Time) (*model.BlindBoxOpeningTrendResponse, error) {
+	var trendData []model.BlindBoxOpeningTrend
+	var trendPercentage float64
+
+	// 根据时间范围构建查询
+	query := s.db.Model(&model.BlindBoxOpening{}).
+		Where("opened_at >= ? AND opened_at <= ?", startTime, endTime)
+
+	// 按日期分组统计
+	rows, err := query.Select("DATE(opened_at) as date, COUNT(*) as count").
+		Group("DATE(opened_at)").
+		Order("date ASC").
+		Rows()
+	if err != nil {
+		return nil, errors.Wrap(err, "查询趋势数据失败")
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var date string
+		var count int
+		if err := rows.Scan(&date, &count); err != nil {
+			return nil, errors.Wrap(err, "扫描趋势数据失败")
+		}
+		trendData = append(trendData, model.BlindBoxOpeningTrend{
+			Date:  date,
+			Count: count,
+		})
+	}
+
+	// 计算趋势百分比
+	if len(trendData) >= 2 {
+		firstCount := trendData[0].Count
+		lastCount := trendData[len(trendData)-1].Count
+		if firstCount > 0 {
+			trendPercentage = float64(lastCount-firstCount) / float64(firstCount) * 100
+		}
+	}
+
+	return &model.BlindBoxOpeningTrendResponse{
+		Data:            trendData,
+		TrendPercentage: trendPercentage,
+	}, nil
+}
+
+// GetDashboardStats 获取仪表盘统计数据
+func (s *BlindBoxService) GetDashboardStats(ctx context.Context) (*model.DashboardStats, error) {
+	stats := &model.DashboardStats{}
+
+	// 获取今日收入
+	var dailyRevenue float64
+	if err := s.db.Model(&model.BlindBoxOrder{}).
+		Where("DATE(created_at) = DATE(?)", time.Now()).
+		Select("COALESCE(SUM(price), 0)").
+		Scan(&dailyRevenue).Error; err != nil {
+		return nil, errors.Wrap(err, "查询今日收入失败")
+	}
+
+	// 获取昨日收入用于计算变化率
+	var yesterdayRevenue float64
+	if err := s.db.Model(&model.BlindBoxOrder{}).
+		Where("DATE(created_at) = DATE(?)", time.Now().AddDate(0, 0, -1)).
+		Select("COALESCE(SUM(price), 0)").
+		Scan(&yesterdayRevenue).Error; err != nil {
+		return nil, errors.Wrap(err, "查询昨日收入失败")
+	}
+
+	// 计算收入变化率
+	stats.DailyRevenue = dailyRevenue
+	if yesterdayRevenue > 0 {
+		stats.DailyRevenueChange = (dailyRevenue - yesterdayRevenue) / yesterdayRevenue * 100
+	}
+	stats.DailyRevenueIsPositive = stats.DailyRevenueChange >= 0
+
+	// 获取盲盒总数
+	var totalBoxes int64
+	if err := s.db.Model(&model.BlindBox{}).Count(&totalBoxes).Error; err != nil {
+		return nil, errors.Wrap(err, "查询盲盒总数失败")
+	}
+
+	// 获取用户总数
+	var totalUsers int64
+	if err := s.db.Model(&model.User{}).Count(&totalUsers).Error; err != nil {
+		return nil, errors.Wrap(err, "查询用户总数失败")
+	}
+
+	// 获取总捐赠金额
+	var totalDonations float64
+	if err := s.db.Model(&model.BlindBox{}).
+		Select("COALESCE(SUM(donation_amount), 0)").
+		Scan(&totalDonations).Error; err != nil {
+		return nil, errors.Wrap(err, "查询总捐赠金额失败")
+	}
+
+	stats.TotalBoxes = int(totalBoxes)
+	stats.TotalUsers = int(totalUsers)
+	stats.TotalDonations = totalDonations
+
+	// 设置默认变化率
+	stats.TotalBoxesChange = 0
+	stats.TotalBoxesIsPositive = true
+	stats.TotalUsersChange = 0
+	stats.TotalUsersIsPositive = true
+	stats.TotalDonationsChange = 0
+	stats.TotalDonationsIsPositive = true
+
+	return stats, nil
+}
+
+// GetRecentOpenings 获取最近的盲盒开启记录
+func (s *BlindBoxService) GetRecentOpenings(ctx context.Context, openings *[]model.BlindBoxOpening) error {
+	return s.db.WithContext(ctx).
+		Preload("User").
+		Preload("BlindBox").
+		Order("opened_at desc").
+		Limit(10).
+		Find(openings).Error
+}
+
+// GetUserInfo 获取用户信息
+func (s *BlindBoxService) GetUserInfo(ctx context.Context, userID string) (*model.User, error) {
+	var user model.User
+	if err := s.db.WithContext(ctx).First(&user, "id = ?", userID).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}

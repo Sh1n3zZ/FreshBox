@@ -197,6 +197,8 @@ export const API_URLS = {
     DONATIONS: `${config.apiBaseUrl}/dashboard/donations`,
     RECENT_BOXES: `${config.apiBaseUrl}/dashboard/recent-boxes`,
     TOP_TASKS: `${config.apiBaseUrl}/dashboard/top-tasks`,
+    BLIND_BOX_TREND: `${config.apiBaseUrl}/dashboard/blind-box-trend`,
+    RECENT_ACTIVITY: `${config.apiBaseUrl}/dashboard/recent-activity`,
   },
 };
 

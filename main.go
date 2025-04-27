@@ -150,6 +150,7 @@ func main() {
 		ingredientHandler,
 		taskHandler,
 		mailHandler,
+		blindBoxService,
 	)
 
 	// 服务前端构建文件
