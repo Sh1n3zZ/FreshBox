@@ -134,7 +134,7 @@ export function CreateProduct({ onProductCreated, product, readOnly = false, ope
       };
 
       let newProduct;
-      if (product) {
+      if (product && !hideEditIcon) {
         newProduct = await productService.updateProduct(product.id, productData);
         toast.success("产品更新成功。", { id: 'update-product-success' });
       } else {
@@ -147,8 +147,8 @@ export function CreateProduct({ onProductCreated, product, readOnly = false, ope
       onProductCreated?.(newProduct);
     } catch (error: any) {
       const errorMsg = error.response?.data?.details || error.message;
-      toast.error(`${product ? '更新' : '创建'}产品失败: ${errorMsg}`, { id: 'product-error' });
-      console.error(`${product ? '更新' : '创建'}产品失败:`, error.response || error);
+      toast.error(`${product && !hideEditIcon ? '更新' : '创建'}产品失败: ${errorMsg}`, { id: 'product-error' });
+      console.error(`${product && !hideEditIcon ? '更新' : '创建'}产品失败:`, error.response || error);
     } finally {
       setIsSubmitting(false);
     }

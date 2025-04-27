@@ -191,6 +191,7 @@ export default function RecognitionResults({ summary, rawText, isLoading }: Reco
   const handleProductCreated = (newProduct: Product) => {
     toast.success('产品导入成功')
     setIsDialogOpen(false)
+    setInitialProduct(null)  // 清空初始产品数据
   }
 
   return (
