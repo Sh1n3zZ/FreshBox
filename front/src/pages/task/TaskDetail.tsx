@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useParams, useNavigate } from 'react-router-dom'
 import { 
   Trophy, 
@@ -22,23 +21,37 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { API_URLS } from '@/conf/env'
+import { getImageUrl } from '@/conf/env'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar } from '@/components/ui/avatar'
+import { apiService } from '@/lib/api'
+
+// API响应接口
+interface ApiResponse {
+  data: TaskDetail;
+  msg: string;
+  trace_id: string;
+}
+
+// 内容响应接口
+interface ContentsResponse {
+  data: TaskSubmission[];
+  msg: string;
+  trace_id: string;
+}
 
 // 挑战详情接口
 interface TaskDetail {
   id: string;
+  user_id: string;
+  type: string;
   title: string;
   description: string;
-  difficulty: 'easy' | 'medium' | 'hard';
-  participants: number;
+  status: 'pending' | 'ongoing' | 'completed';
+  created_at: string;
   deadline: string;
-  tags: string[];
-  image: string;
-  steps: TaskStep[];
-  rewards: string;
-  status?: 'not_started' | 'in_progress' | 'completed';
+  reward: number;
+  steps?: TaskStep[];
 }
 
 // 挑战步骤接口
@@ -46,8 +59,8 @@ interface TaskStep {
   id: number;
   title: string;
   description: string;
-  type: 'purchase' | 'create' | 'submit' | 'other';
-  status?: 'not_started' | 'in_progress' | 'completed';
+  type: string;
+  status?: string;
 }
 
 // 挑战结果接口
@@ -58,24 +71,23 @@ interface TaskSubmission {
   avatar: string;
   title: string;
   description: string;
-  images: string[];
+  images?: string[];
   likes: number;
   comments: number;
   createdAt: string;
 }
 
 // Mock数据
-const mockTaskDetail: TaskDetail = {
+const mockTaskDetail = {
   id: '1',
+  user_id: "mock-user-id",
+  type: "recipe_challenge",
   title: "夏日清凉料理挑战",
   description: "使用盲盒食材制作清爽的夏日料理，赢取丰厚奖励",
-  difficulty: "easy",
-  participants: 246,
-  deadline: "2024-08-31",
-  tags: ["夏季限定", "清凉料理"],
-  image: "/images/ximilu.jpg",
-  rewards: "300积分 + 限定徽章",
-  status: "not_started",
+  status: "pending",
+  created_at: "2025-04-26T23:34:38.7470149+08:00",
+  deadline: "2025-05-03T23:34:38.7470149+08:00",
+  reward: 300,
   steps: [
     {
       id: 1,
@@ -141,7 +153,6 @@ const mockSubmissions: TaskSubmission[] = [
 ];
 
 export default function TaskDetail() {
-  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
@@ -158,31 +169,67 @@ export default function TaskDetail() {
       setError(null);
       
       try {
-        // 真实API调用
-        if (process.env.NODE_ENV === 'production') {
-          const response = await fetch(API_URLS.TASK.DETAIL(id || ''));
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        // 使用apiService获取任务详情
+        const response = await apiService.get<ApiResponse>(`/tasks/${id}`);
+        if (response && response.data) {
+          // 如果没有步骤信息，添加默认步骤
+          const taskData = response.data;
+          if (!taskData.steps) {
+            taskData.steps = [
+              {
+                id: 1,
+                title: "了解任务",
+                description: "仔细阅读任务要求和奖励信息",
+                type: "info",
+                status: "pending"
+              },
+              {
+                id: 2,
+                title: "参与挑战",
+                description: "根据任务类型完成相应挑战",
+                type: "action",
+                status: "pending"
+              },
+              {
+                id: 3,
+                title: "提交结果",
+                description: "上传您的挑战成果",
+                type: "submit",
+                status: "pending"
+              }
+            ];
           }
-          const data = await response.json();
-          setTaskDetail(data);
+          
+          setTaskDetail(taskData);
           
           // 获取任务内容（提交结果）
-          const contentsResponse = await fetch(API_URLS.TASK.CONTENTS(id || ''));
-          if (contentsResponse.ok) {
-            const contentsData = await contentsResponse.json();
-            setSubmissions(contentsData);
+          const contentsResponse = await apiService.get<ContentsResponse>(`/tasks/${id}/contents`);
+          if (contentsResponse && contentsResponse.data) {
+            setSubmissions(contentsResponse.data);
           }
         } else {
-          // Mock数据
-          setTimeout(() => {
-            setTaskDetail(mockTaskDetail);
-            setSubmissions(mockSubmissions);
-          }, 0);
+          throw new Error('无效的API响应');
         }
       } catch (err) {
-        console.error('Failed to fetch task details:', err);
+        console.error('获取挑战详情失败:', err);
         setError('获取挑战详情失败，请稍后再试');
+        
+        // 开发环境下使用mock数据
+        if (import.meta.env.DEV) {
+          // 将mock数据适配为新的数据结构
+          const adaptedMockData: TaskDetail = {
+            ...mockTaskDetail,
+            user_id: "mock-user-id",
+            type: "recipe_challenge",
+            status: "pending",
+            created_at: "2025-04-26T23:34:38.7470149+08:00",
+            deadline: "2025-05-03T23:34:38.7470149+08:00",
+            reward: 50
+          };
+          
+          setTaskDetail(adaptedMockData);
+          setSubmissions(mockSubmissions);
+        }
       } finally {
         setLoading(false);
       }
@@ -194,37 +241,19 @@ export default function TaskDetail() {
   // 加入挑战
   const joinTask = async () => {
     try {
-      // 真实API调用
-      if (process.env.NODE_ENV === 'production') {
-        const response = await fetch(API_URLS.TASK.UPDATE_STATUS(id || ''), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ status: 'in_progress' })
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        // 更新本地状态
-        setTaskDetail(prev => prev ? { ...prev, status: 'in_progress' } : null);
-      } else {
-        // Mock数据
-        setTimeout(() => {
-          setTaskDetail(prev => prev ? { ...prev, status: 'in_progress' } : null);
-        }, 300);
-      }
+      await apiService.put(`/tasks/${id}/status`, { status: 'ongoing' });
+      
+      // 更新本地状态
+      setTaskDetail(prev => prev ? { ...prev, status: 'ongoing' } : null);
     } catch (err) {
-      console.error('Failed to join task:', err);
+      console.error('加入挑战失败:', err);
       setError('加入挑战失败，请稍后再试');
     }
   };
   
   // 购买相关盲盒
   const purchaseBlindBox = () => {
-    navigate('/blindbox/detail/summer-special'); // 导航到盲盒详情页
+    navigate(`/blind-boxes/${id}/purchase`); // 导航到盲盒详情页
   };
   
   // 提交挑战结果
@@ -241,31 +270,12 @@ export default function TaskDetail() {
     }
   };
   
-  // 获取难度标签
-  const getDifficultyLabel = (difficulty: string) => {
-    switch(difficulty) {
-      case 'easy': return t('dashboard.tasks.difficulty-easy');
-      case 'medium': return t('dashboard.tasks.difficulty-medium');
-      case 'hard': return t('dashboard.tasks.difficulty-hard');
-      default: return t('dashboard.tasks.difficulty-all');
-    }
-  };
-
-  // 获取难度颜色
-  const getDifficultyColor = (difficulty: string) => {
-    switch(difficulty) {
-      case 'easy': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      case 'hard': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-      default: return '';
-    }
-  };
-  
   // 获取步骤状态图标
   const getStepStatusIcon = (status?: string) => {
     switch(status) {
       case 'completed': return <Check className="h-5 w-5 text-green-500" />;
-      case 'in_progress': return <CircleDashed className="h-5 w-5 text-blue-500" />;
+      case 'in_progress': 
+      case 'ongoing': return <CircleDashed className="h-5 w-5 text-blue-500" />;
       default: return <Clock className="h-5 w-5 text-gray-400" />;
     }
   };
@@ -312,7 +322,47 @@ export default function TaskDetail() {
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     const target = e.currentTarget;
     target.onerror = null; // 防止循环加载
-    target.src = '/images/placeholder.jpg';
+    target.src = getImageUrl('/images/placeholder.jpg');
+  };
+  
+  // 获取状态标签
+  const getStatusLabel = (status: string) => {
+    switch(status) {
+      case 'pending': return '待开始';
+      case 'ongoing': return '进行中';
+      case 'completed': return '已完成';
+      default: return '未知状态';
+    }
+  };
+
+  // 获取状态颜色
+  const getStatusColor = (status: string) => {
+    switch(status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+      case 'ongoing': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+      case 'completed': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      default: return '';
+    }
+  };
+  
+  // 获取任务类型标签
+  const getTypeLabel = (type: string) => {
+    switch(type) {
+      case 'recipe_challenge': return '料理挑战';
+      case 'food_rescue': return '食物拯救';
+      case 'community_sharing': return '社区分享';
+      default: return type;
+    }
+  };
+  
+  // 获取任务图标
+  const getTaskTypeIcon = (type: string) => {
+    switch(type) {
+      case 'recipe_challenge': return <Utensils className="h-5 w-5 text-primary" />;
+      case 'food_rescue': return <ShoppingBag className="h-5 w-5 text-primary" />;
+      case 'community_sharing': return <Users className="h-5 w-5 text-primary" />;
+      default: return <Trophy className="h-5 w-5 text-primary" />;
+    }
   };
   
   if (loading) {
@@ -355,35 +405,30 @@ export default function TaskDetail() {
       <div className="mb-8 flex flex-col md:flex-row gap-6">
         <div className="w-full md:w-2/3">
           <div className="relative h-64 rounded-lg overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent z-10" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/40 z-10" />
             <div className="absolute top-4 left-4 z-20">
-              <Badge className={getDifficultyColor(taskDetail.difficulty)}>
-                {getDifficultyLabel(taskDetail.difficulty)}
+              <Badge className={getStatusColor(taskDetail.status)}>
+                {getStatusLabel(taskDetail.status)}
               </Badge>
             </div>
-            <img 
-              src={taskDetail.image} 
-              alt={taskDetail.title}
-              className="w-full h-full object-cover"
-              onError={handleImageError}
-            />
-            <div className="absolute bottom-0 left-0 right-0 p-4 z-20 text-white">
-              <h1 className="text-3xl font-bold mb-2">{taskDetail.title}</h1>
-              <div className="flex flex-wrap gap-2 mb-3">
-                {taskDetail.tags.map((tag, index) => (
-                  <Badge key={index} variant="outline" className="text-xs bg-white/20 text-white">
-                    {tag}
-                  </Badge>
-                ))}
+            <div className="absolute inset-0 flex items-center justify-center z-20">
+              <div className="text-center">
+                {getTaskTypeIcon(taskDetail.type)}
+                <h1 className="text-3xl font-bold mt-4">{taskDetail.title}</h1>
+                <Badge variant="outline" className="mt-2">
+                  {getTypeLabel(taskDetail.type)}
+                </Badge>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center">
-                  <Users className="h-4 w-4 mr-1" />
-                  <span>{taskDetail.participants} 人参与</span>
-                </div>
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
+              <div className="flex items-center justify-between gap-4 text-slate-800">
                 <div className="flex items-center">
                   <Calendar className="h-4 w-4 mr-1" />
-                  <span>截止日期: {taskDetail.deadline}</span>
+                  <span>截止日期: {new Date(taskDetail.deadline).toLocaleDateString()}</span>
+                </div>
+                <div className="flex items-center">
+                  <Trophy className="h-4 w-4 mr-1" />
+                  <span>奖励: {taskDetail.reward} 积分</span>
                 </div>
               </div>
             </div>
@@ -399,13 +444,13 @@ export default function TaskDetail() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-lg font-semibold">{taskDetail.rewards}</p>
+              <p className="text-lg font-semibold">{taskDetail.reward} 积分</p>
               <p className="text-muted-foreground mt-2">
                 完成所有挑战步骤即可获得奖励
               </p>
             </CardContent>
             <CardFooter className="flex flex-col">
-              {taskDetail.status === 'not_started' ? (
+              {taskDetail.status === 'pending' ? (
                 <Button 
                   className="w-full" 
                   size="lg"
@@ -414,7 +459,7 @@ export default function TaskDetail() {
                   <Utensils className="mr-2 h-4 w-4" />
                   参与挑战
                 </Button>
-              ) : taskDetail.status === 'in_progress' ? (
+              ) : taskDetail.status === 'ongoing' ? (
                 <div className="space-y-3 w-full">
                   <div className="text-sm text-center text-muted-foreground mb-2">
                     您已加入此挑战，请完成以下步骤
@@ -463,6 +508,20 @@ export default function TaskDetail() {
             </CardHeader>
             <CardContent>
               <p>{taskDetail.description}</p>
+              <div className="mt-4 flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    创建时间: {new Date(taskDetail.created_at).toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    截止日期: {new Date(taskDetail.deadline).toLocaleString()}
+                  </span>
+                </div>
+              </div>
             </CardContent>
           </Card>
           
@@ -472,7 +531,7 @@ export default function TaskDetail() {
               <CardTitle>挑战步骤</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {taskDetail.steps.map((step, index) => (
+              {taskDetail.steps && taskDetail.steps.map((step, index) => (
                 <div key={step.id} className="relative">
                   <div className="flex">
                     <div className="mr-4 flex-shrink-0">
@@ -501,11 +560,18 @@ export default function TaskDetail() {
                   </div>
                   
                   {/* 连接线 */}
-                  {index < taskDetail.steps.length - 1 && (
+                  {taskDetail.steps && index < taskDetail.steps.length - 1 && (
                     <div className="absolute left-5 top-10 bottom-0 w-0.5 bg-border h-6"></div>
                   )}
                 </div>
               ))}
+              
+              {/* 如果没有步骤，显示提示信息 */}
+              {(!taskDetail.steps || taskDetail.steps.length === 0) && (
+                <div className="text-center py-6 text-muted-foreground">
+                  暂无详细步骤信息，请按照挑战描述完成任务。
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -519,19 +585,25 @@ export default function TaskDetail() {
                   <div className="relative">
                     <ScrollArea className="h-64">
                       <div className="flex snap-x snap-mandatory overflow-x-auto">
-                        {submission.images.map((image, i) => (
-                          <div key={i} className="snap-center shrink-0 w-full h-64">
-                            <img 
-                              src={image} 
-                              alt={`${submission.title} - 图片 ${i+1}`}
-                              className="w-full h-full object-cover"
-                              onError={handleImageError}
-                            />
+                        {submission.images && submission.images.length > 0 ? (
+                          submission.images.map((image, i) => (
+                            <div key={i} className="snap-center shrink-0 w-full h-64">
+                              <img 
+                                src={getImageUrl(image)} 
+                                alt={`${submission.title} - 图片 ${i+1}`}
+                                className="w-full h-full object-cover"
+                                onError={handleImageError}
+                              />
+                            </div>
+                          ))
+                        ) : (
+                          <div className="flex items-center justify-center w-full h-64 bg-muted">
+                            <Image className="h-12 w-12 text-muted-foreground/50" />
                           </div>
-                        ))}
+                        )}
                       </div>
                     </ScrollArea>
-                    {submission.images.length > 1 && (
+                    {submission.images && submission.images.length > 1 && (
                       <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
                         {submission.images.map((_, i) => (
                           <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/70"></div>
@@ -543,7 +615,7 @@ export default function TaskDetail() {
                   <CardContent className="pt-4">
                     <div className="flex items-center mb-3">
                       <Avatar className="h-6 w-6 mr-2">
-                        <img src={submission.avatar} alt={submission.username} />
+                        <img src={getImageUrl(submission.avatar)} alt={submission.username} />
                       </Avatar>
                       <span className="font-medium">{submission.username}</span>
                     </div>
