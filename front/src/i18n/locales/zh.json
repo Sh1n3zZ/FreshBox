@@ -28,6 +28,9 @@
     "admin-panel": "管理面板",
     "title": "仪表盘",
     "welcome": "欢迎，{{name}}！查看系统运行状态和关键指标。",
+    "daysAgo": "天",
+    "ago": "前",
+    "opened": "开启了盲盒",
     "tabs": {
       "overview": "概览",
       "analytics": "分析",
@@ -40,7 +43,8 @@
       "new": "新建",
       "viewAll": "查看全部",
       "Export Data": "导出数据"
-    },    "stats": {
+    },
+    "stats": {
       "dailyRevenue": "日营收",
       "dailyRevenueDesc": "今日的总收入金额",
       "dailyRevenueUp": "收入上涨",
@@ -59,7 +63,8 @@
       "totalDonationsDown": "捐赠金额减少"
     },
     "charts": {
-      "noData": "暂无数据",
+      "title": "使用趋势",
+      "description": "近期识别统计",
       "loading": "图表加载中...",
       "periods": {
         "daily": "每日",
@@ -67,37 +72,44 @@
         "monthly": "每月",
         "yearly": "每年"
       },
-      "periodRange": {
-        "lastSevenDays": "过去7天",
-        "lastEightWeeks": "过去8周",
-        "lastSixMonths": "过去6个月"
-      },
-      "revenue": {
-        "title": "收入趋势",
-        "description": "近期收入统计",
-        "stable": "盲盒开启趋势稳定",
-        "trendingUp": "盲盒开启趋势上升",
-        "trendingDown": "盲盒开启趋势下降"
-      },
-      "openingTrend": {
+      "blindBoxTrend": {
         "title": "盲盒开启趋势",
-        "description": "近期盲盒开启数量统计"
+        "description": "{{date}}的盲盒开启统计",
+        "selectPeriod": "选择时间范围",
+        "daily": "每日",
+        "weekly": "每周",
+        "monthly": "每月",
+        "noData": "暂无数据",
+        "trend": "{{percentage}}% {{direction}}",
+        "trendUp": "上升",
+        "trendDown": "下降",
+        "noTrend": "暂无趋势数据",
+        "period": "统计周期：{{date}}"
       }
     },
     "activity": {
       "title": "最近活动",
       "description": "用户的最新操作记录",
-      "actions": {
-        "recognized": "识别了一张图片",
-        "batchProcessed": "批量处理了图片",
-        "registered": "注册了账号"
+      "noActivities": "暂无活动记录",
+      "error": {
+        "fetchingActivities": "获取活动记录失败"
       },
-      "imageCount": "{{count}}张图片",
+      "actions": {
+        "openedBox": "开启了盲盒",
+        "createdBox": "创建了盲盒",
+        "sharedBox": "分享了盲盒",
+        "commented": "发表了评论"
+      },
       "time": {
-        "minutesAgo": "{{count}}分钟前",
-        "hoursAgo": "{{count}}小时前",
-        "daysAgo": "{{count}}天前"
-      }
+        "minutes": "分钟",
+        "hours": "小时",
+        "days": "天",
+        "weeks": "周",
+        "months": "月",
+        "years": "年",
+        "ago": "前"
+      },
+      "boxCount": "{{count}}个盲盒"
     },
     "quickActions": {
       "ocr": {
@@ -145,5 +157,8 @@
       "title": "{{module}}功能开发中",
       "description": "此功能正在开发中，敬请期待！"
     }
+  },
+  "common": {
+    "loading": "加载中..."
   }
 }
