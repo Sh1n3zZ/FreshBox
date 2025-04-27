@@ -230,6 +230,14 @@ func SetupRouter(
 			protected.GET("/user/profile", userHandler.GetProfile)
 			protected.PUT("/user/profile", userHandler.UpdateProfile)
 
+			// 管理员用户管理接口
+			admin := protected.Group("/admin")
+			{
+				admin.GET("/users", userHandler.ListUsers)
+				admin.PUT("/users/:user_id", userHandler.UpdateUser)
+				admin.DELETE("/users/:user_id", userHandler.DeleteUser)
+			}
+
 			// 上传图片 - 需要认证的上传（可选，如果需要认证）
 			protected.POST("/upload/auth", imageHandler.UploadImage)
 

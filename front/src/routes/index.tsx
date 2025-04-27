@@ -12,8 +12,9 @@ const TaskDetail = lazy(() => import('@/pages/task/TaskDetail'))
 const TaskSubmit = lazy(() => import('@/pages/task/TaskSubmit'))
 const Login = lazy(() => import('@/pages/auth/Login'))
 const Register = lazy(() => import('@/pages/auth/Register'))
-const Dashboard = lazy(() => import('@/pages/dashboard/Dashboard'))
+const Dashboard = lazy(() => import('@/pages/admin/Dashboard'))
 const Settings = lazy(() => import('@/pages/admin/Settings'))
+const Users = lazy(() => import('@/pages/admin/Users'))
 const NotFound = lazy(() => import('@/pages/NotFound'))
 const BlindBoxPage = lazy(() => import('@/pages/blindbox/BlindBox'))
 
@@ -35,6 +36,10 @@ const routes: RouteObject[] = [
           {
             path: 'settings',
             element: <Settings />
+          },
+          {
+            path: 'users',
+            element: <Users />
           }
         ]
       },

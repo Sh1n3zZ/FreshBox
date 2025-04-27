@@ -129,6 +129,11 @@ export const API_URLS = {
   // 用户相关API
   USER: {
     PROFILE: `${config.apiBaseUrl}/user/profile`,
+    ADMIN: {
+      LIST: `${config.apiBaseUrl}/admin/users`,
+      UPDATE: (id: string) => `${config.apiBaseUrl}/admin/users/${id}`,
+      DELETE: (id: string) => `${config.apiBaseUrl}/admin/users/${id}`,
+    },
   },
   
   // 盲盒相关API

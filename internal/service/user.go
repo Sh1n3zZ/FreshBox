@@ -166,3 +166,65 @@ func (s *UserService) IsAdmin(ctx context.Context, userID string) (bool, error) 
 	}
 	return user.Role == "admin", nil
 }
+
+// ListUsers 获取用户列表（管理员功能）
+func (s *UserService) ListUsers(ctx context.Context, page, size int, keyword string) ([]*User, int64, error) {
+	var users []*User
+	var total int64
+
+	query := s.db.Model(&User{})
+	if keyword != "" {
+		query = query.Where("username LIKE ? OR email LIKE ?", "%"+keyword+"%", "%"+keyword+"%")
+	}
+
+	// 获取总数
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, errors.Wrap(err, "获取用户总数失败")
+	}
+
+	// 分页查询
+	offset := (page - 1) * size
+	if err := query.Offset(offset).Limit(size).Find(&users).Error; err != nil {
+		return nil, 0, errors.Wrap(err, "获取用户列表失败")
+	}
+
+	return users, total, nil
+}
+
+// UpdateUserByAdmin 管理员更新用户信息
+func (s *UserService) UpdateUserByAdmin(ctx context.Context, userID string, updates map[string]interface{}) error {
+	// 检查用户是否存在
+	var count int64
+	if err := s.db.Model(&User{}).Where("id = ?", userID).Count(&count).Error; err != nil {
+		return errors.Wrap(err, "检查用户失败")
+	}
+	if count == 0 {
+		return errors.New("用户不存在")
+	}
+
+	// 更新用户信息
+	if err := s.db.Model(&User{}).Where("id = ?", userID).Updates(updates).Error; err != nil {
+		return errors.Wrap(err, "更新用户信息失败")
+	}
+
+	return nil
+}
+
+// DeleteUser 删除用户（管理员功能）
+func (s *UserService) DeleteUser(ctx context.Context, userID string) error {
+	// 检查用户是否存在
+	var count int64
+	if err := s.db.Model(&User{}).Where("id = ?", userID).Count(&count).Error; err != nil {
+		return errors.Wrap(err, "检查用户失败")
+	}
+	if count == 0 {
+		return errors.New("用户不存在")
+	}
+
+	// 删除用户
+	if err := s.db.Delete(&User{}, "id = ?", userID).Error; err != nil {
+		return errors.Wrap(err, "删除用户失败")
+	}
+
+	return nil
+}

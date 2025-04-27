@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -342,4 +343,213 @@ type UpdateProfileResponse struct {
 	Email    string `json:"email"`
 	Avatar   string `json:"avatar,omitempty"`
 	Role     string `json:"role"`
+}
+
+// ListUsersResponse 用户列表响应
+type ListUsersResponse struct {
+	Users []UserInfo `json:"users"`
+	Total int64      `json:"total"`
+	Page  int        `json:"page"`
+	Size  int        `json:"size"`
+}
+
+// UpdateUserRequest 更新用户请求
+type UpdateUserRequest struct {
+	Username string `json:"username" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
+	Role     string `json:"role" binding:"required,oneof=admin user"`
+	Avatar   string `json:"avatar,omitempty"`
+}
+
+// UpdateUserResponse 更新用户响应
+type UpdateUserResponse struct {
+	Message string `json:"message"`
+}
+
+// DeleteUserResponse 删除用户响应
+type DeleteUserResponse struct {
+	Message string `json:"message"`
+}
+
+// UserInfo 用户信息
+type UserInfo struct {
+	ID       string `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Role     string `json:"role"`
+	Avatar   string `json:"avatar,omitempty"`
+}
+
+// ListUsers 获取用户列表（管理员功能）
+// @Summary 获取用户列表
+// @Description 管理员获取用户列表
+// @Tags 用户管理
+// @Accept json
+// @Produce json
+// @Param page query int false "页码" default(1)
+// @Param size query int false "每页数量" default(10)
+// @Param keyword query string false "搜索关键词"
+// @Success 200 {object} ListUsersResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v1/admin/users [get]
+func (h *UserHandler) ListUsers(c *gin.Context) {
+	// 验证是否为管理员
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "未授权",
+		})
+		return
+	}
+
+	isAdmin, err := h.userService.IsAdmin(c, userID.(string))
+	if err != nil || !isAdmin {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "无权限访问",
+		})
+		return
+	}
+
+	// 获取查询参数
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
+	keyword := c.Query("keyword")
+
+	// 调用服务层获取用户列表
+	users, total, err := h.userService.ListUsers(c, page, size, keyword)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// 构建响应
+	response := ListUsersResponse{
+		Users: make([]UserInfo, len(users)),
+		Total: total,
+		Page:  page,
+		Size:  size,
+	}
+
+	for i, user := range users {
+		response.Users[i] = UserInfo{
+			ID:       user.ID,
+			Username: user.Username,
+			Email:    user.Email,
+			Role:     user.Role,
+			Avatar:   user.Avatar,
+		}
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// UpdateUser 更新用户信息（管理员功能）
+// @Summary 更新用户信息
+// @Description 管理员更新用户信息
+// @Tags 用户管理
+// @Accept json
+// @Produce json
+// @Param user_id path string true "用户ID"
+// @Param request body UpdateUserRequest true "更新信息"
+// @Success 200 {object} UpdateUserResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v1/admin/users/{user_id} [put]
+func (h *UserHandler) UpdateUser(c *gin.Context) {
+	// 验证是否为管理员
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "未授权",
+		})
+		return
+	}
+
+	isAdmin, err := h.userService.IsAdmin(c, userID.(string))
+	if err != nil || !isAdmin {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "无权限访问",
+		})
+		return
+	}
+
+	// 获取请求参数
+	targetUserID := c.Param("user_id")
+	var req UpdateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "请求参数无效",
+		})
+		return
+	}
+
+	// 构建更新数据
+	updates := map[string]interface{}{
+		"username": req.Username,
+		"email":    req.Email,
+		"role":     req.Role,
+	}
+	if req.Avatar != "" {
+		updates["avatar"] = req.Avatar
+	}
+
+	// 调用服务层更新用户信息
+	if err := h.userService.UpdateUserByAdmin(c, targetUserID, updates); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, UpdateUserResponse{
+		Message: "用户信息更新成功",
+	})
+}
+
+// DeleteUser 删除用户（管理员功能）
+// @Summary 删除用户
+// @Description 管理员删除用户
+// @Tags 用户管理
+// @Accept json
+// @Produce json
+// @Param user_id path string true "用户ID"
+// @Success 200 {object} DeleteUserResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v1/admin/users/{user_id} [delete]
+func (h *UserHandler) DeleteUser(c *gin.Context) {
+	// 验证是否为管理员
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "未授权",
+		})
+		return
+	}
+
+	isAdmin, err := h.userService.IsAdmin(c, userID.(string))
+	if err != nil || !isAdmin {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "无权限访问",
+		})
+		return
+	}
+
+	// 获取要删除的用户ID
+	targetUserID := c.Param("user_id")
+
+	// 调用服务层删除用户
+	if err := h.userService.DeleteUser(c, targetUserID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, DeleteUserResponse{
+		Message: "用户删除成功",
+	})
 }
