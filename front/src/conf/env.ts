@@ -131,6 +131,7 @@ export const API_URLS = {
     PROFILE: `${config.apiBaseUrl}/user/profile`,
     ADMIN: {
       LIST: `${config.apiBaseUrl}/admin/users`,
+      CREATE: `${config.apiBaseUrl}/admin/users`,
       UPDATE: (id: string) => `${config.apiBaseUrl}/admin/users/${id}`,
       DELETE: (id: string) => `${config.apiBaseUrl}/admin/users/${id}`,
     },
