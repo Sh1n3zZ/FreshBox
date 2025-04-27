@@ -113,6 +113,7 @@ func SetupRouter(
 		{
 			dashboard.GET("/summary", dashboardHandler.GetDashboardStats)
 			dashboard.GET("/blind-box-trend", dashboardHandler.GetBlindBoxOpeningTrend)
+			dashboard.GET("/recent-activity", dashboardHandler.GetRecentActivity)
 		}
 
 		// 盲盒接口 - 部分需要认证

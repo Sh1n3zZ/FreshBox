@@ -493,3 +493,22 @@ func (s *BlindBoxService) GetDashboardStats(ctx context.Context) (*model.Dashboa
 
 	return stats, nil
 }
+
+// GetRecentOpenings 获取最近的盲盒开启记录
+func (s *BlindBoxService) GetRecentOpenings(ctx context.Context, openings *[]model.BlindBoxOpening) error {
+	return s.db.WithContext(ctx).
+		Preload("User").
+		Preload("BlindBox").
+		Order("opened_at desc").
+		Limit(10).
+		Find(openings).Error
+}
+
+// GetUserInfo 获取用户信息
+func (s *BlindBoxService) GetUserInfo(ctx context.Context, userID string) (*model.User, error) {
+	var user model.User
+	if err := s.db.WithContext(ctx).First(&user, "id = ?", userID).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}

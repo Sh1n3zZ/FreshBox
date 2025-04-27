@@ -18,28 +18,9 @@ import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { BlindBoxOpeningTrendChart } from "@/components/BlindBoxOpeningTrendChart"
 import { DashboardStatsData } from "@/components/DashboardStatsData"
+import { UserRecentActivity } from "@/components/UserRecentActivity"
 import { formatCurrency } from '@/lib/utils'
 import { dashboardService, DashboardStats } from '@/lib/dashboard'
-
-interface ActivityItem {
-  id: number;
-  user: string;
-  avatar: string;
-  action: 'purchased' | 'opened' | 'donated';
-  time: number;
-  timeUnit: 'minutesAgo' | 'hoursAgo' | 'daysAgo';
-  boxCount?: number;
-  donationAmount?: number;
-}
-
-// 更新示例数据为盲盒相关的活动
-const recentActivity: ActivityItem[] = [
-  { id: 1, user: '张三', avatar: 'Z', action: 'purchased', time: 10, timeUnit: 'minutesAgo', boxCount: 2 },
-  { id: 2, user: '李四', avatar: 'L', action: 'opened', time: 30, timeUnit: 'minutesAgo', boxCount: 1 },
-  { id: 3, user: '王五', avatar: 'W', action: 'donated', time: 1, timeUnit: 'hoursAgo', donationAmount: 100 },
-  { id: 4, user: '赵六', avatar: 'Z', action: 'purchased', time: 2, timeUnit: 'hoursAgo', boxCount: 1 },
-  { id: 5, user: '钱七', avatar: 'Q', action: 'opened', time: 3, timeUnit: 'hoursAgo', boxCount: 3 }
-];
 
 export default function Dashboard() {
   const { user } = useAuth()
@@ -87,12 +68,6 @@ export default function Dashboard() {
       {/* 主要内容区域 */}
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="flex items-center justify-between">
-          <TabsList>
-            <TabsTrigger value="overview">{t('dashboard.tabs.overview')}</TabsTrigger>
-            <TabsTrigger value="analytics">{t('dashboard.tabs.analytics')}</TabsTrigger>
-            <TabsTrigger value="reports">{t('dashboard.tabs.reports')}</TabsTrigger>
-            <TabsTrigger value="settings">{t('dashboard.tabs.settings')}</TabsTrigger>
-          </TabsList>
           <div className="flex items-center gap-2">
             <Button 
               variant="outline" 
@@ -114,9 +89,9 @@ export default function Dashboard() {
           {/* 统计卡片 */}
           <DashboardStatsData stats={stats} />
 
-          <div className="grid gap-4 md:grid-cols-7">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             {/* 图表部分 */}
-            <Card className="md:col-span-4">
+            <Card className="md:col-span-2 lg:col-span-4">
               <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <div>
                   <CardTitle>{t('dashboard.charts.title')}</CardTitle>
@@ -129,67 +104,13 @@ export default function Dashboard() {
             </Card>
 
             {/* 最近活动 */}
-            <Card className="md:col-span-3">
-              <CardHeader className="flex flex-row items-center justify-between pb-3">
-                <div>
-                  <CardTitle>{t('dashboard.activity.title')}</CardTitle>
-                  <CardDescription>{t('dashboard.activity.description')}</CardDescription>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>{t('dashboard.actions.refresh')}</DropdownMenuItem>
-                    <DropdownMenuItem>{t('dashboard.actions.viewAll')}</DropdownMenuItem>
-                    <DropdownMenuItem>{t('Export Data')}</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {recentActivity.map((activity) => (
-                  <div key={activity.id} className="flex items-start space-x-3">
-                    <Avatar>
-                      <AvatarImage src={`/avatars/${activity.id}.png`} alt={activity.user} />
-                      <AvatarFallback>{activity.avatar}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium">
-                        <span className="font-semibold">{activity.user}</span>{' '}
-                        {t(`dashboard.activity.actions.${activity.action}`)}
-                        {activity.boxCount && (
-                          <Badge variant="secondary" className="ml-2 py-0">
-                            {t('dashboard.activity.boxCount', { count: activity.boxCount })}
-                          </Badge>
-                        )}
-                        {activity.donationAmount && (
-                          <Badge variant="secondary" className="ml-2 py-0">
-                            {formatCurrency(activity.donationAmount)}
-                          </Badge>
-                        )}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {t(`dashboard.activity.time.${activity.timeUnit}`, { count: activity.time })}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-              <CardFooter>
-                <Button variant="ghost" size="sm" className="w-full gap-1" asChild>
-                  <Link to="/activity">
-                    {t('dashboard.actions.viewAll')}
-                    <ArrowUpRight className="ml-1 h-3 w-3" />
-                  </Link>
-                </Button>
-              </CardFooter>
-            </Card>
+            <div className="md:col-span-2 lg:col-span-3">
+              <UserRecentActivity />
+            </div>
           </div>
 
           {/* 快捷操作 */}
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Card>
               <CardHeader>
                 <CardTitle>{t('dashboard.quickActions.ocr.title')}</CardTitle>
@@ -203,8 +124,8 @@ export default function Dashboard() {
                 </p>
               </CardContent>
               <CardFooter>
-                <Button variant="outline" asChild>
-                  <Link to="/settings/ocr" className="w-full justify-between">
+                <Button variant="outline" asChild className="w-full">
+                  <Link to="/settings/ocr" className="flex items-center justify-between">
                     {t('dashboard.quickActions.ocr.action')}
                     <ArrowUpRight className="h-4 w-4" />
                   </Link>
@@ -225,8 +146,8 @@ export default function Dashboard() {
                 </p>
               </CardContent>
               <CardFooter>
-                <Button variant="outline" asChild>
-                  <Link to="/settings/users" className="w-full justify-between">
+                <Button variant="outline" asChild className="w-full">
+                  <Link to="/settings/users" className="flex items-center justify-between">
                     {t('dashboard.quickActions.users.action')}
                     <ArrowUpRight className="h-4 w-4" />
                   </Link>
@@ -247,8 +168,8 @@ export default function Dashboard() {
                 </p>
               </CardContent>
               <CardFooter>
-                <Button variant="outline" asChild>
-                  <Link to="/settings/system" className="w-full justify-between">
+                <Button variant="outline" asChild className="w-full">
+                  <Link to="/settings/system" className="flex items-center justify-between">
                     {t('dashboard.quickActions.system.action')}
                     <ArrowUpRight className="h-4 w-4" />
                   </Link>
