@@ -111,6 +111,24 @@ export default function OCR() {
     URL.revokeObjectURL(url)
   }
 
+  // 添加处理样例图片点击的函数
+  const handleExampleClick = async () => {
+    try {
+      const response = await fetch('/images/example.jpg');
+      const blob = await response.blob();
+      const file = new File([blob], 'example.jpg', { type: 'image/jpeg' });
+      
+      if (fileInputRef.current) {
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        fileInputRef.current.files = dataTransfer.files;
+        handleFileChange({ target: fileInputRef.current } as React.ChangeEvent<HTMLInputElement>);
+      }
+    } catch (error) {
+      toast.error('加载样例图片失败');
+    }
+  };
+
   return (
     <div className="container mx-auto max-w-7xl py-6">
       <div className="mb-8 text-center">
@@ -120,7 +138,7 @@ export default function OCR() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-3">
         {/* 上传区域 */}
         <div className="rounded-lg border bg-card p-6 shadow-sm">
           <h2 className="mb-4 text-xl font-semibold">上传图片</h2>
@@ -210,22 +228,42 @@ export default function OCR() {
             )}
           </div>
           
-          <div className="min-h-[200px] rounded-lg border bg-muted/30 p-4">
+          <div className="min-h-[200px] rounded-lg border bg-muted/30 p-4 flex items-center justify-center">
             {isUploading ? (
-              <div className="flex h-full items-center justify-center">
+              <div className="flex items-center justify-center">
                 <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
               </div>
             ) : recognizedText ? (
-              <pre className="whitespace-pre-wrap break-words text-sm">{recognizedText}</pre>
+              <pre className="whitespace-pre-wrap break-words text-sm w-full">{recognizedText}</pre>
             ) : (
-              <div className="flex h-full flex-col items-center justify-center text-muted-foreground">
-                <FileText className="mb-2 h-10 w-10" />
-                <p>识别结果将在这里显示</p>
+              <div className="flex flex-col items-center justify-center">
+                <FileText className="mb-2 h-10 w-10 text-muted-foreground" />
+                <p className="text-muted-foreground">识别结果将在这里显示</p>
               </div>
             )}
           </div>
         </div>
+
+        {/*样例展示*/}
+        <div className="rounded-lg border bg-card p-6 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-xl font-semibold">识别样例</h2>
+          </div>
+          <div 
+            className="min-h-[200px] overflow-hidden rounded-lg border cursor-pointer"
+            onClick={handleExampleClick}
+          >
+            <img 
+              src="/images/example.jpg" 
+              alt="OCR识别样例"
+              className="h-full w-full object-cover hover:opacity-90 transition-opacity"
+            />
+          </div>
+          <p className="mt-4 text-sm text-muted-foreground text-center">
+            点击图片可以直接使用该样例进行识别
+          </p>
+        </div>
       </div>
     </div>
   )
-} 
+}
