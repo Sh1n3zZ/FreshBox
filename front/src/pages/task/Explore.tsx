@@ -37,7 +37,7 @@ const mockChallenges = [
     participants: 246,
     deadline: "2024-08-31",
     tags: ["夏季限定", "清凉料理"],
-    image: "/images/challenge1.jpg"
+    image: "/images/ximilu.jpg"
   },
   {
     id: 2,
@@ -47,7 +47,7 @@ const mockChallenges = [
     participants: 178,
     deadline: "2024-09-15",
     tags: ["创意料理", "家常菜"],
-    image: "/images/challenge2.jpg"
+    image: "/images/homeusualfood.jpeg"
   },
   {
     id: 3,
@@ -57,7 +57,7 @@ const mockChallenges = [
     participants: 92,
     deadline: "2024-10-01",
     tags: ["高级料理", "精致摆盘"],
-    image: "/images/challenge3.jpg"
+    image: "/images/beefmql.jpg"
   }
 ];
 
@@ -196,6 +196,13 @@ export default function Explore() {
     e.stopPropagation() // 阻止事件冒泡
     navigate(`/task/detail/${challengeId}`)
   }
+
+  // 添加图片错误处理函数
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const target = e.currentTarget;
+    target.onerror = null; // 防止循环加载
+    target.src = '/images/placeholder.jpg';
+  };
 
   return (
     <div className="container mx-auto py-6">
@@ -337,9 +344,10 @@ export default function Explore() {
                   <span>{challenge.participants}</span>
                 </div>
                 <img 
-                  src={challenge.image || '/images/placeholder.jpg'} 
+                  src={challenge.image} 
                   alt={challenge.title}
                   className="w-full h-full object-cover transition-transform hover:scale-105"
+                  onError={handleImageError}
                 />
               </div>
               
@@ -390,4 +398,4 @@ export default function Explore() {
       )}
     </div>
   )
-} 
+}

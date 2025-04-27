@@ -39,7 +39,7 @@ export default function Home() {
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">精选盲盒</h1>
-        <Link to="/blind-boxes">
+        <Link to="/NotFound">
           <Button variant="ghost" className="flex items-center">
             查看更多 <ChevronRight className="h-4 w-4 ml-1" />
           </Button>

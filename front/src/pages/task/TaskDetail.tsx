@@ -73,7 +73,7 @@ const mockTaskDetail: TaskDetail = {
   participants: 246,
   deadline: "2024-08-31",
   tags: ["夏季限定", "清凉料理"],
-  image: "/images/challenge1.jpg",
+  image: "/images/ximilu.jpg",
   rewards: "300积分 + 限定徽章",
   status: "not_started",
   steps: [
@@ -105,38 +105,38 @@ const mockSubmissions: TaskSubmission[] = [
   {
     id: '1',
     userId: 'user1',
-    username: '夏日厨神',
-    avatar: '/images/avatar1.jpg',
+    username: 'SkyFrost',
+    avatar: '/images/zjh.jpg',
     title: '薄荷柠檬凉拌蔬菜',
     description: '使用盲盒中的小黄瓜、胡萝卜和薄荷叶，加入柠檬汁调味，清爽可口！',
-    images: ['/images/submission1.jpg', '/images/submission1-2.jpg'],
+    images: ['/images/bohe.jpg'],
     likes: 86,
     comments: 12,
-    createdAt: '2024-07-15'
+    createdAt: '2025-01-14'
   },
   {
     id: '2',
     userId: 'user2',
-    username: '料理达人',
-    avatar: '/images/avatar2.jpg',
+    username: 'Sh1n3ZzxCSGO',
+    avatar: '/images/jdh.jpg',
     title: '水果沙拉冰淇淋',
     description: '将盲盒中的水果制成沙拉，搭配自制的酸奶冰淇淋，既健康又美味！',
-    images: ['/images/submission2.jpg'],
+    images: ['/images/saladicecream.jpg'],
     likes: 74,
     comments: 8,
-    createdAt: '2024-07-16'
+    createdAt: '2023-11-18'
   },
   {
     id: '3',
     userId: 'user3',
-    username: '创意美食家',
-    avatar: '/images/avatar3.jpg',
+    username: 'JimJiangOP',
+    avatar: '/images/jim.jpg',
     title: '凉拌豆腐沙拉',
     description: '用盲盒中的豆腐、黄瓜和胡萝卜，加入特制酱汁，制作了一道低卡路里的夏日沙拉',
-    images: ['/images/submission3.jpg', '/images/submission3-2.jpg', '/images/submission3-3.jpg'],
+    images: ['/images/tofu.jpg'],
     likes: 62,
     comments: 15,
-    createdAt: '2024-07-17'
+    createdAt: '2024-05-14'
   }
 ];
 
@@ -178,7 +178,7 @@ export default function TaskDetail() {
           setTimeout(() => {
             setTaskDetail(mockTaskDetail);
             setSubmissions(mockSubmissions);
-          }, 500);
+          }, 0);
         }
       } catch (err) {
         console.error('Failed to fetch task details:', err);
@@ -308,6 +308,13 @@ export default function TaskDetail() {
     </nav>
   );
   
+  // 添加错误处理函数
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const target = e.currentTarget;
+    target.onerror = null; // 防止循环加载
+    target.src = '/images/placeholder.jpg';
+  };
+  
   if (loading) {
     return (
       <div className="container mx-auto py-6">
@@ -355,9 +362,10 @@ export default function TaskDetail() {
               </Badge>
             </div>
             <img 
-              src={taskDetail.image || '/images/placeholder.jpg'} 
+              src={taskDetail.image} 
               alt={taskDetail.title}
               className="w-full h-full object-cover"
+              onError={handleImageError}
             />
             <div className="absolute bottom-0 left-0 right-0 p-4 z-20 text-white">
               <h1 className="text-3xl font-bold mb-2">{taskDetail.title}</h1>
@@ -517,6 +525,7 @@ export default function TaskDetail() {
                               src={image} 
                               alt={`${submission.title} - 图片 ${i+1}`}
                               className="w-full h-full object-cover"
+                              onError={handleImageError}
                             />
                           </div>
                         ))}
@@ -577,4 +586,4 @@ export default function TaskDetail() {
       </Tabs>
     </div>
   )
-} 
+}
