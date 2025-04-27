@@ -39,12 +39,23 @@
       "new": "New",
       "viewAll": "View All",
       "Export Data": "Export Data"
-    },
-    "stats": {
+    },    "stats": {
+      "dailyRevenue": "Daily Revenue",
+      "dailyRevenueDesc": "Total revenue for today",
+      "dailyRevenueUp": "Revenue increased",
+      "dailyRevenueDown": "Revenue decreased",
+      "totalBoxes": "Total Blind Boxes",
+      "totalBoxesDesc": "Total number of blind boxes released",
+      "totalBoxesUp": "Blind box count increased",
+      "totalBoxesDown": "Blind box count decreased",
       "totalUsers": "Total Users",
-      "recognitionCount": "Recognition Count",
-      "todayRecognition": "Today's Recognition",
-      "accuracy": "Recognition Accuracy"
+      "totalUsersDesc": "Total number of registered users",
+      "totalUsersUp": "User count increased",
+      "totalUsersDown": "User count decreased",
+      "totalDonations": "Total Donations",
+      "totalDonationsDesc": "Total amount of charity donations",
+      "totalDonationsUp": "Donation amount increased",
+      "totalDonationsDown": "Donation amount decreased"
     },
     "charts": {
       "title": "Usage Trends",

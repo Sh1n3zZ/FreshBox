@@ -58,17 +58,20 @@ export function DashboardStatsData({ stats }: DashboardStatsDataProps) {
         <Card key={stat.key}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              {t(`dashboard.stats.${stat.key}.title`)}
+              {t(`dashboard.stats.${stat.key}`)}
             </CardTitle>
             {stat.icon}
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stat.value}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground mt-1">
+              {t(`dashboard.stats.${stat.key}Desc`)}
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
               <span className={stat.isPositive ? 'text-green-500' : 'text-red-500'}>
-                {stat.isPositive ? '+' : ''}{stat.change}
-              </span>{' '}
-              {t('dashboard.stats.fromLastPeriod')}
+                {stat.isPositive ? '+' : ''}{stat.change} · {' '}
+                {t(`dashboard.stats.${stat.key}${stat.isPositive ? 'Up' : 'Down'}`)}
+              </span>
             </p>
           </CardContent>
         </Card>

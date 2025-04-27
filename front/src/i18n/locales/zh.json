@@ -40,12 +40,23 @@
       "new": "新建",
       "viewAll": "查看全部",
       "Export Data": "导出数据"
-    },
-    "stats": {
+    },    "stats": {
       "dailyRevenue": "日营收",
+      "dailyRevenueDesc": "今日的总收入金额",
+      "dailyRevenueUp": "收入上涨",
+      "dailyRevenueDown": "收入下降",
       "totalBoxes": "盲盒总数",
+      "totalBoxesDesc": "累计发布的盲盒数量",
+      "totalBoxesUp": "盲盒数量增加",
+      "totalBoxesDown": "盲盒数量减少",
       "totalUsers": "用户总数",
-      "totalDonations": "捐赠总数"
+      "totalUsersDesc": "累计注册的用户数量",
+      "totalUsersUp": "用户数量增加",
+      "totalUsersDown": "用户数量减少",
+      "totalDonations": "捐赠总数",
+      "totalDonationsDesc": "累计的公益捐赠金额",
+      "totalDonationsUp": "捐赠金额增加",
+      "totalDonationsDown": "捐赠金额减少"
     },
     "charts": {
       "noData": "暂无数据",
