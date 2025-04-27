@@ -63,7 +63,7 @@ export function UserRecentActivity() {
     );
   }
 
-  if (activities.length === 0) {
+  if (!activities || activities.length === 0) {
     return (
       <Card>
         <CardHeader>
