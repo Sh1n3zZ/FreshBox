@@ -27,7 +27,7 @@ export default function About() {
         <div className="rounded-lg border p-6 shadow-sm">
           <h2 className="mb-4 text-2xl font-semibold">我们的团队</h2>
           <p className="text-muted-foreground">
-            FreshBox 团队由来自广东省珠海市的三位热爱人工智能创新的高中生组成。我致力于不断改进和创新我们的产品，以满足用户不断变化的需求，并为可持续发展做出贡献。我们相信，科技可以改变生活，我们希望通过 FreshBox 为可持续发展贡献自己的一份力量。
+            FreshBox 团队由来自广东省珠海市的三位热爱人工智能创新的高中生组成。我们致力于不断改进和创新我们的产品，以满足用户不断变化的需求，并为可持续发展做出贡献。我们相信，科技可以改变生活，我们希望通过 FreshBox 为可持续发展贡献自己的一份力量。
           </p>
         </div>
 
