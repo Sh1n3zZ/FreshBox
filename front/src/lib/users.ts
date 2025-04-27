@@ -30,6 +30,14 @@ export interface UpdateUserRequest {
   avatar?: string;
 }
 
+export interface CreateUserRequest {
+  username: string;
+  email: string;
+  password: string;
+  role: string;
+  avatar?: string;
+}
+
 export const userService = {
   // 获取用户列表（管理员功能）
   async listUsers(options: UserListOptions): Promise<UserListResponse> {
@@ -50,5 +58,11 @@ export const userService = {
   // 删除用户（管理员功能）
   async deleteUser(id: string): Promise<void> {
     await axios.delete(API_URLS.USER.ADMIN.DELETE(id));
+  },
+
+  // 创建用户（管理员功能）
+  async createUser(data: CreateUserRequest): Promise<User> {
+    const response = await axios.post(API_URLS.USER.ADMIN.CREATE, data);
+    return response.data;
   },
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, UpdateUserRequest } from '@/lib/users';
+import { User, UpdateUserRequest, CreateUserRequest } from '@/lib/users';
 import { userService } from '@/lib/users';
 import { Button } from '@/components/ui/button';
 import {
@@ -31,9 +31,10 @@ interface CreateUserProps {
 export function CreateUser({ user, readOnly = false, onUserCreated }: CreateUserProps) {
   const [open, setOpen] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
-  const [formData, setFormData] = React.useState<UpdateUserRequest>({
+  const [formData, setFormData] = React.useState<CreateUserRequest>({
     username: user?.username || '',
     email: user?.email || '',
+    password: '',
     role: user?.role || 'user',
     avatar: user?.avatar || '',
   });
@@ -45,13 +46,18 @@ export function CreateUser({ user, readOnly = false, onUserCreated }: CreateUser
     setLoading(true);
     try {
       if (user) {
+        // 更新用户
         await userService.updateUser(user.id, formData);
         toast.success("用户信息更新成功");
+      } else {
+        // 创建用户
+        await userService.createUser(formData);
+        toast.success("用户创建成功");
       }
       setOpen(false);
       onUserCreated?.();
     } catch (error: any) {
-      const errorMsg = error.response?.data?.details || error.message;
+      const errorMsg = error.response?.data?.error || error.message || '未知错误';
       toast.error(`操作失败: ${errorMsg}`);
       console.error('操作失败:', error);
     } finally {
@@ -106,6 +112,20 @@ export function CreateUser({ user, readOnly = false, onUserCreated }: CreateUser
               required
             />
           </div>
+          {!user && (
+            <div className="space-y-2">
+              <Label htmlFor="password">密码</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleChange}
+                disabled={loading}
+                required
+              />
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="role">角色</Label>
             <Select
