@@ -236,6 +236,15 @@ func SetupRouter(
 				admin.GET("/users", userHandler.ListUsers)
 				admin.PUT("/users/:user_id", userHandler.UpdateUser)
 				admin.DELETE("/users/:user_id", userHandler.DeleteUser)
+
+				// 管理员订单管理接口
+				orders := admin.Group("/orders")
+				{
+					orders.GET("", blindBoxHandler.ListBlindBoxOrders)             // 获取订单列表
+					orders.PUT("/:id", blindBoxHandler.UpdateBlindBoxOrder)        // 更新订单信息
+					orders.DELETE("/:id", blindBoxHandler.DeleteBlindBoxOrder)     // 删除订单
+					orders.POST("/:id/mark-paid", blindBoxHandler.MarkOrderAsPaid) // 标记订单为已支付
+				}
 			}
 
 			// 上传图片 - 需要认证的上传（可选，如果需要认证）

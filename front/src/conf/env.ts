@@ -205,6 +205,16 @@ export const API_URLS = {
     BLIND_BOX_TREND: `${config.apiBaseUrl}/dashboard/blind-box-trend`,
     RECENT_ACTIVITY: `${config.apiBaseUrl}/dashboard/recent-activity`,
   },
+  
+  // 订单相关API
+  ORDER: {
+    ADMIN: {
+      LIST: `${config.apiBaseUrl}/admin/orders`,
+      UPDATE: (id: string) => `${config.apiBaseUrl}/admin/orders/${id}`,
+      DELETE: (id: string) => `${config.apiBaseUrl}/admin/orders/${id}`,
+      MARK_PAID: (id: string) => `${config.apiBaseUrl}/admin/orders/${id}/mark-paid`,
+    },
+  },
 };
 
 // 图片URL构建函数

@@ -15,6 +15,7 @@ const Register = lazy(() => import('@/pages/auth/Register'))
 const Dashboard = lazy(() => import('@/pages/admin/Dashboard'))
 const Settings = lazy(() => import('@/pages/admin/Settings'))
 const Users = lazy(() => import('@/pages/admin/Users'))
+const Orders = lazy(() => import('@/pages/admin/Orders'))
 const NotFound = lazy(() => import('@/pages/NotFound'))
 const BlindBoxPage = lazy(() => import('@/pages/blindbox/BlindBox'))
 
@@ -40,6 +41,10 @@ const routes: RouteObject[] = [
           {
             path: 'users',
             element: <Users />
+          },
+          {
+            path: 'orders',
+            element: <Orders />
           }
         ]
       },

@@ -398,3 +398,137 @@ func (h *BlindBoxHandler) GetBlindBoxOpeningTrend(c *gin.Context) {
 		"data": trendData,
 	})
 }
+
+// ListBlindBoxOrders 管理员列出所有盲盒订单
+func (h *BlindBoxHandler) ListBlindBoxOrders(c *gin.Context) {
+	// 解析查询参数
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
+	status := c.Query("status")
+	userID := c.Query("user_id")
+	blindBoxID := c.Query("blind_box_id")
+	sortBy := c.Query("sort_by")
+	order := c.Query("order")
+	minPrice, _ := strconv.ParseFloat(c.Query("min_price"), 64)
+	maxPrice, _ := strconv.ParseFloat(c.Query("max_price"), 64)
+
+	// 解析时间范围
+	startTimeStr := c.Query("start_time")
+	endTimeStr := c.Query("end_time")
+	var startTime, endTime time.Time
+	var err error
+
+	if startTimeStr != "" {
+		startTime, err = time.Parse(time.RFC3339, startTimeStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "开始时间格式错误"})
+			return
+		}
+	}
+	if endTimeStr != "" {
+		endTime, err = time.Parse(time.RFC3339, endTimeStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "结束时间格式错误"})
+			return
+		}
+	}
+
+	// 构建查询选项
+	opts := service.BlindBoxOrderListOptions{
+		Page:       page,
+		Size:       size,
+		Status:     status,
+		UserID:     userID,
+		BlindBoxID: blindBoxID,
+		SortBy:     sortBy,
+		Order:      order,
+		MinPrice:   minPrice,
+		MaxPrice:   maxPrice,
+		StartTime:  startTime,
+		EndTime:    endTime,
+	}
+
+	// 查询订单列表
+	orders, total, err := h.blindBoxService.ListBlindBoxOrders(c.Request.Context(), opts)
+	if err != nil {
+		h.logger.Error("查询订单列表失败", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "查询订单列表失败", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"orders": orders,
+		"total":  total,
+		"page":   page,
+		"size":   size,
+	})
+}
+
+// UpdateBlindBoxOrder 管理员更新订单信息
+func (h *BlindBoxHandler) UpdateBlindBoxOrder(c *gin.Context) {
+	orderID := c.Param("id")
+	if orderID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "订单ID不能为空"})
+		return
+	}
+
+	var updates map[string]interface{}
+	if err := c.ShouldBindJSON(&updates); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误", "details": err.Error()})
+		return
+	}
+
+	err := h.blindBoxService.UpdateBlindBoxOrder(c.Request.Context(), orderID, updates)
+	if err != nil {
+		h.logger.Error("更新订单失败", zap.Error(err), zap.String("order_id", orderID))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新订单失败", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":  "更新订单成功",
+		"order_id": orderID,
+	})
+}
+
+// DeleteBlindBoxOrder 管理员删除订单
+func (h *BlindBoxHandler) DeleteBlindBoxOrder(c *gin.Context) {
+	orderID := c.Param("id")
+	if orderID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "订单ID不能为空"})
+		return
+	}
+
+	err := h.blindBoxService.DeleteBlindBoxOrder(c.Request.Context(), orderID)
+	if err != nil {
+		h.logger.Error("删除订单失败", zap.Error(err), zap.String("order_id", orderID))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除订单失败", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":  "删除订单成功",
+		"order_id": orderID,
+	})
+}
+
+// MarkOrderAsPaid 管理员将订单标记为已支付
+func (h *BlindBoxHandler) MarkOrderAsPaid(c *gin.Context) {
+	orderID := c.Param("id")
+	if orderID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "订单ID不能为空"})
+		return
+	}
+
+	err := h.blindBoxService.MarkOrderAsPaid(c.Request.Context(), orderID)
+	if err != nil {
+		h.logger.Error("标记订单为已支付失败", zap.Error(err), zap.String("order_id", orderID))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "标记订单为已支付失败", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":  "标记订单为已支付成功",
+		"order_id": orderID,
+	})
+}

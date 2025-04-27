@@ -101,6 +101,12 @@
         "content": "添加、编辑或删除用户，设置不同的访问权限和角色。",
         "action": "管理用户"
       },
+      "orders": {
+        "title": "订单管理",
+        "description": "管理订单和支付状态",
+        "content": "查看、编辑或删除订单，标记订单为已支付。",
+        "action": "管理订单"
+      },
       "system": {
         "title": "系统配置",
         "description": "调整系统设置和集成",

@@ -10,7 +10,8 @@ import {
   BarChart,
   X,
   Shield,
-  Trophy
+  Trophy,
+  ShoppingCart
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -127,6 +128,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   icon={<Shield className="h-4 w-4" />}
                   title={t('dashboard.quickActions.users.title')}
                   isActive={pathname.startsWith('/admin/users')}
+                />
+
+                <SidebarItem
+                  href="/admin/orders"
+                  icon={<ShoppingCart className="h-4 w-4" />}
+                  title={t('dashboard.quickActions.orders.title')}
+                  isActive={pathname.startsWith('/admin/orders')}
                 />
               </>
             )}

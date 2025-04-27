@@ -512,3 +512,145 @@ func (s *BlindBoxService) GetUserInfo(ctx context.Context, userID string) (*mode
 	}
 	return &user, nil
 }
+
+// BlindBoxOrderListOptions 盲盒订单列表查询选项
+type BlindBoxOrderListOptions struct {
+	Page       int       // 页码
+	Size       int       // 每页数量
+	Status     string    // 订单状态
+	MinPrice   float64   // 最低价格
+	MaxPrice   float64   // 最高价格
+	StartTime  time.Time // 开始时间
+	EndTime    time.Time // 结束时间
+	UserID     string    // 用户ID
+	BlindBoxID string    // 盲盒ID
+	SortBy     string    // 排序字段
+	Order      string    // 排序顺序
+}
+
+// ListBlindBoxOrders 管理员列出所有盲盒订单
+func (s *BlindBoxService) ListBlindBoxOrders(ctx context.Context, opts BlindBoxOrderListOptions) ([]*model.BlindBoxOrder, int64, error) {
+	var orders []*model.BlindBoxOrder
+	var total int64
+
+	// 构建查询
+	query := s.db.Model(&model.BlindBoxOrder{})
+
+	// 添加筛选条件
+	if opts.Status != "" {
+		query = query.Where("status = ?", opts.Status)
+	}
+	if opts.MinPrice > 0 {
+		query = query.Where("price >= ?", opts.MinPrice)
+	}
+	if opts.MaxPrice > 0 {
+		query = query.Where("price <= ?", opts.MaxPrice)
+	}
+	if !opts.StartTime.IsZero() {
+		query = query.Where("created_at >= ?", opts.StartTime)
+	}
+	if !opts.EndTime.IsZero() {
+		query = query.Where("created_at <= ?", opts.EndTime)
+	}
+	if opts.UserID != "" {
+		query = query.Where("user_id = ?", opts.UserID)
+	}
+	if opts.BlindBoxID != "" {
+		query = query.Where("blind_box_id = ?", opts.BlindBoxID)
+	}
+
+	// 查询总数
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, errors.Wrap(err, "查询订单总数失败")
+	}
+
+	// 添加排序
+	if opts.SortBy != "" {
+		order := "ASC"
+		if opts.Order == "desc" {
+			order = "DESC"
+		}
+
+		switch opts.SortBy {
+		case "price":
+			query = query.Order(fmt.Sprintf("price %s", order))
+		case "created":
+			query = query.Order(fmt.Sprintf("created_at %s", order))
+		case "paid":
+			query = query.Order(fmt.Sprintf("paid_at %s", order))
+		default:
+			query = query.Order("created_at DESC") // 默认按创建时间倒序
+		}
+	} else {
+		query = query.Order("created_at DESC") // 默认排序
+	}
+
+	// 分页
+	if opts.Page < 1 {
+		opts.Page = 1
+	}
+	if opts.Size < 1 {
+		opts.Size = 10
+	}
+	query = query.Offset((opts.Page - 1) * opts.Size).Limit(opts.Size)
+
+	// 执行查询
+	if err := query.Find(&orders).Error; err != nil {
+		return nil, 0, errors.Wrap(err, "查询订单列表失败")
+	}
+
+	return orders, total, nil
+}
+
+// UpdateBlindBoxOrder 管理员更新订单信息
+func (s *BlindBoxService) UpdateBlindBoxOrder(ctx context.Context, orderID string, updates map[string]interface{}) error {
+	// 检查订单是否存在
+	var order model.BlindBoxOrder
+	if err := s.db.First(&order, "id = ?", orderID).Error; err != nil {
+		return errors.Wrap(err, "订单不存在")
+	}
+
+	// 更新订单
+	if err := s.db.Model(&model.BlindBoxOrder{}).Where("id = ?", orderID).Updates(updates).Error; err != nil {
+		return errors.Wrap(err, "更新订单失败")
+	}
+
+	return nil
+}
+
+// DeleteBlindBoxOrder 管理员删除订单
+func (s *BlindBoxService) DeleteBlindBoxOrder(ctx context.Context, orderID string) error {
+	// 检查订单是否存在
+	var order model.BlindBoxOrder
+	if err := s.db.First(&order, "id = ?", orderID).Error; err != nil {
+		return errors.Wrap(err, "订单不存在")
+	}
+
+	// 删除订单
+	if err := s.db.Delete(&model.BlindBoxOrder{}, "id = ?", orderID).Error; err != nil {
+		return errors.Wrap(err, "删除订单失败")
+	}
+
+	return nil
+}
+
+// MarkOrderAsPaid 管理员将订单标记为已支付
+func (s *BlindBoxService) MarkOrderAsPaid(ctx context.Context, orderID string) error {
+	// 检查订单是否存在
+	var order model.BlindBoxOrder
+	if err := s.db.First(&order, "id = ?", orderID).Error; err != nil {
+		return errors.Wrap(err, "订单不存在")
+	}
+
+	// 更新订单状态为已支付
+	updates := map[string]interface{}{
+		"status":  "paid",
+		"paid_at": time.Now(),
+	}
+
+	if err := s.db.Model(&model.BlindBoxOrder{}).Where("id = ?", orderID).Updates(updates).Error; err != nil {
+		return errors.Wrap(err, "更新订单状态失败")
+	}
+
+	return nil
+}
