@@ -77,12 +77,22 @@ export default function Home() {
           <h2 className="text-2xl font-bold">最新优惠活动</h2>
         </div>
 
-        <div className="bg-muted rounded-lg p-8 text-center">
-          <h3 className="text-xl font-bold mb-4">首次购买，享受9折优惠！</h3>
-          <p className="text-muted-foreground mb-6">
-            使用优惠码 <span className="font-semibold">FIRSTBOX</span> 获得10%折扣
-          </p>
-          <Button size="lg">立即选购</Button>
+        <div className="rounded-lg p-8 text-center relative border min-h-[200px]">
+          {/* 背景图片层 */}
+          <img
+            src="/images/logoALL.jpg"
+            alt="background"
+            className="absolute inset-0 w-full h-full object-cover opacity-30"
+          />
+          
+          {/* 内容层 */}
+          <div className="relative z-10">
+            <h3 className="text-xl font-bold mb-4">首次购买，享受9折优惠！</h3>
+            <p className="text-muted-foreground mb-6">
+              使用优惠码 <span className="font-semibold">FIRSTBOX</span> 获得10%折扣
+            </p>
+            <Button size="lg">立即选购</Button>
+          </div>
         </div>
       </div>
 
