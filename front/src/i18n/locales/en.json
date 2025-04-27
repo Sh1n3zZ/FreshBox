@@ -13,6 +13,7 @@
   "auth": {
     "login_title": "Login",
     "login_description": "Welcome back, please login to your account",
+    "login_required": "Email is required",
     "email": "Email",
     "email_placeholder": "Enter your email",
     "email_invalid": "Please enter a valid email address",

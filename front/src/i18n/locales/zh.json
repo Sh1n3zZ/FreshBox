@@ -12,7 +12,8 @@
   "auth": {
     "login_title": "登录账户",
     "login_description": "欢迎回来，请登录您的账户",
-    "email": "邮箱",
+    "login_required": "账号不能为空",
+    "email": "邮箱", 
     "email_placeholder": "请输入邮箱",
     "email_invalid": "请输入有效的邮箱地址",
     "password": "密码",

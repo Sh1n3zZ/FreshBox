@@ -20,8 +20,8 @@ export default function Login() {
 
   // 定义表单验证模式
   const formSchema = z.object({
-    login: z.string().min(1, t('auth.login_required')),
-    password: z.string().min(1, t('auth.password_required')),
+    login: z.string().min(1, t('请输入账号')),
+    password: z.string().min(1, t('请输入密码')),
   })
 
   // 初始化表单
@@ -42,7 +42,7 @@ export default function Login() {
       if (error instanceof Error) {
         setFormError(error.message)
       } else {
-        setFormError('登录失败，请稍后重试')
+        setFormError('登录失败,请稍后重试')
       }
     }
   }
@@ -69,7 +69,7 @@ export default function Login() {
               <FormItem>
                 <FormLabel>{t('auth.login')}</FormLabel>
                 <FormControl>
-                  <Input placeholder={t('请输入账号')} {...field} />
+                  <Input placeholder={t('auth.email_placeholder')} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -103,9 +103,9 @@ func (s *UserService) Login(ctx context.Context, login, password string) (*User,
 	// 同时查询用户名和邮箱
 	if err := s.db.Where("username = ? OR email = ?", login, login).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, errors.New("用户不存在")
+			return nil, errors.New("用户不存在,请检查用户名或邮箱")
 		}
-		return nil, errors.Wrap(err, "查询用户失败")
+		return nil, errors.Wrap(err, "查询用户失败,请稍后再试")
 	}
 
 	// 验证密码
