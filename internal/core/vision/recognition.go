@@ -3,6 +3,7 @@ package vision
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -78,4 +79,47 @@ func (r *OCRRecognizer) RecognizeImage(ctx context.Context, imageData []byte) (s
 	}
 
 	return "", fmt.Errorf("no text content recognized")
+}
+
+// SummarizeOCRResult 实现OCR结果的结构化处理
+func (r *OCRRecognizer) SummarizeOCRResult(ctx context.Context, ocrText string) (*OCRSummary, error) {
+	// 创建超时上下文
+	timeoutDuration := time.Duration(r.config.TimeoutSec) * time.Second
+	ctx, cancel := context.WithTimeout(ctx, timeoutDuration)
+	defer cancel()
+
+	// 构建Chat API请求
+	req := openai.ChatCompletionRequest{
+		Model: r.config.OCRSummaryModel,
+		Messages: []openai.ChatCompletionMessage{
+			{
+				Role:    openai.ChatMessageRoleSystem,
+				Content: r.config.OCRSummaryPrompt,
+			},
+			{
+				Role:    openai.ChatMessageRoleUser,
+				Content: ocrText,
+			},
+		},
+		MaxTokens: r.config.MaxTokens,
+	}
+
+	// 发送请求
+	resp, err := r.client.CreateChatCompletion(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("OCR summary failed: %w", err)
+	}
+
+	// 提取识别结果
+	if len(resp.Choices) == 0 {
+		return nil, fmt.Errorf("no summary content generated")
+	}
+
+	// 解析JSON结果
+	var summary OCRSummary
+	if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &summary); err != nil {
+		return nil, fmt.Errorf("failed to parse OCR summary: %w", err)
+	}
+
+	return &summary, nil
 }

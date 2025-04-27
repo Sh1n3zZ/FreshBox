@@ -1,11 +1,14 @@
 import { useState, useRef } from 'react'
 import { toast } from 'sonner'
-import { FileText, Upload, X, Copy, Download } from 'lucide-react'
+import { FileText, Upload, X } from 'lucide-react'
 import { API_URLS } from '@/conf/env'
+import RecognitionResults from '@/components/RecognitionResults'
+import { processOCR, OCRSummary } from '@/lib/ocr'
 
 export default function OCR() {
   const [isUploading, setIsUploading] = useState(false)
   const [recognizedText, setRecognizedText] = useState('')
+  const [summary, setSummary] = useState<OCRSummary | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -29,6 +32,8 @@ export default function OCR() {
     }
 
     setSelectedFile(file)
+    setRecognizedText('')
+    setSummary(null)
 
     // 创建预览URL
     const reader = new FileReader()
@@ -46,29 +51,11 @@ export default function OCR() {
     }
 
     setIsUploading(true)
-    setRecognizedText('')
 
     try {
-      const formData = new FormData()
-      formData.append('image', selectedFile)
-
-      const response = await fetch(API_URLS.OCR.PROCESS, {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.msg || '处理失败')
-      }
-
-      const data = await response.json()
-      
-      if (data.code !== 200) {
-        throw new Error(data.msg || '处理失败')
-      }
-
-      setRecognizedText(data.data.text || data.data || '')
+      const response = await processOCR(selectedFile)
+      setRecognizedText(response.data.text)
+      setSummary(response.data.summary)
       toast.success('文本识别成功')
     } catch (error) {
       toast.error(`识别失败: ${error instanceof Error ? error.message : '未知错误'}`)
@@ -82,33 +69,10 @@ export default function OCR() {
     setSelectedFile(null)
     setPreviewUrl(null)
     setRecognizedText('')
+    setSummary(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
-  }
-
-  // 复制文本到剪贴板
-  const copyToClipboard = () => {
-    if (!recognizedText) return
-    
-    navigator.clipboard.writeText(recognizedText)
-      .then(() => toast.success('已复制到剪贴板'))
-      .catch(() => toast.error('复制失败，请手动复制'))
-  }
-
-  // 下载文本文件
-  const downloadText = () => {
-    if (!recognizedText) return
-    
-    const blob = new Blob([recognizedText], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'ocr-result.txt'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
   }
 
   // 添加处理样例图片点击的函数
@@ -205,44 +169,11 @@ export default function OCR() {
         </div>
 
         {/* 识别结果 */}
-        <div className="rounded-lg border bg-card p-6 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-semibold">识别结果</h2>
-            {recognizedText && (
-              <div className="flex gap-2">
-                <button
-                  onClick={copyToClipboard}
-                  className="inline-flex items-center justify-center rounded-md border p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                  title="复制到剪贴板"
-                >
-                  <Copy className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={downloadText}
-                  className="inline-flex items-center justify-center rounded-md border p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                  title="下载文本文件"
-                >
-                  <Download className="h-4 w-4" />
-                </button>
-              </div>
-            )}
-          </div>
-          
-          <div className="min-h-[200px] rounded-lg border bg-muted/30 p-4 flex items-center justify-center">
-            {isUploading ? (
-              <div className="flex items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-              </div>
-            ) : recognizedText ? (
-              <pre className="whitespace-pre-wrap break-words text-sm w-full">{recognizedText}</pre>
-            ) : (
-              <div className="flex flex-col items-center justify-center">
-                <FileText className="mb-2 h-10 w-10 text-muted-foreground" />
-                <p className="text-muted-foreground">识别结果将在这里显示</p>
-              </div>
-            )}
-          </div>
-        </div>
+        <RecognitionResults
+          summary={summary}
+          rawText={recognizedText}
+          isLoading={isUploading}
+        />
 
         {/*样例展示*/}
         <div className="rounded-lg border bg-card p-6 shadow-sm">

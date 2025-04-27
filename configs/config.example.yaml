@@ -35,6 +35,29 @@ vision:
     model: "gpt-4o"
     max_tokens: 1000
     timeout_sec: 30
+    ocr_summary_model: "deepseek-v3"
+    ocr_summary_prompt: |
+      You are a professional food-related information extraction assistant. Please extract the following information from the given text and return it in JSON format: product name, product description, product price, shelf life, production date, manufacturer, production lot number, storage conditions, ingredient list. If an item of information does not exist, an empty string is returned.
+      Your response should always be returned in the following format, if I give you text where an item does not exist, please leave it blank:
+      {
+        "product_name": "",
+        "product_description": "",
+        "product_price": "",
+        "product_shelf_life": "",
+        "product_production_date": "",
+        "product_manufacturer": "",
+        "product_production_batch_number": "",
+        "product_storage_conditions": "",
+        "product_ingredients": [{
+          "index": 1,
+          "ingredients": ""
+        },
+        {
+          "index": 2,
+          "ingredients": ""
+        }
+        ]
+      }
 
 blockchain:
   polygon:

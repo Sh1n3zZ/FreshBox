@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '@/providers/auth-provider'
 import { 
   FileText,
-  MoreHorizontal,
   ArrowUpRight,
   Plus,
   RefreshCw
@@ -12,14 +11,10 @@ import { useTranslation } from 'react-i18next'
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Tabs, TabsContent } from "@/components/ui/tabs"
 import { BlindBoxOpeningTrendChart } from "@/components/BlindBoxOpeningTrendChart"
 import { DashboardStatsData } from "@/components/DashboardStatsData"
 import { UserRecentActivity } from "@/components/UserRecentActivity"
-import { formatCurrency } from '@/lib/utils'
 import { dashboardService, DashboardStats } from '@/lib/dashboard'
 
 export default function Dashboard() {

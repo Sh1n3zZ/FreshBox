@@ -21,6 +21,8 @@ func NewService() (*Service, error) {
 	modelName := viper.GetString("vision.openai.model")
 	maxTokens := viper.GetInt("vision.openai.max_tokens")
 	timeoutSec := viper.GetInt("vision.openai.timeout_sec")
+	ocrSummaryModel := viper.GetString("vision.openai.ocr_summary_model")
+	ocrSummaryPrompt := viper.GetString("vision.openai.ocr_summary_prompt")
 
 	if apiKey == "" {
 		return nil, fmt.Errorf("vision.openai.api_key 配置缺失")
@@ -39,13 +41,19 @@ func NewService() (*Service, error) {
 		timeoutSec = 30
 	}
 
+	if ocrSummaryModel == "" {
+		ocrSummaryModel = "gpt-4"
+	}
+
 	// 创建配置
 	config := Config{
-		APIKey:     apiKey,
-		Endpoint:   endpoint,
-		ModelName:  modelName,
-		MaxTokens:  maxTokens,
-		TimeoutSec: timeoutSec,
+		APIKey:           apiKey,
+		Endpoint:         endpoint,
+		ModelName:        modelName,
+		MaxTokens:        maxTokens,
+		TimeoutSec:       timeoutSec,
+		OCRSummaryModel:  ocrSummaryModel,
+		OCRSummaryPrompt: ocrSummaryPrompt,
 	}
 
 	// 创建识别器
@@ -67,4 +75,9 @@ func (s *Service) RecognizeImage(ctx context.Context, imageData []byte) (string,
 
 	// 调用底层识别器进行识别
 	return s.recognizer.RecognizeImage(ctx, imageData)
+}
+
+// SummarizeOCRResult 结构化处理OCR结果
+func (s *Service) SummarizeOCRResult(ctx context.Context, ocrText string) (*OCRSummary, error) {
+	return s.recognizer.SummarizeOCRResult(ctx, ocrText)
 }

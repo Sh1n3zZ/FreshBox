@@ -82,10 +82,18 @@ func (h *OCRHandler) UploadAndProcess(c *gin.Context) {
 		return
 	}
 
+	// 结构化处理OCR结果
+	summary, err := h.ocrService.SummarizeOCRResult(c.Request.Context(), textContent)
+	if err != nil {
+		response.InternalError(c, "OCR结果结构化处理失败: "+err.Error(), err)
+		return
+	}
+
 	// 返回识别结果
 	result := gin.H{
-		"text": textContent,
-		"msg":  "识别成功",
+		"text":    textContent,
+		"summary": summary,
+		"msg":     "识别成功",
 	}
 	response.Success(c, result)
 }

@@ -40,6 +40,9 @@ interface CreateProductProps {
   onProductCreated?: (newProduct: Product) => void;
   product?: Product;
   readOnly?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideEditIcon?: boolean;
 }
 
 const productFormSchema = z.object({
@@ -58,8 +61,8 @@ const productFormSchema = z.object({
 
 type ProductFormValues = z.infer<typeof productFormSchema>;
 
-export function CreateProduct({ onProductCreated, product, readOnly = false }: CreateProductProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function CreateProduct({ onProductCreated, product, readOnly = false, open, onOpenChange, hideEditIcon }: CreateProductProps) {
+  const [isOpen, setIsOpen] = useState(open ?? false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
@@ -82,6 +85,17 @@ export function CreateProduct({ onProductCreated, product, readOnly = false }: C
       fetchData();
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (open !== undefined) {
+      setIsOpen(open);
+    }
+  }, [open]);
+
+  const handleOpenChange = (newOpen: boolean) => {
+    setIsOpen(newOpen);
+    onOpenChange?.(newOpen);
+  };
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
@@ -168,7 +182,7 @@ export function CreateProduct({ onProductCreated, product, readOnly = false }: C
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {product ? (
           readOnly ? (
@@ -176,12 +190,12 @@ export function CreateProduct({ onProductCreated, product, readOnly = false }: C
               <span className="sr-only">查看</span>
               <Eye className="h-4 w-4" />
             </Button>
-          ) : (
+          ) : !hideEditIcon ? (
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
               <span className="sr-only">编辑</span>
               <Pencil className="h-4 w-4" />
             </Button>
-          )
+          ) : null
         ) : (
           <Button>创建产品</Button>
         )}
