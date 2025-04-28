@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+<<<<<<< HEAD
 // Service 实现OCR服务
 type Service struct {
 	recognizer OCRService
@@ -58,10 +59,24 @@ func NewService() (*Service, error) {
 
 	// 创建识别器
 	recognizer, err := NewOCRRecognizer(config)
+=======
+// OCRService OCR服务实现
+type OCRService struct {
+	grpcClient    *grpc.ClientConn
+	modelEndpoint string
+	confidence    float32
+	recognition   *GRPCRecognition
+}
+
+// NewOCRService 创建OCR服务
+func NewOCRService(endpoint string, confidence float64) (*OCRService, error) {
+	conn, err := grpc.Dial(endpoint, grpc.WithInsecure())
+>>>>>>> origin/master
 	if err != nil {
 		return nil, fmt.Errorf("无法创建OCR识别器: %w", err)
 	}
 
+<<<<<<< HEAD
 	return &Service{
 		recognizer: recognizer,
 	}, nil
@@ -80,4 +95,32 @@ func (s *Service) RecognizeImage(ctx context.Context, imageData []byte) (string,
 // SummarizeOCRResult 结构化处理OCR结果
 func (s *Service) SummarizeOCRResult(ctx context.Context, ocrText string) (*OCRSummary, error) {
 	return s.recognizer.SummarizeOCRResult(ctx, ocrText)
+=======
+	recognition := NewGRPCRecognition(conn, 30*time.Second, confidence)
+
+	return &OCRService{
+		grpcClient:    conn,
+		modelEndpoint: endpoint,
+		confidence:    float32(confidence),
+		recognition:   recognition,
+	}, nil
+}
+
+// ProcessImage 处理图像OCR识别
+func (s *OCRService) ProcessImage(ctx context.Context, imageData []byte, imageFormat string, autoRotate bool) (*OCRResult, error) {
+	return s.recognition.ProcessImage(ctx, imageData, imageFormat, autoRotate)
+}
+
+// ProcessBatchImages 批量处理图像OCR识别
+func (s *OCRService) ProcessBatchImages(ctx context.Context, images []ImageRequest) ([]*OCRResult, error) {
+	return s.recognition.ProcessBatchImages(ctx, images)
+}
+
+// Close 关闭gRPC连接
+func (s *OCRService) Close() error {
+	if s.grpcClient != nil {
+		return s.grpcClient.Close()
+	}
+	return nil
+>>>>>>> origin/master
 }
