@@ -29,6 +29,8 @@
     "title": "仪表盘",
     "welcome": "欢迎，{{name}}！查看系统运行状态和关键指标。",
     "daysAgo": "天",
+    "minutesAgo": "分钟",
+    "hoursAgo": "小时",
     "ago": "前",
     "opened": "开启了盲盒",
     "tabs": {
