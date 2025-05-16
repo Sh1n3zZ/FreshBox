@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react'
 import { toast } from 'sonner'
-import { FileText, Upload, X } from 'lucide-react'
-import { API_URLS } from '@/conf/env'
+import { Upload, X } from 'lucide-react'
 import RecognitionResults from '@/components/RecognitionResults'
 import { processOCR, OCRSummary } from '@/lib/ocr'
 

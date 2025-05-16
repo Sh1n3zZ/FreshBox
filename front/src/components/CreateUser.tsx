@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, UpdateUserRequest, CreateUserRequest } from '@/lib/users';
+import { User, CreateUserRequest } from '@/lib/users';
 import { userService } from '@/lib/users';
 import { Button } from '@/components/ui/button';
 import {
