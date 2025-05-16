@@ -53,7 +53,22 @@
       "refreshing": "正在刷新...",
       "new": "新建",
       "viewAll": "查看全部",
-      "Export Data": "导出数据"
+      "Export Data": "导出数据",
+      "generateMock": "生成模拟数据"
+    },
+    "mockData": {
+      "title": "生成模拟数据",
+      "error": "生成模拟数据失败",
+      "success": "成功生成模拟数据：用户 {{users}}，盲盒 {{boxes}}，商品 {{products}}，订单 {{orders}}，开箱记录 {{openings}}",
+      "users": "用户数量",
+      "boxes": "盲盒数量",
+      "products": "商品数量",
+      "orders": "订单数量",
+      "openings": "开箱记录数量",
+      "dayRange": "数据时间范围",
+      "days": "天",
+      "generating": "生成中...",
+      "generate": "生成"
     },
     "stats": {
       "dailyRevenue": "日营收",
