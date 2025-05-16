@@ -27,28 +27,32 @@ export function DashboardStatsData({ stats }: DashboardStatsDataProps) {
       value: formatCurrency(stats.dailyRevenue),
       change: `${stats.dailyRevenueChange.toFixed(1)}%`,
       isPositive: stats.dailyRevenueIsPositive,
-      icon: <BarChart3 className="h-4 w-4" />
+      icon: <BarChart3 className="h-4 w-4 text-blue-600" />,
+      bgColor: 'bg-blue-100 bg-opacity-80'
     },
     {
       key: 'totalBoxes',
       value: stats.totalBoxes.toString(),
       change: `${stats.totalBoxesChange.toFixed(1)}%`,
       isPositive: stats.totalBoxesIsPositive,
-      icon: <FileText className="h-4 w-4" />
+      icon: <FileText className="h-4 w-4 text-amber-600" />,
+      bgColor: 'bg-amber-100 bg-opacity-80'
     },
     {
       key: 'totalUsers',
       value: stats.totalUsers.toString(),
       change: `${stats.totalUsersChange.toFixed(1)}%`,
       isPositive: stats.totalUsersIsPositive,
-      icon: <Users className="h-4 w-4" />
+      icon: <Users className="h-4 w-4 text-green-600" />,
+      bgColor: 'bg-green-100 bg-opacity-80'
     },
     {
       key: 'totalDonations',
       value: formatCurrency(stats.totalDonations),
       change: `${stats.totalDonationsChange.toFixed(1)}%`,
       isPositive: stats.totalDonationsIsPositive,
-      icon: <Heart className="h-4 w-4" />
+      icon: <Heart className="h-4 w-4 text-rose-600" />,
+      bgColor: 'bg-rose-100 bg-opacity-80'
     }
   ]
 
@@ -60,7 +64,9 @@ export function DashboardStatsData({ stats }: DashboardStatsDataProps) {
             <CardTitle className="text-sm font-medium">
               {t(`dashboard.stats.${stat.key}`)}
             </CardTitle>
-            {stat.icon}
+            <div className={`${stat.bgColor} p-2 rounded-full flex items-center justify-center`}>
+              {stat.icon}
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stat.value}</div>
