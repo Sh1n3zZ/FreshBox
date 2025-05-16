@@ -116,6 +116,13 @@ func SetupRouter(
 			dashboard.GET("/blind-box-trend", dashboardHandler.GetBlindBoxOpeningTrend)
 			dashboard.GET("/recent-activity", dashboardHandler.GetRecentActivity)
 			dashboard.GET("/llm-summary", dashboardHandler.GetLLMSummary)
+
+			// 生成模拟数据接口 - 需要认证
+			dashboardAuth := dashboard.Group("")
+			dashboardAuth.Use(middleware.Auth())
+			{
+				dashboardAuth.POST("/generate-mock-data", dashboardHandler.GenerateMockData)
+			}
 		}
 
 		// 盲盒接口 - 部分需要认证

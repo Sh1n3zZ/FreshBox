@@ -206,6 +206,7 @@ export const API_URLS = {
     BLIND_BOX_TREND: `${config.apiBaseUrl}/dashboard/blind-box-trend`,
     RECENT_ACTIVITY: `${config.apiBaseUrl}/dashboard/recent-activity`,
     LLM_SUMMARY: `${config.apiBaseUrl}/dashboard/llm-summary`,
+    GENERATE_MOCK_DATA: `${config.apiBaseUrl}/dashboard/generate-mock-data`,
   },
   
   // 订单相关API

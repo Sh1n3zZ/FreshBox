@@ -16,6 +16,7 @@ import { BlindBoxOpeningTrendChart } from "@/components/BlindBoxOpeningTrendChar
 import { DashboardStatsData } from "@/components/DashboardStatsData"
 import { UserRecentActivity } from "@/components/UserRecentActivity"
 import { DashboardLLMSummarize } from "@/components/DashboardLLMSummarize"
+import { DashboardGenerateMockData } from "@/components/DashboardGenerateMockData"
 import { dashboardService, DashboardStats } from '@/lib/dashboard'
 
 export default function Dashboard() {
@@ -74,6 +75,7 @@ export default function Dashboard() {
               <RefreshCw className="h-3.5 w-3.5" />
               <span className="hidden sm:inline-block">{t('dashboard.actions.refresh')}</span>
             </Button>
+            <DashboardGenerateMockData />
             <Button size="sm" className="h-8 gap-1">
               <Plus className="h-3.5 w-3.5" />
               <span className="hidden sm:inline-block">{t('dashboard.actions.new')}</span>

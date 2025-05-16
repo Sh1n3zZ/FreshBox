@@ -654,3 +654,382 @@ func (s *BlindBoxService) MarkOrderAsPaid(ctx context.Context, orderID string) e
 
 	return nil
 }
+
+// IsAdmin 检查用户是否为管理员
+func (s *BlindBoxService) IsAdmin(ctx context.Context, userID string) (bool, error) {
+	return s.userService.IsAdmin(ctx, userID)
+}
+
+// MockDataStats 存储生成的模拟数据统计信息
+type MockDataStats struct {
+	BoxesCreated    int `json:"boxes_created"`
+	ProductsCreated int `json:"products_created"`
+	UsersCreated    int `json:"users_created"`
+	OrdersCreated   int `json:"orders_created"`
+	OpeningsCreated int `json:"openings_created"`
+	DaysOfData      int `json:"days_of_data"`
+}
+
+// GenerateMockData 生成模拟数据
+func (s *BlindBoxService) GenerateMockData(ctx context.Context, adminID string, boxCount, productCount, userCount, orderCount, openingCount, dayRange int) (*MockDataStats, error) {
+	// 首先检查用户是否为管理员
+	isAdmin, err := s.IsAdmin(ctx, adminID)
+	if err != nil {
+		return nil, errors.Wrap(err, "检查管理员权限失败")
+	}
+	if !isAdmin {
+		return nil, errors.New("只有管理员可以生成模拟数据")
+	}
+
+	// 开始事务
+	tx := s.db.Begin()
+
+	stats := &MockDataStats{
+		BoxesCreated:    0,
+		ProductsCreated: 0,
+		UsersCreated:    0,
+		OrdersCreated:   0,
+		OpeningsCreated: 0,
+		DaysOfData:      dayRange,
+	}
+
+	// 生成模拟用户
+	users, err := s.userService.GenerateMockUsers(tx, userCount)
+	if err != nil {
+		tx.Rollback()
+		return nil, errors.Wrap(err, "生成模拟用户失败")
+	}
+	stats.UsersCreated = len(users)
+
+	// 生成模拟盲盒
+	boxes, err := s.generateMockBoxes(tx, adminID, boxCount)
+	if err != nil {
+		tx.Rollback()
+		return nil, errors.Wrap(err, "生成模拟盲盒失败")
+	}
+	stats.BoxesCreated = len(boxes)
+
+	// 生成模拟商品
+	products, err := s.generateMockProducts(tx, adminID, productCount, boxes)
+	if err != nil {
+		tx.Rollback()
+		return nil, errors.Wrap(err, "生成模拟商品失败")
+	}
+	stats.ProductsCreated = len(products)
+
+	// 生成模拟订单
+	orders, err := s.generateMockOrders(tx, orderCount, boxes, users, dayRange)
+	if err != nil {
+		tx.Rollback()
+		return nil, errors.Wrap(err, "生成模拟订单失败")
+	}
+	stats.OrdersCreated = len(orders)
+
+	// 生成模拟盲盒开启记录
+	openings, err := s.generateMockOpenings(tx, openingCount, boxes, users, products, dayRange)
+	if err != nil {
+		tx.Rollback()
+		return nil, errors.Wrap(err, "生成模拟盲盒开启记录失败")
+	}
+	stats.OpeningsCreated = len(openings)
+
+	// 提交事务
+	if err := tx.Commit().Error; err != nil {
+		return nil, errors.Wrap(err, "提交事务失败")
+	}
+
+	return stats, nil
+}
+
+// generateMockBoxes 生成模拟盲盒
+func (s *BlindBoxService) generateMockBoxes(tx *gorm.DB, adminID string, count int) ([]model.BlindBox, error) {
+	var boxes []model.BlindBox
+
+	// 盲盒名称前缀
+	prefixes := []string{"超值", "限定", "精选", "特惠", "尝鲜", "新品", "人气", "爆款", "豪华", "经典"}
+
+	// 盲盒类别
+	categories := []string{"食品", "饮料", "零食", "水果", "海鲜", "肉类", "蔬菜", "面食", "甜点", "干货"}
+
+	// 盲盒图片
+	images := []string{
+		"boxes/box1.jpg",
+		"boxes/box2.jpg",
+		"boxes/box3.jpg",
+		"boxes/box4.jpg",
+		"boxes/box5.jpg",
+	}
+
+	// 盲盒描述模板
+	descriptions := []string{
+		"内含多种%s，品质保证，实惠优选。",
+		"专为%s爱好者打造，多种优质产品等你来开启。",
+		"精选各类%s，每一次开启都有惊喜。",
+		"限量版%s盲盒，超高性价比，先到先得。",
+		"汇集各地特色%s，带给你不一样的味蕾体验。",
+	}
+
+	for i := 0; i < count; i++ {
+		category := categories[rand.Intn(len(categories))]
+		prefix := prefixes[rand.Intn(len(prefixes))]
+		image := images[rand.Intn(len(images))]
+		description := fmt.Sprintf(descriptions[rand.Intn(len(descriptions))], category)
+
+		// 随机生成折扣系数(0.6-0.9)
+		discountCoef := 0.6 + rand.Float64()*0.3
+
+		// 随机生成捐赠金额(0-10元)
+		donationAmount := rand.Float64() * 10
+
+		box := model.BlindBox{
+			ID:                  GenerateUniqueID(),
+			Name:                prefix + category + "盲盒",
+			Description:         description,
+			ImageURL:            image,
+			Category:            category,
+			DiscountCoefficient: discountCoef,
+			DonationAmount:      donationAmount,
+			Status:              "active",
+			CreatorID:           adminID,
+			CreatedAt:           time.Now().Add(-time.Duration(rand.Intn(30*24)) * time.Hour),
+			UpdatedAt:           time.Now(),
+			ExpirationTime:      time.Now().Add(time.Duration(30+rand.Intn(60)) * 24 * time.Hour),
+		}
+
+		if err := tx.Create(&box).Error; err != nil {
+			return nil, errors.Wrap(err, "创建模拟盲盒失败")
+		}
+
+		boxes = append(boxes, box)
+	}
+
+	return boxes, nil
+}
+
+// generateMockProducts 生成模拟商品
+func (s *BlindBoxService) generateMockProducts(tx *gorm.DB, adminID string, count int, boxes []model.BlindBox) ([]model.Product, error) {
+	if len(boxes) == 0 {
+		return nil, errors.New("没有盲盒可用于生成商品")
+	}
+
+	var products []model.Product
+
+	// 商品名称前缀
+	prefixes := []string{"优质", "特级", "新鲜", "有机", "原生态", "野生", "进口", "国产", "手工", "传统"}
+
+	// 产品类别及其对应的产品
+	productTypes := map[string][]string{
+		"食品": {"面包", "蛋糕", "饼干", "薯片", "巧克力", "糖果", "坚果", "肉干", "豆腐", "香肠"},
+		"饮料": {"矿泉水", "果汁", "牛奶", "咖啡", "茶", "汽水", "功能饮料", "酸奶", "豆浆", "啤酒"},
+		"零食": {"薯片", "果干", "巧克力", "口香糖", "棉花糖", "爆米花", "曲奇", "威化", "能量棒", "海苔"},
+		"水果": {"苹果", "香蕉", "橙子", "葡萄", "西瓜", "草莓", "蓝莓", "芒果", "猕猴桃", "柚子"},
+		"海鲜": {"鱼", "虾", "蟹", "贝", "龙虾", "牡蛎", "鱿鱼", "海参", "海带", "紫菜"},
+		"肉类": {"牛肉", "猪肉", "鸡肉", "羊肉", "鸭肉", "兔肉", "火腿", "香肠", "培根", "午餐肉"},
+		"蔬菜": {"胡萝卜", "青椒", "土豆", "茄子", "黄瓜", "西红柿", "白菜", "菠菜", "蘑菇", "洋葱"},
+		"面食": {"面条", "面包", "馒头", "包子", "饺子", "汤圆", "粽子", "拉面", "意大利面", "春卷"},
+		"甜点": {"冰淇淋", "布丁", "蛋挞", "奶酪", "蛋糕", "甜甜圈", "马卡龙", "慕斯", "舒芙蕾", "泡芙"},
+		"干货": {"木耳", "香菇", "枸杞", "红枣", "莲子", "桂圆", "杏仁", "花生", "腰果", "松子"},
+	}
+
+	// 商品描述模板
+	descriptions := []string{
+		"精选%s，新鲜美味，健康营养。",
+		"优质%s，采用传统工艺制作，口感纯正。",
+		"特级%s，来自专业供应链，品质有保障。",
+		"纯天然%s，无添加，安全健康。",
+		"进口%s，国际品质，值得信赖。",
+	}
+
+	// 商品图片
+	images := []string{
+		"products/product1.jpg",
+		"products/product2.jpg",
+		"products/product3.jpg",
+		"products/product4.jpg",
+		"products/product5.jpg",
+	}
+
+	for i := 0; i < count; i++ {
+		// 随机选择一个盲盒
+		box := boxes[rand.Intn(len(boxes))]
+
+		// 获取该盲盒类别对应的产品列表
+		productList := productTypes[box.Category]
+		if len(productList) == 0 {
+			// 如果没有找到对应类别的产品，使用默认列表
+			productList = productTypes["食品"]
+		}
+
+		// 随机选择一个产品
+		productName := productList[rand.Intn(len(productList))]
+		prefix := prefixes[rand.Intn(len(prefixes))]
+
+		// 生成描述
+		description := fmt.Sprintf(descriptions[rand.Intn(len(descriptions))], productName)
+
+		// 生成生产日期（过去1-30天内）
+		productionDate := time.Now().Add(-time.Duration(1+rand.Intn(30)) * 24 * time.Hour)
+
+		// 生成批次号
+		batchFormat := "BN%d%02d%02d"
+		batchNumber := fmt.Sprintf(batchFormat, productionDate.Year(), productionDate.Month(), rand.Intn(1000))
+
+		// 生成保质期（1-90天）
+		shelfLife := 24 * (1 + rand.Intn(90))
+
+		// 随机生成价格(5-100元)
+		price := 5 + rand.Float64()*95
+
+		// 随机选择一个图片
+		image := images[rand.Intn(len(images))]
+
+		// 生成随机生产商ID，这里不真正创建生产商对象
+		manufacturerID := GenerateUniqueID()
+
+		product := model.Product{
+			ID:               GenerateUniqueID(),
+			Name:             prefix + productName,
+			Description:      description,
+			Price:            price,
+			Category:         box.Category,
+			ImageURL:         image,
+			Status:           "in_blind_box", // 默认已放入盲盒
+			ProductionDate:   productionDate,
+			ShelfLifeHours:   shelfLife,
+			BatchNumber:      batchNumber,
+			ManufacturerID:   manufacturerID, // 使用生成的ID
+			StorageCondition: "常温保存",
+			CreatorID:        adminID,
+			BlindBoxID:       box.ID,
+			CreatedAt:        time.Now().Add(-time.Duration(rand.Intn(30*24)) * time.Hour),
+			UpdatedAt:        time.Now(),
+		}
+
+		if err := tx.Create(&product).Error; err != nil {
+			return nil, errors.Wrap(err, "创建模拟商品失败")
+		}
+
+		products = append(products, product)
+	}
+
+	return products, nil
+}
+
+// generateMockOrders 生成模拟订单
+func (s *BlindBoxService) generateMockOrders(tx *gorm.DB, count int, boxes []model.BlindBox, users []model.User, dayRange int) ([]model.BlindBoxOrder, error) {
+	if len(boxes) == 0 || len(users) == 0 {
+		return nil, errors.New("没有盲盒或用户可用于生成订单")
+	}
+
+	var orders []model.BlindBoxOrder
+
+	// 订单状态分布
+	statuses := []string{"pending", "paid", "cancelled"}
+	statusWeights := []int{20, 70, 10} // 分别表示未支付、已支付、已取消的订单比例
+
+	// 生成权重累积分布
+	statusDist := make([]int, len(statusWeights))
+	sum := 0
+	for i, w := range statusWeights {
+		sum += w
+		statusDist[i] = sum
+	}
+
+	for i := 0; i < count; i++ {
+		// 随机选择一个盲盒和用户
+		box := boxes[rand.Intn(len(boxes))]
+		user := users[rand.Intn(len(users))]
+
+		// 随机生成订单创建时间（过去dayRange天内）
+		createdAt := time.Now().Add(-time.Duration(rand.Intn(dayRange*24)) * time.Hour)
+
+		// 随机决定订单状态
+		statusRand := rand.Intn(100)
+		status := "pending"
+		for j, limit := range statusDist {
+			if statusRand < limit {
+				status = statuses[j]
+				break
+			}
+		}
+
+		// 生成价格（盲盒内商品总价乘以折扣系数）
+		// 这里简化计算，生成一个随机价格
+		price := 20 + rand.Float64()*180
+
+		// 计算支付时间（如果已支付）
+		var paidAt time.Time
+		if status == "paid" {
+			// 支付时间在创建时间之后的24小时内
+			paidAt = createdAt.Add(time.Duration(rand.Intn(24)) * time.Hour)
+		}
+
+		order := model.BlindBoxOrder{
+			ID:         GenerateUniqueID(),
+			BlindBoxID: box.ID,
+			UserID:     user.ID,
+			Price:      price,
+			Status:     status,
+			CreatedAt:  createdAt,
+			UpdatedAt:  createdAt,
+			PaidAt:     paidAt,
+		}
+
+		if err := tx.Create(&order).Error; err != nil {
+			return nil, errors.Wrap(err, "创建模拟订单失败")
+		}
+
+		orders = append(orders, order)
+	}
+
+	return orders, nil
+}
+
+// generateMockOpenings 生成模拟盲盒开启记录
+func (s *BlindBoxService) generateMockOpenings(tx *gorm.DB, count int, boxes []model.BlindBox, users []model.User, products []model.Product, dayRange int) ([]model.BlindBoxOpening, error) {
+	if len(boxes) == 0 || len(users) == 0 || len(products) == 0 {
+		return nil, errors.New("没有盲盒、用户或商品可用于生成开启记录")
+	}
+
+	var openings []model.BlindBoxOpening
+
+	for i := 0; i < count; i++ {
+		// 随机选择一个盲盒、用户和商品
+		box := boxes[rand.Intn(len(boxes))]
+		user := users[rand.Intn(len(users))]
+
+		// 筛选属于该盲盒的产品
+		var boxProducts []model.Product
+		for _, p := range products {
+			if p.BlindBoxID == box.ID {
+				boxProducts = append(boxProducts, p)
+			}
+		}
+
+		// 如果没有该盲盒的产品，跳过
+		if len(boxProducts) == 0 {
+			continue
+		}
+
+		product := boxProducts[rand.Intn(len(boxProducts))]
+
+		// 随机生成开启时间（过去dayRange天内）
+		openedAt := time.Now().Add(-time.Duration(rand.Intn(dayRange*24)) * time.Hour)
+
+		opening := model.BlindBoxOpening{
+			ID:                GenerateUniqueID(),
+			UserID:            user.ID,
+			BlindBoxID:        box.ID,
+			ObtainedProductID: product.ID,
+			OpenedAt:          openedAt,
+		}
+
+		if err := tx.Create(&opening).Error; err != nil {
+			return nil, errors.Wrap(err, "创建模拟盲盒开启记录失败")
+		}
+
+		openings = append(openings, opening)
+	}
+
+	return openings, nil
+}

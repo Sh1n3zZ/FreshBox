@@ -51,6 +51,24 @@ export interface LLMSummaryResponse {
   status: string;
 }
 
+export interface MockDataParams {
+  boxCount: number;
+  productCount: number;
+  userCount: number;
+  orderCount: number;
+  openingCount: number;
+  dayRange: number;
+}
+
+export interface MockDataResult {
+  boxesCreated: number;
+  productsCreated: number;
+  usersCreated: number;
+  ordersCreated: number;
+  openingsCreated: number;
+  daysOfData: number;
+}
+
 export const dashboardService = {
   getBlindBoxOpeningTrend: async (startTime: string, endTime: string): Promise<BlindBoxOpeningTrendResponse> => {
     const response = await axios.get(`${API_URLS.DASHBOARD.BLIND_BOX_TREND}?startTime=${startTime}&endTime=${endTime}`);
@@ -69,6 +87,11 @@ export const dashboardService = {
   
   getLLMSummary: async (): Promise<LLMSummaryResponse> => {
     const response = await axios.get(API_URLS.DASHBOARD.LLM_SUMMARY);
+    return response.data;
+  },
+
+  generateMockData: async (params: MockDataParams): Promise<MockDataResult> => {
+    const response = await axios.post(API_URLS.DASHBOARD.GENERATE_MOCK_DATA, params);
     return response.data;
   },
 };

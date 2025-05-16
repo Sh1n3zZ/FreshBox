@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 
+	"FreshBox/internal/model"
 	"FreshBox/internal/pkg/jwt"
 	"FreshBox/internal/service"
 )
@@ -322,11 +323,11 @@ type RefreshTokenResponse struct {
 
 // UserProfileResponse 用户信息响应
 type UserProfileResponse struct {
-	UserID   string `json:"user_id"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Avatar   string `json:"avatar,omitempty"`
-	Role     string `json:"role"`
+	UserID   string         `json:"user_id"`
+	Username string         `json:"username"`
+	Email    string         `json:"email"`
+	Avatar   string         `json:"avatar,omitempty"`
+	Role     model.UserRole `json:"role"`
 }
 
 // UpdateProfileRequest 更新用户信息请求
@@ -338,11 +339,11 @@ type UpdateProfileRequest struct {
 
 // UpdateProfileResponse 更新用户信息响应
 type UpdateProfileResponse struct {
-	UserID   string `json:"user_id"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Avatar   string `json:"avatar,omitempty"`
-	Role     string `json:"role"`
+	UserID   string         `json:"user_id"`
+	Username string         `json:"username"`
+	Email    string         `json:"email"`
+	Avatar   string         `json:"avatar,omitempty"`
+	Role     model.UserRole `json:"role"`
 }
 
 // ListUsersResponse 用户列表响应
@@ -355,10 +356,10 @@ type ListUsersResponse struct {
 
 // UpdateUserRequest 更新用户请求
 type UpdateUserRequest struct {
-	Username string `json:"username" binding:"required"`
-	Email    string `json:"email" binding:"required,email"`
-	Role     string `json:"role" binding:"required,oneof=admin user"`
-	Avatar   string `json:"avatar,omitempty"`
+	Username string         `json:"username" binding:"required"`
+	Email    string         `json:"email" binding:"required,email"`
+	Role     model.UserRole `json:"role" binding:"required,oneof=admin user"`
+	Avatar   string         `json:"avatar,omitempty"`
 }
 
 // UpdateUserResponse 更新用户响应
@@ -373,11 +374,11 @@ type DeleteUserResponse struct {
 
 // UserInfo 用户信息
 type UserInfo struct {
-	ID       string `json:"id"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Role     string `json:"role"`
-	Avatar   string `json:"avatar,omitempty"`
+	ID       string         `json:"id"`
+	Username string         `json:"username"`
+	Email    string         `json:"email"`
+	Role     model.UserRole `json:"role"`
+	Avatar   string         `json:"avatar,omitempty"`
 }
 
 // ListUsers 获取用户列表（管理员功能）

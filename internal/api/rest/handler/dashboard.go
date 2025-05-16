@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -157,4 +158,68 @@ func (h *DashboardHandler) GetLLMSummary(c *gin.Context) {
 
 	// 返回总结结果
 	c.JSON(http.StatusOK, summary)
+}
+
+// GenerateMockData 生成模拟数据
+func (h *DashboardHandler) GenerateMockData(c *gin.Context) {
+	// 获取用户ID
+	userID := c.GetString("user_id")
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未授权"})
+		return
+	}
+
+	// 检查是否为管理员
+	isAdmin, err := h.blindBoxService.IsAdmin(c.Request.Context(), userID)
+	if err != nil {
+		h.logger.Error("检查用户权限失败", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "检查用户权限失败"})
+		return
+	}
+
+	if !isAdmin {
+		c.JSON(http.StatusForbidden, gin.H{"error": "只有管理员可以生成模拟数据"})
+		return
+	}
+
+	// 获取需要生成的数据量
+	boxCount, _ := strconv.Atoi(c.DefaultQuery("boxes", "10"))
+	productCount, _ := strconv.Atoi(c.DefaultQuery("products", "50"))
+	userCount, _ := strconv.Atoi(c.DefaultQuery("users", "20"))
+	orderCount, _ := strconv.Atoi(c.DefaultQuery("orders", "100"))
+	openingCount, _ := strconv.Atoi(c.DefaultQuery("openings", "80"))
+	dayRange, _ := strconv.Atoi(c.DefaultQuery("days", "30"))
+
+	// 检查参数范围
+	if boxCount > 100 {
+		boxCount = 100
+	}
+	if productCount > 500 {
+		productCount = 500
+	}
+	if userCount > 100 {
+		userCount = 100
+	}
+	if orderCount > 1000 {
+		orderCount = 1000
+	}
+	if openingCount > 1000 {
+		openingCount = 1000
+	}
+	if dayRange > 365 {
+		dayRange = 365
+	}
+
+	// 生成模拟数据
+	stats, err := h.blindBoxService.GenerateMockData(c.Request.Context(), userID, boxCount, productCount, userCount, orderCount, openingCount, dayRange)
+	if err != nil {
+		h.logger.Error("生成模拟数据失败", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "生成模拟数据失败", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "成功生成模拟数据",
+		"stats":   stats,
+	})
 }
