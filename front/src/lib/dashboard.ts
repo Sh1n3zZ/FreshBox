@@ -44,6 +44,13 @@ export interface RecentActivityResponse {
   data: ActivityItem[];
 }
 
+export interface LLMSummaryResponse {
+  summary: string;
+  insights: string[];
+  recommendations: string[];
+  status: string;
+}
+
 export const dashboardService = {
   getBlindBoxOpeningTrend: async (startTime: string, endTime: string): Promise<BlindBoxOpeningTrendResponse> => {
     const response = await axios.get(`${API_URLS.DASHBOARD.BLIND_BOX_TREND}?startTime=${startTime}&endTime=${endTime}`);
@@ -57,6 +64,11 @@ export const dashboardService = {
 
   getRecentActivity: async (): Promise<RecentActivityResponse> => {
     const response = await axios.get(API_URLS.DASHBOARD.RECENT_ACTIVITY);
+    return response.data;
+  },
+  
+  getLLMSummary: async (): Promise<LLMSummaryResponse> => {
+    const response = await axios.get(API_URLS.DASHBOARD.LLM_SUMMARY);
     return response.data;
   },
 };

@@ -13,16 +13,18 @@ import (
 
 // DashboardHandler 仪表盘处理器
 type DashboardHandler struct {
-	blindBoxService *service.BlindBoxService
-	logger          *zap.Logger
+	blindBoxService   *service.BlindBoxService
+	llmSummaryService *service.LLMSummaryService
+	logger            *zap.Logger
 }
 
 // NewDashboardHandler 创建仪表盘处理器
-func NewDashboardHandler(blindBoxService *service.BlindBoxService) *DashboardHandler {
+func NewDashboardHandler(blindBoxService *service.BlindBoxService, llmSummaryService *service.LLMSummaryService) *DashboardHandler {
 	logger, _ := zap.NewDevelopment()
 	return &DashboardHandler{
-		blindBoxService: blindBoxService,
-		logger:          logger,
+		blindBoxService:   blindBoxService,
+		llmSummaryService: llmSummaryService,
+		logger:            logger,
 	}
 }
 
@@ -135,4 +137,24 @@ func (h *DashboardHandler) GetRecentActivity(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"data": activities,
 	})
+}
+
+// GetLLMSummary 获取LLM智能总结
+func (h *DashboardHandler) GetLLMSummary(c *gin.Context) {
+	// 如果LLM总结服务未初始化，返回错误
+	if h.llmSummaryService == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "LLM总结服务未初始化"})
+		return
+	}
+
+	// 获取仪表盘智能总结
+	summary, err := h.llmSummaryService.GetDashboardSummary(c.Request.Context())
+	if err != nil {
+		h.logger.Error("获取仪表盘智能总结失败", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取仪表盘智能总结失败", "details": err.Error()})
+		return
+	}
+
+	// 返回总结结果
+	c.JSON(http.StatusOK, summary)
 }

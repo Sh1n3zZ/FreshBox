@@ -205,6 +205,7 @@ export const API_URLS = {
     TOP_TASKS: `${config.apiBaseUrl}/dashboard/top-tasks`,
     BLIND_BOX_TREND: `${config.apiBaseUrl}/dashboard/blind-box-trend`,
     RECENT_ACTIVITY: `${config.apiBaseUrl}/dashboard/recent-activity`,
+    LLM_SUMMARY: `${config.apiBaseUrl}/dashboard/llm-summary`,
   },
   
   // 订单相关API

@@ -15,6 +15,7 @@ import { Tabs, TabsContent } from "@/components/ui/tabs"
 import { BlindBoxOpeningTrendChart } from "@/components/BlindBoxOpeningTrendChart"
 import { DashboardStatsData } from "@/components/DashboardStatsData"
 import { UserRecentActivity } from "@/components/UserRecentActivity"
+import { DashboardLLMSummarize } from "@/components/DashboardLLMSummarize"
 import { dashboardService, DashboardStats } from '@/lib/dashboard'
 
 export default function Dashboard() {
@@ -83,6 +84,9 @@ export default function Dashboard() {
         <TabsContent value="overview" className="space-y-6">
           {/* 统计卡片 */}
           <DashboardStatsData stats={stats} />
+
+          {/* AI 智能分析 */}
+          <DashboardLLMSummarize />
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             {/* 图表部分 */}

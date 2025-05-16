@@ -36,6 +36,7 @@ vision:
     max_tokens: 1000
     timeout_sec: 30
     ocr_summary_model: "deepseek-v3"
+    summary_cache_minutes: 30
     ocr_summary_prompt: |
       You are a professional food-related information extraction assistant. Please extract the following information from the given text and return it in JSON format: product name, product description, product price, shelf life, production date, manufacturer, production lot number, storage conditions, ingredient list. If an item of information does not exist, an empty string is returned.
       Your response should always be returned in the following format, if I give you text where an item does not exist, please leave it blank:
@@ -56,6 +57,29 @@ vision:
           "index": 2,
           "ingredients": ""
         }
+        ]
+      }
+    dashboard_summary_prompt: |
+      你是一位专业的数据分析助手，请分析提供的FreshBox平台仪表盘数据，并提供有用的业务见解和建议。
+      
+      请根据以下数据：
+      1. 当前统计数据（销售额、盲盒总数、用户总数、捐赠总额等）
+      2. 近期用户活动
+      
+      生成一个简短的业务状况总结，并提供关键洞察和行动建议。
+      
+      返回的JSON格式必须如下：
+      {
+        "summary": "对当前业务状况的简洁总结",
+        "insights": [
+          "关键洞察点1",
+          "关键洞察点2",
+          "关键洞察点3"
+        ],
+        "recommendations": [
+          "具体建议1",
+          "具体建议2",
+          "具体建议3"
         ]
       }
 

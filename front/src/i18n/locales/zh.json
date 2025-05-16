@@ -33,6 +33,15 @@
     "hoursAgo": "小时",
     "ago": "前",
     "opened": "开启了盲盒",
+    "llm": {
+      "title": "AI智能分析",
+      "refresh": "刷新",
+      "error": "获取数据失败",
+      "summaryLabel": "业务状况总结",
+      "insightsLabel": "关键洞察",
+      "recommendationsLabel": "行动建议",
+      "lastUpdate": "最后更新时间：{{time}}"
+    },
     "tabs": {
       "overview": "概览",
       "analytics": "分析",

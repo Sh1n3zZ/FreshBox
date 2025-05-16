@@ -23,6 +23,7 @@ func SetupRouter(
 	taskHandler *handler.TaskHandler,
 	mailHandler *handler.MailHandler,
 	blindBoxService *service.BlindBoxService,
+	llmSummaryService *service.LLMSummaryService,
 ) *gin.Engine {
 	r := gin.Default()
 
@@ -92,7 +93,7 @@ func SetupRouter(
 	}
 
 	// 仪表盘处理器
-	dashboardHandler := handler.NewDashboardHandler(blindBoxService)
+	dashboardHandler := handler.NewDashboardHandler(blindBoxService, llmSummaryService)
 
 	// API v1
 	v1 := r.Group("/api/v1")
@@ -114,6 +115,7 @@ func SetupRouter(
 			dashboard.GET("/summary", dashboardHandler.GetDashboardStats)
 			dashboard.GET("/blind-box-trend", dashboardHandler.GetBlindBoxOpeningTrend)
 			dashboard.GET("/recent-activity", dashboardHandler.GetRecentActivity)
+			dashboard.GET("/llm-summary", dashboardHandler.GetLLMSummary)
 		}
 
 		// 盲盒接口 - 部分需要认证

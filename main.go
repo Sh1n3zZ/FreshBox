@@ -120,6 +120,12 @@ func main() {
 	blindBoxService := service.NewBlindBoxService(db, pricingEngine, logger, userService)
 	productService := service.NewProductService(db, logger, userService)
 
+	llmSummaryService, err := service.NewLLMSummaryService(blindBoxService, logger)
+	if err != nil {
+		logger.Warn("初始化LLM总结服务失败，将不提供AI分析功能", zap.Error(err))
+		llmSummaryService = nil
+	}
+
 	// 初始化社交任务服务
 	taskManager := social.NewDefaultTaskManager(db)
 	contentManager := social.NewDefaultContentManager(db)
@@ -151,6 +157,7 @@ func main() {
 		taskHandler,
 		mailHandler,
 		blindBoxService,
+		llmSummaryService,
 	)
 
 	// 服务前端构建文件
