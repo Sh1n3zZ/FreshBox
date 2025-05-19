@@ -8,7 +8,7 @@ export interface BlindBox {
   description: string;
   discountCoefficient: number;
   category: string;
-  imageURL: string;
+  imageUrl: string;
   status: string;
   expirationTime: string;
   donationAmount: number;

@@ -64,7 +64,7 @@ export default function Home() {
             <Link to={`/BlindBox/${box.id}`} key={box.id}>
               <BlindBox
                 title={box.name}
-                imageUrl={box.imageURL || defaultImageUrl}
+                imageUrl={box.imageUrl || defaultImageUrl}
                 alt={`${box.name} 盲盒图片`}
               />
             </Link>
