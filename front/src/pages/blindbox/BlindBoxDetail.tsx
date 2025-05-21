@@ -14,12 +14,16 @@ interface BlindBoxDetailProps {
 
 export function BlindBoxDetailDisplay({ box, onPurchase, isPurchasing, canPurchase }: BlindBoxDetailProps) {
   const defaultImageUrl = "https://placehold.co/600x400?text=盲盒";
+  const baseUrl = "http://localhost:5173/";
 
   // Calculate the actual price based on products and discount
   // Note: This calculation assumes the backend provides the products array in the detail.
   // If products are not provided, we might need a separate way to show price or fetch it.
   const originalPrice = box.products?.reduce((sum, product) => sum + product.price, 0) || 0;
   const finalPrice = originalPrice * box.discountCoefficient;
+
+  // Construct full image URL if imageUrl exists
+  const fullImageUrl = box.imageUrl ? `${baseUrl}${box.imageUrl}` : defaultImageUrl;
 
   return (
     <Card className="overflow-hidden">
@@ -30,7 +34,7 @@ export function BlindBoxDetailDisplay({ box, onPurchase, isPurchasing, canPurcha
       <CardContent className="grid md:grid-cols-2 gap-6">
         <div className="relative aspect-video">
           <img
-            src={box.imageURL || defaultImageUrl}
+            src={fullImageUrl}
             alt={`${box.name} image`}
             className="absolute inset-0 h-full w-full object-cover rounded-md border"
             onError={(e) => {
