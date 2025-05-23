@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -119,6 +121,20 @@ func (s *LLMSummaryService) isCacheValid() bool {
 	return time.Since(lastCacheTime) < s.cacheExpiry
 }
 
+// extractJSONFromMarkdown 从markdown代码块中提取JSON内容
+func extractJSONFromMarkdown(content string) string {
+	// 匹配 ```json ... ``` 或 ``` ... ``` 格式的代码块
+	re := regexp.MustCompile("(?s)```(?:json)?\n?(.*?)\n?```")
+	matches := re.FindStringSubmatch(content)
+
+	if len(matches) > 1 {
+		return strings.TrimSpace(matches[1])
+	}
+
+	// 如果没有找到代码块，返回原内容
+	return strings.TrimSpace(content)
+}
+
 // generateSummary 生成总结
 func (s *LLMSummaryService) generateSummary(ctx context.Context, contextJSON string) (*LLMSummaryResponse, error) {
 	// 设置超时
@@ -155,9 +171,18 @@ func (s *LLMSummaryService) generateSummary(ctx context.Context, contextJSON str
 	content := resp.Choices[0].Message.Content
 	var summary LLMSummaryResponse
 
-	if err := json.Unmarshal([]byte(content), &summary); err != nil {
+	// 尝试从markdown代码块中提取JSON内容
+	jsonContent := extractJSONFromMarkdown(content)
+
+	// 记录提取的JSON内容用于调试
+	s.logger.Debug("提取的JSON内容", zap.String("content", jsonContent))
+
+	if err := json.Unmarshal([]byte(jsonContent), &summary); err != nil {
 		// 如果解析JSON失败，尝试使用一个基本结构
-		s.logger.Warn("解析LLM响应为JSON失败，使用基本结构", zap.Error(err))
+		s.logger.Warn("解析LLM响应为JSON失败，使用基本结构",
+			zap.Error(err),
+			zap.String("original_content", content),
+			zap.String("extracted_json", jsonContent))
 		summary = LLMSummaryResponse{
 			Summary:         content,
 			Insights:        []string{},

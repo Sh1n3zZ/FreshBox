@@ -23,16 +23,16 @@ export interface BlindBoxDetail extends BlindBox {
 
 // Define ProductDTO directly here based on backend response
 export interface ProductDTO {
-  ID: string;
-  Name: string;
-  Description?: string;
-  Price: number;
-  Category: string;
-  ImageURL?: string;
-  Status: string;
-  ProductionDate: string;
-  ShelfLifeHours: number;
-  CreatedAt: string;
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  category: string;
+  imageUrl?: string;
+  status: string;
+  productionDate: string;
+  shelfLifeHours: number;
+  createdAt: string;
 }
 
 // 用于创建/更新盲盒的数据结构

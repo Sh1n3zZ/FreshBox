@@ -16,7 +16,7 @@ interface BlindBoxOpenProps {
 
 export function BlindBoxOpenDisplay({ productInfo, isOpening, onOpen, onReset }: BlindBoxOpenProps) {
   const [showResult, setShowResult] = useState(false);
-  const defaultImageUrl = "https://placehold.co/300x200?text=产品图片";
+  const baseUrl = "http://localhost:5173/";
 
   useEffect(() => {
     if (productInfo) {
@@ -27,6 +27,12 @@ export function BlindBoxOpenDisplay({ productInfo, isOpening, onOpen, onReset }:
       setShowResult(false);
     }
   }, [productInfo]);
+
+  // Construct full image URL from backend response
+  const getImageUrl = (imageUrl?: string) => {
+    if (!imageUrl) return "";
+    return imageUrl.startsWith('http') ? imageUrl : `${baseUrl}${imageUrl}`;
+  };
 
   return (
     <div className="flex flex-col items-center justify-center p-8 border rounded-lg min-h-[400px] bg-gradient-to-br from-primary/10 via-transparent to-secondary/10">
@@ -74,18 +80,17 @@ export function BlindBoxOpenDisplay({ productInfo, isOpening, onOpen, onReset }:
                 </CardHeader>
                 <CardContent className="items-center flex flex-col text-center">
                   <img
-                    src={productInfo.ImageURL || defaultImageUrl}
-                    alt={productInfo.Name}
+                    src={getImageUrl(productInfo.imageUrl)}
+                    alt={productInfo.name}
                     className="w-48 h-48 object-contain mb-4 rounded border"
-                    onError={(e) => { e.currentTarget.src = defaultImageUrl; }}
                   />
-                  <h3 className="text-xl font-semibold">{productInfo.Name}</h3>
-                  <p className="text-muted-foreground text-sm mb-2">{productInfo.Description}</p>
+                  <h3 className="text-xl font-semibold">{productInfo.name}</h3>
+                  <p className="text-muted-foreground text-sm mb-2">{productInfo.description}</p>
                   <div className="flex gap-2 mb-2">
-                    <Badge variant="outline">{productInfo.Category}</Badge>
-                    <Badge variant="secondary">价值: {formatCurrency(productInfo.Price)}</Badge>
+                    <Badge variant="outline">{productInfo.category}</Badge>
+                    <Badge variant="secondary">价值: {formatCurrency(productInfo.price)}</Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground">生产日期: {formatDate(productInfo.ProductionDate)}</p>
+                  <p className="text-xs text-muted-foreground">生产日期: {formatDate(productInfo.productionDate)}</p>
                 </CardContent>
                 {onReset && (
                   <CardFooter className="justify-center">

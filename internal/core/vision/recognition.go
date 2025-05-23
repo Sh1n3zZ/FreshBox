@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/sashabaranov/go-openai"
@@ -81,6 +83,32 @@ func (r *OCRRecognizer) RecognizeImage(ctx context.Context, imageData []byte) (s
 	return "", fmt.Errorf("no text content recognized")
 }
 
+// extractJSONFromMarkdown 从markdown代码块中提取JSON内容
+func extractJSONFromMarkdown(content string) string {
+	// Remove leading and trailing whitespace
+	content = strings.TrimSpace(content)
+
+	// Check if content is wrapped in markdown code block
+	if strings.HasPrefix(content, "```") {
+		// Use regex to extract content between ```json and ```
+		re := regexp.MustCompile("```(?:json)?\n?(.*?)\n?```")
+		matches := re.FindStringSubmatch(content)
+		if len(matches) > 1 {
+			return strings.TrimSpace(matches[1])
+		}
+
+		// Fallback: try to extract content between first ``` and last ```
+		lines := strings.Split(content, "\n")
+		if len(lines) > 2 {
+			// Skip first line (```) and last line (```)
+			return strings.Join(lines[1:len(lines)-1], "\n")
+		}
+	}
+
+	// Return original content if no markdown wrapper found
+	return content
+}
+
 // SummarizeOCRResult 实现OCR结果的结构化处理
 func (r *OCRRecognizer) SummarizeOCRResult(ctx context.Context, ocrText string) (*OCRSummary, error) {
 	// 创建超时上下文
@@ -115,10 +143,14 @@ func (r *OCRRecognizer) SummarizeOCRResult(ctx context.Context, ocrText string) 
 		return nil, fmt.Errorf("no summary content generated")
 	}
 
+	// 获取响应内容并提取JSON
+	responseContent := resp.Choices[0].Message.Content
+	jsonContent := extractJSONFromMarkdown(responseContent)
+
 	// 解析JSON结果
 	var summary OCRSummary
-	if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &summary); err != nil {
-		return nil, fmt.Errorf("failed to parse OCR summary: %w", err)
+	if err := json.Unmarshal([]byte(jsonContent), &summary); err != nil {
+		return nil, fmt.Errorf("failed to parse OCR summary: %w, original content: %s", err, responseContent)
 	}
 
 	return &summary, nil
