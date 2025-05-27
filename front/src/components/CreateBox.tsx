@@ -96,7 +96,7 @@ export function CreateBox({ onBoxCreated, box, readOnly = false }: CreateBoxProp
       description: box?.description || "",
       discountCoefficient: box?.discountCoefficient || 0.8,
       category: box?.category || "",
-      imageURL: box?.imageURL || "",
+      imageURL: box?.imageUrl || "",
       expirationTime: box?.expirationTime ? new Date(box.expirationTime) : addDays(new Date(), 3),
       donationAmount: box?.donationAmount || 0,
     },
