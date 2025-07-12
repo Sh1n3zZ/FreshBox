@@ -400,6 +400,7 @@ export default function TaskDetail() {
           <TaskUserSubmit 
             submissions={submissions} 
             handleImageError={handleImageError}
+            taskId={id}
           />
         </TabsContent>
       </Tabs>

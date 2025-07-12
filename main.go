@@ -158,6 +158,7 @@ func main() {
 		mailHandler,
 		blindBoxService,
 		llmSummaryService,
+		db,
 	)
 
 	// 服务前端构建文件

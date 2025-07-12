@@ -50,7 +50,6 @@ export const mockTaskInfo: TaskInfo = {
   image: "/images/challenge1.jpg"
 };
 
-
 // Mock数据
 export const mockTaskDetail: TaskDetail = {
   id: '1',

@@ -8,18 +8,45 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar } from '@/components/ui/avatar'
 import { TaskSubmission } from '@/lib/task-mock'
+import { useEffect, useState } from 'react'
+import { getTaskSubmissions } from '@/lib/task'
+import { mockSubmissions } from '@/lib/task-mock'
 
 interface TaskUserSubmitProps {
   submissions: TaskSubmission[];
   handleImageError: (e: React.SyntheticEvent<HTMLImageElement, Event>) => void;
+  taskId?: string;
 }
 
-export default function TaskUserSubmit({ submissions, handleImageError }: TaskUserSubmitProps) {
+export default function TaskUserSubmit({ submissions, handleImageError, taskId }: TaskUserSubmitProps) {
+  const [realSubmissions, setRealSubmissions] = useState<TaskSubmission[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!taskId) return
+    setLoading(true)
+    getTaskSubmissions(taskId)
+      .then(data => setRealSubmissions(data))
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false))
+  }, [taskId])
+
+  // 合并 mock 和真实数据（真实数据在前）
+  const allSubmissions = [...realSubmissions, ...submissions]
+
+  if (loading) {
+    return <div className="py-8 text-center text-muted-foreground">加载中...</div>
+  }
+  if (error) {
+    return <div className="py-8 text-center text-red-500">{error}</div>
+  }
+
   return (
     <>
-      {submissions.length > 0 ? (
+      {allSubmissions.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {submissions.map((submission) => (
+          {allSubmissions.map((submission) => (
             <Card key={submission.id} className="overflow-hidden">
               <div className="relative">
                 <ScrollArea className="h-64">

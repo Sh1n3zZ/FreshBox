@@ -192,6 +192,9 @@ export const API_URLS = {
     CONTENTS: (id: string) => `${config.apiBaseUrl}/tasks/${id}/contents`,
     UPDATE_STATUS: (id: string) => `${config.apiBaseUrl}/tasks/${id}/status`,
     UPLOAD_CONTENT: (id: string) => `${config.apiBaseUrl}/tasks/${id}/content`,
+    // 新增：任务提交相关API
+    SUBMISSIONS: (id: string) => `${config.apiBaseUrl}/tasks/${id}/submissions`,
+    SUBMISSION_DETAIL: (id: string, submissionId: string) => `${config.apiBaseUrl}/tasks/${id}/submissions/${submissionId}`,
   },
   
   // 仪表盘相关API

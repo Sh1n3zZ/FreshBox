@@ -7,6 +7,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
+	"gorm.io/gorm"
 
 	"FreshBox/internal/api/rest/handler"
 	"FreshBox/internal/api/rest/middleware"
@@ -24,6 +25,7 @@ func SetupRouter(
 	mailHandler *handler.MailHandler,
 	blindBoxService *service.BlindBoxService,
 	llmSummaryService *service.LLMSummaryService,
+	db *gorm.DB,
 ) *gin.Engine {
 	r := gin.Default()
 
@@ -94,6 +96,10 @@ func SetupRouter(
 
 	// 仪表盘处理器
 	dashboardHandler := handler.NewDashboardHandler(blindBoxService, llmSummaryService)
+
+	// 任务提交服务和处理器
+	taskSubmissionService := service.NewTaskSubmissionService(db)
+	taskSubmissionHandler := handler.NewTaskSubmissionHandler(taskSubmissionService)
 
 	// API v1
 	v1 := r.Group("/api/v1")
@@ -220,6 +226,32 @@ func SetupRouter(
 				tasksAuth.PUT("/:id/status", taskHandler.UpdateTaskStatus)    // 更新任务状态
 				tasksAuth.POST("/:id/content", taskHandler.UploadTaskContent) // 上传任务内容
 			}
+
+			// 任务提交相关接口
+			taskSubmissions := tasks.Group("/:id/submissions")
+			{
+				// 公开接口
+				taskSubmissions.GET("", taskSubmissionHandler.GetTaskSubmissions)                  // 获取任务所有提交
+				taskSubmissions.GET("/:submissionId", taskSubmissionHandler.GetTaskSubmissionByID) // 获取单个提交
+
+				// 需要认证的接口
+				taskSubmissionsAuth := taskSubmissions.Group("")
+				taskSubmissionsAuth.Use(middleware.Auth())
+				{
+					taskSubmissionsAuth.POST("", taskSubmissionHandler.CreateTaskSubmission)                      // 提交作品
+					taskSubmissionsAuth.PUT("/:submissionId", taskSubmissionHandler.UpdateTaskSubmission)         // 修改提交
+					taskSubmissionsAuth.DELETE("/:submissionId", taskSubmissionHandler.DeleteTaskSubmission)      // 删除提交
+					taskSubmissionsAuth.POST("/:submissionId/like", taskSubmissionHandler.LikeTaskSubmission)     // 点赞
+					taskSubmissionsAuth.POST("/:submissionId/unlike", taskSubmissionHandler.UnlikeTaskSubmission) // 取消点赞
+				}
+			}
+		}
+
+		// 用户相关接口
+		user := v1.Group("/user")
+		user.Use(middleware.Auth())
+		{
+			user.GET("/submissions", taskSubmissionHandler.GetUserTaskSubmissions) // 获取当前用户所有提交
 		}
 
 		// 认证相关接口
