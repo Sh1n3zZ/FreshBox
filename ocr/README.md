@@ -1,6 +1,33 @@
-# OCR gRPC 服务
+# FreshBox OCR Service
 
-这是一个基于Python的OCR服务，使用gRPC与Golang后端通信。该服务使用CnOCR进行图像文字识别处理。
+<div align="center">
+
+[![Python](https://img.shields.io/badge/Python-3.10-3776AB.svg?style=flat&logo=python)](https://www.python.org/)
+[![YOLOv5](https://img.shields.io/badge/YOLOv5-7.0-00FFFF.svg?style=flat)](https://github.com/ultralytics/yolov5)
+[![gRPC](https://img.shields.io/badge/gRPC-1.54-244c5a.svg?style=flat&logo=google)](https://grpc.io/)
+[![OpenCV](https://img.shields.io/badge/OpenCV-4.8-5C3EE8.svg?style=flat&logo=opencv)](https://opencv.org/)
+
+</div>
+
+> 🔍 FreshBox的OCR服务组件，基于YOLOv5和CnOCR，通过gRPC提供高性能的食品图像识别和文字识别服务。
+
+## ✨ 特性
+
+- 🎯 **精准识别**
+  - 食品图像识别
+  - 包装文字识别
+  - 保质期识别
+  - 多语言支持
+
+- 🚀 **高性能**
+  - GPU加速支持
+  - 批量处理优化
+  - 流式识别
+
+- 🛠 **易扩展**
+  - 模块化设计
+  - 插件系统
+  - 自定义预处理
 
 ## 目录结构
 
