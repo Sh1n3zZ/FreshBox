@@ -17,20 +17,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { API_URLS } from '@/conf/env'
-
-// 任务简要信息接口
-interface TaskInfo {
-  id: string;
-  title: string;
-  image: string;
-}
-
-// Mock数据
-const mockTaskInfo: TaskInfo = {
-  id: '1',
-  title: "夏日清凉料理挑战",
-  image: "/images/challenge1.jpg"
-};
+import { mockTaskInfo, TaskInfo } from '@/lib/task-mock'
 
 export default function TaskSubmit() {
   const { id } = useParams<{ id: string }>();
