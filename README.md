@@ -1,7 +1,4 @@
 # FreshBox 临期食品盲盒社交化系统 
-``FreshBox--A Blindbox and socialization system for expired food``
-
-
 
 <div align="center">
 
