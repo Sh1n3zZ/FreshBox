@@ -20,14 +20,17 @@ export function Header({ onMenuClick }: HeaderProps) {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background">
       <div className="container mx-auto max-w-7xl flex h-16 items-center justify-between py-4">
-        <div className="flex items-center gap-2 md:gap-6">          <Button
+        <div className="flex items-center gap-2 md:gap-6">
+          <Button
             variant="ghost"
             size="sm"
             onClick={onMenuClick}
             className="h-10 w-10 p-0 md:hidden"
           >
             <Menu className="h-6 w-6" />
-            <span className="sr-only">{t('Open menu')}</span>          </Button><Link to="/about" className="flex items-center space-x-2">
+            <span className="sr-only">{t('Open menu')}</span>
+          </Button>
+          <Link to="/about" className="flex items-center space-x-2">
             <img src="/FreshBoxLogo.svg" alt="FreshBox" className="h-10 w-10" />
             <span className="hidden text-xl font-bold sm:inline-block">
               FreshBox 临期食品盲盒社交化系统
