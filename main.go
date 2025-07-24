@@ -21,7 +21,6 @@ import (
 	"FreshBox/internal/api/rest"
 	"FreshBox/internal/api/rest/handler"
 	"FreshBox/internal/core/pricing"
-	"FreshBox/internal/core/social"
 	"FreshBox/internal/pkg/jwt"
 	"FreshBox/internal/pkg/migration"
 	"FreshBox/internal/service"
@@ -126,9 +125,8 @@ func main() {
 		llmSummaryService = nil
 	}
 
-	// 初始化社交任务服务
-	taskManager := social.NewDefaultTaskManager(db)
-	contentManager := social.NewDefaultContentManager(db)
+	// 初始化任务服务
+	taskService := service.NewTaskService(db, userService)
 
 	manufacturerService := service.NewManufacturerService(db, logger, userService)
 	ingredientService := service.NewIngredientService(db, logger, userService)
@@ -139,7 +137,7 @@ func main() {
 	productHandler := handler.NewProductHandler(productService)
 	manufacturerHandler := handler.NewManufacturerHandler(manufacturerService)
 	ingredientHandler := handler.NewIngredientHandler(ingredientService)
-	taskHandler := handler.NewTaskHandler(taskManager, contentManager)
+	taskHandler := handler.NewTaskHandler(taskService, userService)
 	mailHandler := handler.NewMailHandler(mailService)
 
 	// 设置运行模式

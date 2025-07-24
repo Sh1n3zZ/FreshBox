@@ -16,8 +16,10 @@ const Dashboard = lazy(() => import('@/pages/admin/Dashboard'))
 const Settings = lazy(() => import('@/pages/admin/Settings'))
 const Users = lazy(() => import('@/pages/admin/Users'))
 const Orders = lazy(() => import('@/pages/admin/Orders'))
+const TaskPanel = lazy(() => import('@/pages/admin/TaskPanel'))
 const NotFound = lazy(() => import('@/pages/NotFound'))
 const BlindBoxPage = lazy(() => import('@/pages/blindbox/BlindBox'))
+const Profile = lazy(() => import('@/pages/Profile'));
 
 const routes: RouteObject[] = [
   {
@@ -27,6 +29,7 @@ const routes: RouteObject[] = [
       { index: true, element: <Home /> },
       { path: 'about', element: <About /> },
       { path: 'ocr', element: <OCR /> },
+      { path: 'profile', element: <Profile /> },
       {
         path: 'dashboard',
         element: <Dashboard />
@@ -45,6 +48,10 @@ const routes: RouteObject[] = [
           {
             path: 'orders',
             element: <Orders />
+          },
+          {
+            path: 'tasks',
+            element: <TaskPanel />
           }
         ]
       },

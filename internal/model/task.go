@@ -117,3 +117,37 @@ type TaskDetailDTO struct {
 	Steps        []TaskStep     `json:"steps"`
 	CreatedAt    string         `json:"created_at"`
 }
+
+// TaskComment 任务评论
+type TaskComment struct {
+	ID           string         `json:"id" gorm:"primarykey;type:varchar(36)"`
+	TaskID       string         `json:"task_id" gorm:"type:varchar(36);index;not null"`
+	Task         Task           `json:"task" gorm:"foreignKey:TaskID"`
+	SubmissionID string         `json:"submission_id" gorm:"type:varchar(36);index;not null"`
+	Submission   TaskSubmission `json:"submission" gorm:"foreignKey:SubmissionID"`
+	UserID       string         `json:"user_id" gorm:"type:varchar(36);index;not null"`
+	User         User           `json:"user" gorm:"foreignKey:UserID"`
+	Content      string         `json:"content" gorm:"type:text;not null"`
+	ParentID     *string        `json:"parent_id" gorm:"type:varchar(36);index"` // 父评论ID，用于回复功能
+	Parent       *TaskComment   `json:"parent" gorm:"foreignKey:ParentID"`
+	Replies      []TaskComment  `json:"replies" gorm:"foreignKey:ParentID"`
+	Likes        int            `json:"likes" gorm:"default:0"`
+	CreatedAt    time.Time      `json:"created_at" gorm:"type:datetime"`
+	UpdatedAt    time.Time      `json:"updated_at" gorm:"type:datetime"`
+}
+
+// TaskCommentDTO 任务评论数据传输对象
+type TaskCommentDTO struct {
+	ID           string           `json:"id"`
+	TaskID       string           `json:"task_id"`
+	SubmissionID string           `json:"submission_id"`
+	UserID       string           `json:"user_id"`
+	Username     string           `json:"username"`
+	Avatar       string           `json:"avatar"`
+	Content      string           `json:"content"`
+	ParentID     *string          `json:"parent_id"`
+	Likes        int              `json:"likes"`
+	ReplyCount   int              `json:"reply_count"`
+	CreatedAt    string           `json:"created_at"`
+	Replies      []TaskCommentDTO `json:"replies,omitempty"`
+}

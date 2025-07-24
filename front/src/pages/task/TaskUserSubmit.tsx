@@ -1,25 +1,16 @@
-import { 
-  ThumbsUp,
-  MessageCircle,
-  Image
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter } from '@/components/ui/card'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Avatar } from '@/components/ui/avatar'
-import { TaskSubmission } from '@/lib/task-mock'
+import { Image } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
 import { useEffect, useState } from 'react'
 import { getTaskSubmissions } from '@/lib/task'
-import { mockSubmissions } from '@/lib/task-mock'
+import TaskUserSubmitContent from './TaskUserSubmitContent'
+import TaskUserSubmitCard from './TaskUserSubmitCard'
 
 interface TaskUserSubmitProps {
-  submissions: TaskSubmission[];
-  handleImageError: (e: React.SyntheticEvent<HTMLImageElement, Event>) => void;
   taskId?: string;
 }
 
-export default function TaskUserSubmit({ submissions, handleImageError, taskId }: TaskUserSubmitProps) {
-  const [realSubmissions, setRealSubmissions] = useState<TaskSubmission[]>([])
+export default function TaskUserSubmit({ taskId }: TaskUserSubmitProps) {
+  const [realSubmissions, setRealSubmissions] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -32,8 +23,8 @@ export default function TaskUserSubmit({ submissions, handleImageError, taskId }
       .finally(() => setLoading(false))
   }, [taskId])
 
-  // 合并 mock 和真实数据（真实数据在前）
-  const allSubmissions = [...realSubmissions, ...submissions]
+  // 只用真实后端数据
+  const allSubmissions = realSubmissions
 
   if (loading) {
     return <div className="py-8 text-center text-muted-foreground">加载中...</div>
@@ -44,61 +35,28 @@ export default function TaskUserSubmit({ submissions, handleImageError, taskId }
 
   return (
     <>
-      {allSubmissions.length > 0 ? (
+      {/* 提交作品表单入口，可根据业务逻辑决定是否显示 */}
+      <div className="mb-8">
+        <TaskUserSubmitContent onSuccess={() => window.location.reload()} />
+      </div>
+      {Array.isArray(allSubmissions) && allSubmissions.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {allSubmissions.map((submission) => (
-            <Card key={submission.id} className="overflow-hidden">
-              <div className="relative">
-                <ScrollArea className="h-64">
-                  <div className="flex snap-x snap-mandatory overflow-x-auto">
-                    {submission.images.map((image, i) => (
-                      <div key={i} className="snap-center shrink-0 w-full h-64">
-                        <img 
-                          src={image} 
-                          alt={`${submission.title} - 图片 ${i+1}`}
-                          className="w-full h-full object-cover"
-                          onError={handleImageError}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-                {submission.images.length > 1 && (
-                  <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
-                    {submission.images.map((_, i) => (
-                      <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/70"></div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              
-              <CardContent className="pt-4">
-                <div className="flex items-center mb-3">
-                  <Avatar className="h-6 w-6 mr-2">
-                    <img src={submission.avatar} alt={submission.username} />
-                  </Avatar>
-                  <span className="font-medium">{submission.username}</span>
-                </div>
-                <h3 className="text-lg font-semibold mb-1">{submission.title}</h3>
-                <p className="text-muted-foreground text-sm">{submission.description}</p>
-              </CardContent>
-              
-              <CardFooter className="flex justify-between border-t pt-4">
-                <div className="flex gap-4">
-                  <Button variant="ghost" size="sm" className="h-8 px-2">
-                    <ThumbsUp className="h-4 w-4 mr-1" />
-                    <span>{submission.likes}</span>
-                  </Button>
-                  <Button variant="ghost" size="sm" className="h-8 px-2">
-                    <MessageCircle className="h-4 w-4 mr-1" />
-                    <span>{submission.comments}</span>
-                  </Button>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {submission.createdAt}
-                </div>
-              </CardFooter>
-            </Card>
+          {allSubmissions.map((submission: any) => (
+            <TaskUserSubmitCard
+              key={submission.id}
+              submission={submission}
+              taskId={taskId}
+              onCommentCountChange={(submissionId: string, count: number) => {
+                // 更新本地评论数量
+                setRealSubmissions(prev => 
+                  prev.map((item: any) => 
+                    item.id === submissionId 
+                      ? { ...item, comments: count }
+                      : item
+                  )
+                )
+              }}
+            />
           ))}
         </div>
       ) : (

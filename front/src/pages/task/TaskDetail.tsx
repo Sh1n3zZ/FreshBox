@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { 
   Trophy, 
   Users, 
@@ -10,30 +10,52 @@ import {
   Check, 
   Clock, 
   CircleDashed,
-  Image,
-  ChevronRight,
-  ArrowLeft,
-  Home,
-  ChevronRight as ChevronRightIcon
+  Image
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { GlobalTaskCover } from '@/components/GlobalTaskCover'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { API_URLS } from '@/conf/env'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { mockTaskDetail, mockSubmissions, TaskSubmission, TaskStep } from '@/lib/task-mock'
-import type { TaskDetail } from '@/lib/task-mock'
+import { getTaskDetail, joinTask as joinTaskApi } from '@/lib/task'
 import TaskUserSubmit from './TaskUserSubmit'
+import TaskDetailDescription from './TaskDetailDescription'
+import TaskDetailSteps from './TaskDetailSteps'
+import TaskDetailNav from './TaskDetailNav'
+
+// 定义后端返回的类型
+interface TaskStep {
+  id: string
+  title: string
+  description: string
+  type: string
+  status?: string
+}
+
+interface TaskDetail {
+  id: string
+  title: string
+  description: string
+  difficulty?: string
+  participants?: number
+  deadline: string
+  tags: string[]
+  image?: string
+  rewards?: string
+  status?: string
+  steps: TaskStep[]
+}
 
 export default function TaskDetail() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get('tab') || 'details';
   
   // 状态
   const [taskDetail, setTaskDetail] = useState<TaskDetail | null>(null);
-  const [submissions, setSubmissions] = useState<TaskSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -42,30 +64,9 @@ export default function TaskDetail() {
     const fetchTaskDetail = async () => {
       setLoading(true);
       setError(null);
-      
       try {
-        // 真实API调用
-        if (process.env.NODE_ENV === 'production') {
-          const response = await fetch(API_URLS.TASK.DETAIL(id || ''));
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          const data = await response.json();
-          setTaskDetail(data);
-          
-          // 获取任务内容（提交结果）
-          const contentsResponse = await fetch(API_URLS.TASK.CONTENTS(id || ''));
-          if (contentsResponse.ok) {
-            const contentsData = await contentsResponse.json();
-            setSubmissions(contentsData);
-          }
-        } else {
-          // Mock数据
-          setTimeout(() => {
-            setTaskDetail(mockTaskDetail);
-            setSubmissions(mockSubmissions);
-          }, 0);
-        }
+        const data = await getTaskDetail(id as string);
+        setTaskDetail(data);
       } catch (err) {
         console.error('Failed to fetch task details:', err);
         setError('获取挑战详情失败，请稍后再试');
@@ -73,35 +74,15 @@ export default function TaskDetail() {
         setLoading(false);
       }
     };
-    
     fetchTaskDetail();
   }, [id]);
   
   // 加入挑战
   const joinTask = async () => {
+    if (!id) return;
     try {
-      // 真实API调用
-      if (process.env.NODE_ENV === 'production') {
-        const response = await fetch(API_URLS.TASK.UPDATE_STATUS(id || ''), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ status: 'in_progress' })
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        // 更新本地状态
-        setTaskDetail(prev => prev ? { ...prev, status: 'in_progress' } : null);
-      } else {
-        // Mock数据
-        setTimeout(() => {
-          setTaskDetail(prev => prev ? { ...prev, status: 'in_progress' } : null);
-        }, 300);
-      }
+      await joinTaskApi(id as string);
+      setTaskDetail((prev: TaskDetail | null) => prev ? { ...prev, status: 'in_progress' } : null);
     } catch (err) {
       console.error('Failed to join task:', err);
       setError('加入挑战失败，请稍后再试');
@@ -128,7 +109,7 @@ export default function TaskDetail() {
   };
   
   // 获取难度标签
-  const getDifficultyLabel = (difficulty: string) => {
+  const getDifficultyLabel = (difficulty?: string) => {
     switch(difficulty) {
       case 'easy': return t('dashboard.tasks.difficulty-easy');
       case 'medium': return t('dashboard.tasks.difficulty-medium');
@@ -138,7 +119,7 @@ export default function TaskDetail() {
   };
 
   // 获取难度颜色
-  const getDifficultyColor = (difficulty: string) => {
+  const getDifficultyColor = (difficulty?: string) => {
     switch(difficulty) {
       case 'easy': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
       case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
@@ -156,55 +137,10 @@ export default function TaskDetail() {
     }
   };
   
-  // 返回到挑战列表页面
-  const goBackToExplore = () => {
-    navigate('/task/explore');
-  };
-  
-  // 返回按钮组件
-  const BackButton = () => (
-    <div className="mb-4">
-      <Button 
-        variant="ghost" 
-        size="sm" 
-        className="flex items-center text-muted-foreground hover:text-foreground"
-        onClick={goBackToExplore}
-      >
-        <ArrowLeft className="mr-1 h-4 w-4" />
-        返回挑战列表
-      </Button>
-    </div>
-  );
-  
-  // 面包屑导航组件
-  const Breadcrumbs = ({ title }: { title: string }) => (
-    <nav className="flex mb-4 text-sm items-center">
-      <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => navigate('/')}>
-        <Home className="h-3.5 w-3.5 mr-1" />
-        <span>首页</span>
-      </Button>
-      <ChevronRightIcon className="h-3 w-3 mx-2 text-muted-foreground" />
-      <Button variant="link" size="sm" className="p-0 h-auto" onClick={goBackToExplore}>
-        <span>挑战列表</span>
-      </Button>
-      <ChevronRightIcon className="h-3 w-3 mx-2 text-muted-foreground" />
-      <span className="text-muted-foreground truncate" title={title}>
-        {title}
-      </span>
-    </nav>
-  );
-  
-  // 添加错误处理函数
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    const target = e.currentTarget;
-    target.onerror = null; // 防止循环加载
-    target.src = '/images/placeholder.jpg';
-  };
-  
   if (loading) {
     return (
       <div className="container mx-auto py-6">
-        <BackButton />
+        <TaskDetailNav title={''} />
         <div className="py-12 flex justify-center">
           <div className="animate-spin">
             <CircleDashed className="h-8 w-8 text-primary" />
@@ -217,7 +153,7 @@ export default function TaskDetail() {
   if (error || !taskDetail) {
     return (
       <div className="container mx-auto py-6">
-        <BackButton />
+        <TaskDetailNav title={''} />
         <Card>
           <CardContent className="pt-6 flex flex-col items-center">
             <div className="text-xl text-red-500 mb-4">
@@ -234,9 +170,7 @@ export default function TaskDetail() {
   
   return (
     <div className="container mx-auto py-6">
-      <BackButton />
-      <Breadcrumbs title={taskDetail.title} />
-      
+      <TaskDetailNav title={taskDetail.title} />
       {/* 挑战头部信息 */}
       <div className="mb-8 flex flex-col md:flex-row gap-6">
         <div className="w-full md:w-2/3">
@@ -247,16 +181,11 @@ export default function TaskDetail() {
                 {getDifficultyLabel(taskDetail.difficulty)}
               </Badge>
             </div>
-            <img 
-              src={taskDetail.image} 
-              alt={taskDetail.title}
-              className="w-full h-full object-cover"
-              onError={handleImageError}
-            />
+            <GlobalTaskCover cover={taskDetail.image} size="lg" alt={taskDetail.title} />
             <div className="absolute bottom-0 left-0 right-0 p-4 z-20 text-white">
               <h1 className="text-3xl font-bold mb-2">{taskDetail.title}</h1>
               <div className="flex flex-wrap gap-2 mb-3">
-                {taskDetail.tags.map((tag, index) => (
+                {(Array.isArray(taskDetail.tags) ? taskDetail.tags : []).map((tag: string, index: number) => (
                   <Badge key={index} variant="outline" className="text-xs bg-white/20 text-white">
                     {tag}
                   </Badge>
@@ -333,73 +262,22 @@ export default function TaskDetail() {
           </Card>
         </div>
       </div>
-      
       {/* 挑战详情和提交内容标签 */}
-      <Tabs defaultValue="details" className="mb-8">
+      <Tabs value={tab} onValueChange={v => setSearchParams({ ...Object.fromEntries(searchParams.entries()), tab: v })} className="mb-8">
         <TabsList className="mb-4">
           <TabsTrigger value="details">挑战详情</TabsTrigger>
-          <TabsTrigger value="submissions">他人作品 ({submissions.length})</TabsTrigger>
+          <TabsTrigger value="submissions">他人作品</TabsTrigger>
         </TabsList>
-        
         <TabsContent value="details" className="space-y-6">
-          {/* 挑战描述 */}
-          <Card>
-            <CardHeader>
-              <CardTitle>挑战描述</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>{taskDetail.description}</p>
-            </CardContent>
-          </Card>
-          
-          {/* 挑战步骤 */}
-          <Card>
-            <CardHeader>
-              <CardTitle>挑战步骤</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {taskDetail.steps.map((step, index) => (
-                <div key={step.id} className="relative">
-                  <div className="flex">
-                    <div className="mr-4 flex-shrink-0">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900">
-                        {getStepStatusIcon(step.status)}
-                      </div>
-                    </div>
-                    <div className="flex-grow">
-                      <div className="flex justify-between items-start">
-                        <h3 className="text-lg font-semibold mb-1">
-                          {step.title}
-                        </h3>
-                        {step.type === 'purchase' || step.type === 'submit' ? (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleStepAction(step)}
-                          >
-                            {step.type === 'purchase' ? '购买盲盒' : '提交结果'}
-                            <ChevronRight className="ml-1 h-4 w-4" />
-                          </Button>
-                        ) : null}
-                      </div>
-                      <p className="text-muted-foreground">{step.description}</p>
-                    </div>
-                  </div>
-                  
-                  {/* 连接线 */}
-                  {index < taskDetail.steps.length - 1 && (
-                    <div className="absolute left-5 top-10 bottom-0 w-0.5 bg-border h-6"></div>
-                  )}
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+          <TaskDetailDescription description={taskDetail.description} />
+          <TaskDetailSteps 
+            steps={taskDetail.steps} 
+            handleStepAction={handleStepAction} 
+            getStepStatusIcon={getStepStatusIcon} 
+          />
         </TabsContent>
-        
         <TabsContent value="submissions">
           <TaskUserSubmit 
-            submissions={submissions} 
-            handleImageError={handleImageError}
             taskId={id}
           />
         </TabsContent>

@@ -9,7 +9,8 @@ import {
   getUserFromLocalStorage, 
   saveUserToLocalStorage, 
   removeUserFromLocalStorage,
-  refreshToken
+  refreshToken,
+  fetchUserProfile
 } from '@/lib/auth'
 
 // 用户角色类型
@@ -24,7 +25,7 @@ interface AuthContextType {
   register: (username: string, email: string, password: string, code: string) => Promise<void>
   sendCode: (email: string) => Promise<void>
   logout: () => void
-  updateUser: (user: Partial<User>) => void
+  updateUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -212,12 +213,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     navigate('/auth/login')
   }
 
-  const updateUser = (updatedUserData: Partial<User>) => {
-    if (!user) return
-
-    const newUserData = { ...user, ...updatedUserData }
-    saveUserToLocalStorage(newUserData)
-    setUser(newUserData)
+  const updateUser = async () => {
+    const savedToken = localStorage.getItem('access_token');
+    if (savedToken) {
+      try {
+        const freshUserData = await fetchUserProfile(savedToken);
+        setUser({ ...freshUserData, access_token: savedToken, refresh_token: localStorage.getItem('refresh_token') || '' });
+      } catch (error) {
+        console.error('实时获取用户信息失败:', error);
+      }
+    }
   }
 
   const value = {

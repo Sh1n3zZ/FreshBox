@@ -42,5 +42,15 @@ export const apiService = {
     apiClient.delete<T>(url, config).then(response => response.data),
 };
 
+// 获取当前用户信息
+export function getUserProfile() {
+  return apiClient.get('/user/profile');
+}
+
+// 更新当前用户信息
+export function updateUserProfile(data: any) {
+  return apiClient.put('/user/profile', data);
+}
+
 // 导出原始实例，用于特殊场景
 export default apiClient; 

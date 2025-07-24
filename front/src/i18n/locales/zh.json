@@ -8,12 +8,11 @@
   "open-menu": "打开菜单",
   "switch-language": "切换语言",
   "toggle-theme": "切换主题",
-
   "auth": {
     "login_title": "登录账户",
     "login_description": "欢迎回来，请登录您的账户",
     "login_required": "账号不能为空",
-    "email": "邮箱", 
+    "email": "邮箱",
     "email_placeholder": "请输入邮箱",
     "email_invalid": "请输入有效的邮箱地址",
     "password": "密码",
@@ -163,6 +162,9 @@
         "action": "系统设置",
         "blindBoxes": "盲盒列表",
         "products": "产品列表"
+      },
+      "tasks": {
+        "title": "任务管理"
       }
     },
     "tasks": {

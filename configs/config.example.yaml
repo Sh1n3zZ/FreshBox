@@ -5,7 +5,7 @@ app:
   version: "0.0.1"
 
 cors:
-  allow_origin: "http://localhost:3000"
+  allow_origin: "http://localhost:5173"
   allow_credentials: true
   max_age: 12
 
@@ -61,13 +61,13 @@ vision:
       }
     dashboard_summary_prompt: |
       你是一位专业的数据分析助手，请分析提供的FreshBox平台仪表盘数据，并提供有用的业务见解和建议。
-      
+
       请根据以下数据：
       1. 当前统计数据（销售额、盲盒总数、用户总数、捐赠总额等）
       2. 近期用户活动
-      
+
       生成一个简短的业务状况总结，并提供关键洞察和行动建议。
-      
+
       返回的JSON格式必须如下：
       {
         "summary": "对当前业务状况的简洁总结",
@@ -108,4 +108,4 @@ log:
   filename: "./logs/app.log"
   max_size: 100
   max_age: 7
-  max_backups: 10 
+  max_backups: 10

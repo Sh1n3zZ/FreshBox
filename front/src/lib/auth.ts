@@ -302,14 +302,6 @@ export const USER_KEY = 'user_info';
 export function saveUserToLocalStorage(userData: User): void {
   localStorage.setItem(TOKEN_KEY, userData.access_token);
   localStorage.setItem(REFRESH_TOKEN_KEY, userData.refresh_token);
-  const userInfo = {
-    user_id: userData.user_id,
-    username: userData.username,
-    email: userData.email,
-    avatar: userData.avatar,
-    role: userData.role,
-  };
-  localStorage.setItem(USER_KEY, JSON.stringify(userInfo));
 }
 
 /**
@@ -318,55 +310,27 @@ export function saveUserToLocalStorage(userData: User): void {
 export function removeUserFromLocalStorage(): void {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
 }
 
 /**
  * 从本地存储中获取用户信息
  */
 export async function getUserFromLocalStorage(): Promise<User | null> {
-  const savedUser = localStorage.getItem(USER_KEY);
   const savedToken = localStorage.getItem(TOKEN_KEY);
   const savedRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
 
-  if (savedUser && savedToken && savedRefreshToken) {
+  if (savedToken && savedRefreshToken) {
     try {
-      const userInfo = JSON.parse(savedUser);
-      const userData = {
-        ...userInfo,
+      const freshUserData = await fetchUserProfile(savedToken);
+      return {
+        ...freshUserData,
         access_token: savedToken,
         refresh_token: savedRefreshToken,
       };
-
-      try {
-        const freshUserData = await fetchUserProfile(savedToken);
-        
-        const hasChanges = 
-          freshUserData.username !== userInfo.username ||
-          freshUserData.email !== userInfo.email ||
-          freshUserData.avatar !== userInfo.avatar ||
-          freshUserData.role !== userInfo.role;
-
-        if (hasChanges) {
-          const updatedUser = {
-            ...freshUserData,
-            access_token: savedToken,
-            refresh_token: savedRefreshToken,
-          };
-          
-          saveUserToLocalStorage(updatedUser);
-          return updatedUser;
-        }
-      } catch (error) {
-        console.error('同步远程数据失败，使用本地数据:', error);
-      }
-
-      return userData;
     } catch (error) {
-      console.error('Failed to parse user data', error);
+      console.error('获取用户实时数据失败:', error);
       return null;
     }
   }
-
   return null;
 }

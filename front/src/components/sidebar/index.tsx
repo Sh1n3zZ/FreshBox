@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/providers/auth-provider'
 import { useTranslation } from 'react-i18next'
+import { GlobalAvatar } from '@/components/GlobalAvatar'
 import { 
   Home, 
   User, 
@@ -11,7 +12,8 @@ import {
   X,
   Shield,
   Trophy,
-  ShoppingCart
+  ShoppingCart,
+  List
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -136,6 +138,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   title={t('dashboard.quickActions.orders.title')}
                   isActive={pathname.startsWith('/admin/orders')}
                 />
+
+                <SidebarItem
+                  href="/admin/tasks"
+                  icon={<List className="h-4 w-4" />}
+                  title={t('dashboard.quickActions.tasks.title')}
+                  isActive={pathname.startsWith('/admin/tasks')}
+                />
               </>
             )}
           </nav>
@@ -143,17 +152,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         
         <div className="border-t p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-muted">
-              {user?.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt={user.username}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <User className="h-4 w-4" />
-              )}
-            </div>
+            <GlobalAvatar user={user || {}} size="sm" />
             <div>
               <div className="text-sm font-medium">{user?.username}</div>
               <div className="text-xs text-muted-foreground">{user?.email}</div>

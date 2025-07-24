@@ -109,7 +109,7 @@ func (h *ImageHandler) UploadImage(c *gin.Context) {
 	}
 
 	// 生成URL
-	imageURL := fmt.Sprintf("/static/%s/%s", strings.TrimPrefix(uploadDir, "./uploads/"), filename)
+	imageURL := fmt.Sprintf("/static/%s/%s", strings.TrimPrefix(uploadDir, "./"), filename)
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": 200,

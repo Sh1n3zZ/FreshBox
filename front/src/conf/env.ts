@@ -109,7 +109,10 @@ export { config };
 export const API_URLS = {
   // 通用API
   BASE: config.apiBaseUrl,
-  UPLOAD: `${config.apiBaseUrl}/upload`,
+  UPLOAD: {
+    BASE: `${config.apiBaseUrl}/upload`,
+    WITH_TYPE: (type: string) => `${config.apiBaseUrl}/upload?type=${type}`,
+  },
   
   // 认证相关API
   AUTH: {
@@ -190,11 +193,16 @@ export const API_URLS = {
     POPULAR: `${config.apiBaseUrl}/tasks/popular`,
     PROGRESS: (id: string) => `${config.apiBaseUrl}/tasks/${id}/progress`,
     CONTENTS: (id: string) => `${config.apiBaseUrl}/tasks/${id}/contents`,
+    UPDATE: (id: string) => `${config.apiBaseUrl}/tasks/${id}`,
+    DELETE: (id: string) => `${config.apiBaseUrl}/tasks/${id}`,
     UPDATE_STATUS: (id: string) => `${config.apiBaseUrl}/tasks/${id}/status`,
     UPLOAD_CONTENT: (id: string) => `${config.apiBaseUrl}/tasks/${id}/content`,
     // 新增：任务提交相关API
     SUBMISSIONS: (id: string) => `${config.apiBaseUrl}/tasks/${id}/submissions`,
     SUBMISSION_DETAIL: (id: string, submissionId: string) => `${config.apiBaseUrl}/tasks/${id}/submissions/${submissionId}`,
+    // 新增：任务评论相关API
+    COMMENTS: (id: string, submissionId: string) => `${config.apiBaseUrl}/tasks/${id}/submissions/${submissionId}/comments`,
+    COMMENT_DETAIL: (id: string, submissionId: string, commentId: string) => `${config.apiBaseUrl}/tasks/${id}/submissions/${submissionId}/comments/${commentId}`,
   },
   
   // 仪表盘相关API
@@ -223,16 +231,6 @@ export const API_URLS = {
   },
 };
 
-// 图片URL构建函数
-export const getImageUrl = (path: string): string => {
-  if (path.startsWith('http') || path.startsWith('data:')) {
-    return path;
-  }
-  
-  const trimmedPath = path.startsWith('/') ? path.slice(1) : path;
-  return `${config.imageBaseUrl}/${trimmedPath}`;
-};
-
 // 导出实用函数
 export default {
   isProduction: currentEnv === Environment.Production,
@@ -240,7 +238,6 @@ export default {
   isTest: currentEnv === Environment.Test,
   config,
   API_URLS,
-  getImageUrl,
   getCustomApiEndpoint,
   setCustomApiEndpoint,
   clearCustomApiEndpoint,

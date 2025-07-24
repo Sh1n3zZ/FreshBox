@@ -66,3 +66,18 @@ export const userService = {
     return response.data;
   },
 };
+
+// 上传用户头像，返回图片 url
+export async function uploadUserAvatar(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append('image', file);
+  const response = await axios.post(
+    `${API_URLS.BASE}/upload?type=user`,
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } }
+  );
+  if (response.data && response.data.code === 200 && response.data.data?.url) {
+    return response.data.data.url;
+  }
+  throw new Error(response.data?.msg || '头像上传失败');
+}

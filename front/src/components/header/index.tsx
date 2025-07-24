@@ -87,16 +87,9 @@ export function Header({ onMenuClick }: HeaderProps) {
                   variant="outline"
                   size="sm"
                   className="h-9 w-9 p-0 rounded-full"
+                  onClick={() => navigate('/profile')}
                 >
-                  {user?.avatar ? (
-                    <img
-                      src={user.avatar}
-                      alt={user.username}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <User className="h-4 w-4" />
-                  )}
+                  <User className="h-4 w-4" />
                 </Button>
               </div>
               

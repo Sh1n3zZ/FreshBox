@@ -41,6 +41,7 @@ func SetupRouter(
 			viper.GetString("cors.allow_origin"),
 			"http://localhost:3000",
 			"http://localhost:3001",
+			"http://localhost:5173", // 添加Vite默认端口
 		}
 		corsConfig.AllowCredentials = viper.GetBool("cors.allow_credentials")
 	}
@@ -100,6 +101,10 @@ func SetupRouter(
 	// 任务提交服务和处理器
 	taskSubmissionService := service.NewTaskSubmissionService(db)
 	taskSubmissionHandler := handler.NewTaskSubmissionHandler(taskSubmissionService)
+
+	// 任务评论服务和处理器
+	taskCommentService := service.NewTaskCommentService(db)
+	taskCommentHandler := handler.NewTaskCommentHandler(taskCommentService)
 
 	// API v1
 	v1 := r.Group("/api/v1")
@@ -223,6 +228,7 @@ func SetupRouter(
 			tasksAuth.Use(middleware.Auth())
 			{
 				tasksAuth.POST("", taskHandler.CreateTask)                    // 创建任务
+				tasksAuth.PUT("/:id", taskHandler.UpdateTask)                 // 更新任务详情
 				tasksAuth.PUT("/:id/status", taskHandler.UpdateTaskStatus)    // 更新任务状态
 				tasksAuth.POST("/:id/content", taskHandler.UploadTaskContent) // 上传任务内容
 			}
@@ -243,6 +249,24 @@ func SetupRouter(
 					taskSubmissionsAuth.DELETE("/:submissionId", taskSubmissionHandler.DeleteTaskSubmission)      // 删除提交
 					taskSubmissionsAuth.POST("/:submissionId/like", taskSubmissionHandler.LikeTaskSubmission)     // 点赞
 					taskSubmissionsAuth.POST("/:submissionId/unlike", taskSubmissionHandler.UnlikeTaskSubmission) // 取消点赞
+				}
+
+				// 评论相关接口
+				comments := taskSubmissions.Group("/:submissionId/comments")
+				{
+					// 公开接口
+					comments.GET("", taskCommentHandler.GetSubmissionComments) // 获取提交的所有评论
+
+					// 需要认证的接口
+					commentsAuth := comments.Group("")
+					commentsAuth.Use(middleware.Auth())
+					{
+						commentsAuth.POST("", taskCommentHandler.CreateComment)                   // 创建评论
+						commentsAuth.PUT("/:commentId", taskCommentHandler.UpdateComment)         // 更新评论
+						commentsAuth.DELETE("/:commentId", taskCommentHandler.DeleteComment)      // 删除评论
+						commentsAuth.POST("/:commentId/like", taskCommentHandler.LikeComment)     // 点赞评论
+						commentsAuth.POST("/:commentId/unlike", taskCommentHandler.UnlikeComment) // 取消点赞评论
+					}
 				}
 			}
 		}

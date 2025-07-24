@@ -115,6 +115,11 @@ func autoMigrate(db *gorm.DB) error {
 		return err
 	}
 
+	log.Println("迁移任务评论表...")
+	if err := db.AutoMigrate(&model.TaskComment{}); err != nil {
+		return err
+	}
+
 	// 可以在这里添加其他迁移逻辑，如创建索引、添加默认数据等
 
 	return nil

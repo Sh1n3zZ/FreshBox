@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Search, Filter, Trophy, Users, Calendar, ShoppingBag, Utensils, X } from 'lucide-react'
+import { Search, Filter, Trophy, X } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -11,55 +11,37 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { useNavigate } from 'react-router-dom'
 import { API_URLS } from '@/conf/env'
+import ExploreTaskCard from './ExploreTaskCard'
 
-// 定义挑战接口
+// 定义挑战接口（与后端保持一致，字段可扩展）
 interface Challenge {
-  id: number;
+  id: string;
   title: string;
   description: string;
-  difficulty: string;
-  participants: number;
+  difficulty?: string;
+  participants?: number;
   deadline: string;
-  tags: string[];
-  image: string;
+  tags?: string[] | string;
+  image?: string;
 }
 
-// Mock数据
-const mockChallenges = [
-  {
-    id: 1,
-    title: "夏日清凉料理挑战",
-    description: "使用盲盒食材制作清爽的夏日料理，赢取丰厚奖励",
-    difficulty: "easy",
-    participants: 246,
-    deadline: "2024-08-31",
-    tags: ["夏季限定", "清凉料理"],
-    image: "/images/ximilu.jpg"
-  },
-  {
-    id: 2,
-    title: "家常菜改造挑战",
-    description: "用盲盒中的神秘食材改造传统家常菜，焕发新活力",
-    difficulty: "medium",
-    participants: 178,
-    deadline: "2024-09-15",
-    tags: ["创意料理", "家常菜"],
-    image: "/images/homeusualfood.jpeg"
-  },
-  {
-    id: 3,
-    title: "米其林风格料理挑战",
-    description: "使用盲盒食材制作高级餐厅风格的精致料理",
-    difficulty: "hard",
-    participants: 92,
-    deadline: "2024-10-01",
-    tags: ["高级料理", "精致摆盘"],
-    image: "/images/beefmql.jpg"
+// 移除 Mock 数据，始终使用后端真实数据
+
+// Utility to get array of tags
+const toTagArray = (tags?: string[] | string): string[] => {
+  if (!tags) return [];
+  if (Array.isArray(tags)) return tags;
+  // 如果后端返回的是JSON字符串或逗号分隔
+  try {
+    const parsed = JSON.parse(tags);
+    if (Array.isArray(parsed)) return parsed;
+  } catch {
+    /* ignore */
   }
-];
+  return tags.split(',').map(t => t.trim()).filter(Boolean);
+};
 
 export default function Explore() {
   const { t } = useTranslation()
@@ -91,24 +73,16 @@ export default function Explore() {
   useEffect(() => {
     const fetchChallenges = async () => {
       setLoading(true)
-      
       try {
-        // 真实API调用
-        if (process.env.NODE_ENV === 'production') {
-          const response = await fetch(API_URLS.TASK.LIST)
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
-          }
-          const data = await response.json()
-          setChallenges(data)
-          setFilteredChallenges(data)
-        } else {
-          // Mock数据
-          setTimeout(() => {
-            setChallenges(mockChallenges)
-            setFilteredChallenges(mockChallenges)
-          }, 300)
+        const response = await fetch(API_URLS.TASK.LIST)
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
         }
+        // 后端返回 { data: [...] } 或直接数组
+        const result = await response.json()
+        const data: Challenge[] = Array.isArray(result) ? result : result.data
+        setChallenges(data)
+        setFilteredChallenges(data)
       } catch (error) {
         console.error('Failed to fetch challenges:', error)
       } finally {
@@ -134,7 +108,7 @@ export default function Explore() {
       result = result.filter(challenge => 
         challenge.title.toLowerCase().includes(query) || 
         challenge.description.toLowerCase().includes(query) ||
-        challenge.tags.some(tag => tag.toLowerCase().includes(query))
+        toTagArray(challenge.tags).some(tag => tag.toLowerCase().includes(query))
       )
     }
     
@@ -163,7 +137,7 @@ export default function Explore() {
     setDifficulty('all')
   }, [handleClearSearch])
 
-  const getDifficultyLabel = (difficulty: string) => {
+  const getDifficultyLabel = (difficulty?: string) => {
     switch(difficulty) {
       case 'easy': return t('dashboard.tasks.difficulty-easy');
       case 'medium': return t('dashboard.tasks.difficulty-medium');
@@ -172,7 +146,7 @@ export default function Explore() {
     }
   };
 
-  const getDifficultyColor = (difficulty: string) => {
+  const getDifficultyColor = (difficulty?: string) => {
     switch(difficulty) {
       case 'easy': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
       case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
@@ -181,7 +155,7 @@ export default function Explore() {
     }
   };
 
-  const handleTaskClick = (taskId: number) => {
+  const handleTaskClick = (taskId: string) => {
     navigate(`/task/detail/${taskId}`)
   }
   
@@ -192,17 +166,10 @@ export default function Explore() {
   }
   
   // 参与挑战
-  const handleJoinChallenge = (e: React.MouseEvent, challengeId: number) => {
+  const handleJoinChallenge = (e: React.MouseEvent, challengeId: string) => {
     e.stopPropagation() // 阻止事件冒泡
     navigate(`/task/detail/${challengeId}`)
   }
-
-  // 添加图片错误处理函数
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    const target = e.currentTarget;
-    target.onerror = null; // 防止循环加载
-    target.src = '/images/placeholder.jpg';
-  };
 
   return (
     <div className="container mx-auto py-6">
@@ -327,72 +294,16 @@ export default function Explore() {
       {!loading && !isSearching && filteredChallenges.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredChallenges.map((challenge) => (
-            <Card 
-              key={challenge.id} 
-              className="hover:shadow-lg transition-shadow overflow-hidden cursor-pointer"
+            <ExploreTaskCard
+              key={challenge.id}
+              challenge={challenge}
               onClick={() => handleTaskClick(challenge.id)}
-            >
-              <div className="h-40 overflow-hidden relative">
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10" />
-                <div className="absolute top-2 left-2 z-20">
-                  <Badge className={getDifficultyColor(challenge.difficulty)}>
-                    {getDifficultyLabel(challenge.difficulty)}
-                  </Badge>
-                </div>
-                <div className="absolute top-2 right-2 z-20 flex items-center text-white bg-black/30 rounded-full px-2 py-1 text-xs">
-                  <Users className="h-3 w-3 mr-1" />
-                  <span>{challenge.participants}</span>
-                </div>
-                <img 
-                  src={challenge.image} 
-                  alt={challenge.title}
-                  className="w-full h-full object-cover transition-transform hover:scale-105"
-                  onError={handleImageError}
-                />
-              </div>
-              
-              <CardContent className="pt-4">
-                <h3 className="text-xl font-semibold mb-2">{challenge.title}</h3>
-                <p className="text-muted-foreground mb-3">{challenge.description}</p>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {challenge.tags.map((tag, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-              
-              <CardFooter className="flex flex-col gap-3 border-t pt-4">
-                <div className="flex justify-between items-center w-full">
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Calendar className="h-3 w-3 mr-1" />
-                    <span>{t('dashboard.tasks.deadline')}: {challenge.deadline}</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <ShoppingBag className="h-3 w-3" />
-                    <span>{t('dashboard.tasks.blindbox-required')}</span>
-                  </div>
-                </div>
-                <div className="flex justify-between w-full">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={handleBuyBlindbox}
-                  >
-                    <ShoppingBag className="mr-1 h-3 w-3" />
-                    {t('dashboard.tasks.buy-blindbox')}
-                  </Button>
-                  <Button 
-                    size="sm"
-                    onClick={(e) => handleJoinChallenge(e, challenge.id)}
-                  >
-                    <Utensils className="mr-1 h-3 w-3" />
-                    {t('dashboard.tasks.join')}
-                  </Button>
-                </div>
-              </CardFooter>
-            </Card>
+              onBuy={handleBuyBlindbox}
+              onJoin={(e) => handleJoinChallenge(e, challenge.id)}
+              getDifficultyLabel={getDifficultyLabel}
+              getDifficultyColor={getDifficultyColor}
+              toTagArray={toTagArray}
+            />
           ))}
         </div>
       )}
