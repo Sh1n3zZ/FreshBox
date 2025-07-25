@@ -19,7 +19,7 @@ func NewTaskCommentService(db *gorm.DB) *TaskCommentService {
 }
 
 // GetSubmissionComments 获取提交的所有评论
-func (s *TaskCommentService) GetSubmissionComments(submissionID string) ([]model.TaskCommentDTO, error) {
+func (s *TaskCommentService) GetSubmissionComments(submissionID string, userID string) ([]model.TaskCommentDTO, error) {
 	var comments []model.TaskComment
 	var dtos []model.TaskCommentDTO
 
@@ -33,7 +33,7 @@ func (s *TaskCommentService) GetSubmissionComments(submissionID string) ([]model
 	}
 
 	for _, comment := range comments {
-		dto := s.convertToDTO(comment)
+		dto := s.convertToDTO(comment, userID)
 		dtos = append(dtos, dto)
 	}
 
@@ -77,13 +77,39 @@ func (s *TaskCommentService) DeleteComment(id string) error {
 }
 
 // LikeComment 点赞评论
-func (s *TaskCommentService) LikeComment(id string) error {
-	return s.db.Model(&model.TaskComment{}).Where("id = ?", id).UpdateColumn("likes", gorm.Expr("likes + ?", 1)).Error
+func (s *TaskCommentService) LikeComment(id string) (*model.TaskCommentDTO, error) {
+	err := s.db.Model(&model.TaskComment{}).Where("id = ?", id).UpdateColumn("likes", gorm.Expr("likes + ?", 1)).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// 获取更新后的评论
+	comment, err := s.GetCommentByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// 转换为DTO（这里暂时不传递userID，因为点赞后状态会改变）
+	dto := s.convertToDTO(*comment, "")
+	return &dto, nil
 }
 
 // UnlikeComment 取消点赞评论
-func (s *TaskCommentService) UnlikeComment(id string) error {
-	return s.db.Model(&model.TaskComment{}).Where("id = ?", id).UpdateColumn("likes", gorm.Expr("GREATEST(likes - ?, 0)", 1)).Error
+func (s *TaskCommentService) UnlikeComment(id string) (*model.TaskCommentDTO, error) {
+	err := s.db.Model(&model.TaskComment{}).Where("id = ?", id).UpdateColumn("likes", gorm.Expr("GREATEST(likes - ?, 0)", 1)).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// 获取更新后的评论
+	comment, err := s.GetCommentByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// 转换为DTO（这里暂时不传递userID，因为取消点赞后状态会改变）
+	dto := s.convertToDTO(*comment, "")
+	return &dto, nil
 }
 
 // GetUserComments 获取用户的所有评论
@@ -100,7 +126,7 @@ func (s *TaskCommentService) GetUserComments(userID string) ([]model.TaskComment
 	}
 
 	for _, comment := range comments {
-		dto := s.convertToDTO(comment)
+		dto := s.convertToDTO(comment, userID)
 		dtos = append(dtos, dto)
 	}
 
@@ -108,7 +134,7 @@ func (s *TaskCommentService) GetUserComments(userID string) ([]model.TaskComment
 }
 
 // convertToDTO 将评论转换为DTO
-func (s *TaskCommentService) convertToDTO(comment model.TaskComment) model.TaskCommentDTO {
+func (s *TaskCommentService) convertToDTO(comment model.TaskComment, userID string) model.TaskCommentDTO {
 	dto := model.TaskCommentDTO{
 		ID:           comment.ID,
 		TaskID:       comment.TaskID,
@@ -121,6 +147,7 @@ func (s *TaskCommentService) convertToDTO(comment model.TaskComment) model.TaskC
 		Likes:        comment.Likes,
 		ReplyCount:   len(comment.Replies),
 		CreatedAt:    comment.CreatedAt.Format("2006-01-02 15:04:05"),
+		IsLiked:      false, // TODO: 实现用户点赞状态检查
 	}
 
 	// 转换回复
@@ -139,6 +166,7 @@ func (s *TaskCommentService) convertToDTO(comment model.TaskComment) model.TaskC
 				Likes:        reply.Likes,
 				ReplyCount:   0, // 回复的回复暂时不计算
 				CreatedAt:    reply.CreatedAt.Format("2006-01-02 15:04:05"),
+				IsLiked:      false, // TODO: 实现用户点赞状态检查
 			}
 			replyDTOs = append(replyDTOs, replyDTO)
 		}

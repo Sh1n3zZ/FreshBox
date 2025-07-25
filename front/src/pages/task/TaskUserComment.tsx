@@ -42,6 +42,11 @@ export default function TaskUserComment({ taskId, submissionId, onCommentCountCh
     onCommentCountChange?.(comments.length + 1)
   }
 
+  // 处理评论更新（点赞、删除等）
+  const handleCommentUpdate = (updatedComments: TaskComment[]) => {
+    setComments(updatedComments)
+  }
+
   return (
     <div className="space-y-4">
       {/* 评论提交组件 */}
@@ -57,6 +62,7 @@ export default function TaskUserComment({ taskId, submissionId, onCommentCountCh
         taskId={taskId}
         submissionId={submissionId}
         onCommentCountChange={onCommentCountChange}
+        onCommentUpdate={handleCommentUpdate}
         loading={loading}
       />
 

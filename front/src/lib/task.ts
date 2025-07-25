@@ -14,6 +14,7 @@ export interface TaskComment {
   reply_count: number;
   created_at: string;
   replies?: TaskComment[];
+  is_liked?: boolean; // 新增：用户是否已点赞
 }
 
 export interface Task {
@@ -165,9 +166,10 @@ export async function deleteComment(taskId: string, submissionId: string, commen
 }
 
 // 点赞评论
-export async function likeComment(taskId: string, submissionId: string, commentId: string): Promise<void> {
+export async function likeComment(taskId: string, submissionId: string, commentId: string): Promise<TaskComment> {
   try {
-    await apiService.post(API_URLS.TASK.COMMENT_DETAIL(taskId, submissionId, commentId) + '/like')
+    const data = await apiService.post<any>(API_URLS.TASK.COMMENT_DETAIL(taskId, submissionId, commentId) + '/like')
+    return data.data
   } catch (error) {
     console.error('点赞评论失败:', error)
     throw new Error('点赞评论失败')
@@ -175,9 +177,10 @@ export async function likeComment(taskId: string, submissionId: string, commentI
 }
 
 // 取消点赞评论
-export async function unlikeComment(taskId: string, submissionId: string, commentId: string): Promise<void> {
+export async function unlikeComment(taskId: string, submissionId: string, commentId: string): Promise<TaskComment> {
   try {
-    await apiService.post(API_URLS.TASK.COMMENT_DETAIL(taskId, submissionId, commentId) + '/unlike')
+    const data = await apiService.post<any>(API_URLS.TASK.COMMENT_DETAIL(taskId, submissionId, commentId) + '/unlike')
+    return data.data
   } catch (error) {
     console.error('取消点赞评论失败:', error)
     throw new Error('取消点赞评论失败')

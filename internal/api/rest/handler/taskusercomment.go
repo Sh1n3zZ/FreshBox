@@ -30,7 +30,13 @@ func (h *TaskCommentHandler) GetSubmissionComments(c *gin.Context) {
 		return
 	}
 
-	comments, err := h.taskCommentService.GetSubmissionComments(submissionID)
+	// 从JWT中获取用户ID（如果用户已登录）
+	userID := ""
+	if userIDInterface, exists := c.Get("user_id"); exists {
+		userID = userIDInterface.(string)
+	}
+
+	comments, err := h.taskCommentService.GetSubmissionComments(submissionID, userID)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "获取评论失败: "+err.Error(), err)
 		return
@@ -190,13 +196,13 @@ func (h *TaskCommentHandler) LikeComment(c *gin.Context) {
 		return
 	}
 
-	err := h.taskCommentService.LikeComment(commentID)
+	updatedComment, err := h.taskCommentService.LikeComment(commentID)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "点赞失败: "+err.Error(), err)
 		return
 	}
 
-	response.Success(c, nil)
+	response.Success(c, updatedComment)
 }
 
 // UnlikeComment 取消点赞评论
@@ -207,13 +213,13 @@ func (h *TaskCommentHandler) UnlikeComment(c *gin.Context) {
 		return
 	}
 
-	err := h.taskCommentService.UnlikeComment(commentID)
+	updatedComment, err := h.taskCommentService.UnlikeComment(commentID)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "取消点赞失败: "+err.Error(), err)
 		return
 	}
 
-	response.Success(c, nil)
+	response.Success(c, updatedComment)
 }
 
 // GetUserComments 获取用户的所有评论

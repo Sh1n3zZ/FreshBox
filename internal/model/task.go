@@ -149,5 +149,6 @@ type TaskCommentDTO struct {
 	Likes        int              `json:"likes"`
 	ReplyCount   int              `json:"reply_count"`
 	CreatedAt    string           `json:"created_at"`
+	IsLiked      bool             `json:"is_liked"` // 新增：当前用户是否已点赞
 	Replies      []TaskCommentDTO `json:"replies,omitempty"`
 }

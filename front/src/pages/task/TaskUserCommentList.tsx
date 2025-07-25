@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   MessageCircle, 
   ThumbsUp, 
@@ -26,6 +26,7 @@ interface TaskUserCommentListProps {
   taskId: string;
   submissionId: string;
   onCommentCountChange?: (count: number) => void;
+  onCommentUpdate?: (comments: TaskComment[]) => void;
   loading?: boolean;
 }
 
@@ -34,6 +35,7 @@ export default function TaskUserCommentList({
   taskId, 
   submissionId,
   onCommentCountChange,
+  onCommentUpdate,
   loading = false
 }: TaskUserCommentListProps) {
   const { user } = useAuth()
@@ -42,6 +44,13 @@ export default function TaskUserCommentList({
   const [replyContent, setReplyContent] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set())
+  const [localComments, setLocalComments] = useState<TaskComment[]>(comments)
+  const [likingComments, setLikingComments] = useState<Set<string>>(new Set())
+
+  // 当comments prop更新时，同步本地状态
+  useEffect(() => {
+    setLocalComments(comments)
+  }, [comments])
 
   // 提交回复
   const handleSubmitReply = async (parentId: string) => {
@@ -76,14 +85,53 @@ export default function TaskUserCommentList({
   const handleLikeComment = async (commentId: string, isLiked: boolean) => {
     if (!user) return
     
+    // 防止重复点击
+    if (likingComments.has(commentId)) return
+    
+    setLikingComments(prev => new Set(prev).add(commentId))
+    
     try {
+      let updatedComment: TaskComment
+      
       if (isLiked) {
-        await unlikeComment(taskId, submissionId, commentId)
+        updatedComment = await unlikeComment(taskId, submissionId, commentId)
       } else {
-        await likeComment(taskId, submissionId, commentId)
+        updatedComment = await likeComment(taskId, submissionId, commentId)
       }
+      
+      // 更新本地状态
+      setLocalComments(prev => {
+        const updateCommentInList = (comments: TaskComment[]): TaskComment[] => {
+          return comments.map(comment => {
+            if (comment.id === commentId) {
+              return {
+                ...comment,
+                likes: updatedComment.likes,
+                is_liked: updatedComment.is_liked
+              }
+            }
+            if (comment.replies) {
+              return {
+                ...comment,
+                replies: updateCommentInList(comment.replies)
+              }
+            }
+            return comment
+          })
+        }
+        const updatedComments = updateCommentInList(prev)
+        // 通知父组件评论状态变化
+        onCommentUpdate?.(updatedComments)
+        return updatedComments
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : '操作失败')
+    } finally {
+      setLikingComments(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(commentId)
+        return newSet
+      })
     }
   }
 
@@ -104,6 +152,7 @@ export default function TaskUserCommentList({
   const CommentItem = ({ comment, isReply = false }: { comment: TaskComment; isReply?: boolean }) => {
     const isExpanded = expandedComments.has(comment.id)
     const canDelete = user && comment.user_id === user.user_id
+    const isLiked = comment.is_liked || false
 
     return (
       <div className={`${isReply ? 'ml-8 border-l-2 border-gray-200 pl-4' : ''}`}>
@@ -126,10 +175,11 @@ export default function TaskUserCommentList({
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="h-6 px-2 text-xs"
-                onClick={() => handleLikeComment(comment.id, false)}
+                className={`h-6 px-2 text-xs ${isLiked ? 'text-blue-500 hover:text-blue-700' : ''}`}
+                onClick={() => handleLikeComment(comment.id, isLiked)}
+                disabled={likingComments.has(comment.id)}
               >
-                <ThumbsUp className="h-3 w-3 mr-1" />
+                <ThumbsUp className={`h-3 w-3 mr-1 ${isLiked ? 'fill-current' : ''}`} />
                 {comment.likes}
               </Button>
               {!isReply && (
@@ -255,7 +305,7 @@ export default function TaskUserCommentList({
 
       {/* 评论列表 */}
       <div className="space-y-2">
-        {comments.map(comment => (
+        {localComments.map(comment => (
           <CommentItem key={comment.id} comment={comment} />
         ))}
       </div>
