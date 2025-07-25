@@ -96,7 +96,8 @@ export default function TaskDetail() {
   
   // 提交挑战结果
   const submitTaskResult = () => {
-    navigate(`/task/submit/${id}`); // 导航到提交页面
+    // Navigate to the submissions tab of the current task
+    navigate(`/task/detail/${id}?tab=submissions`);
   };
   
   // 处理步骤点击
