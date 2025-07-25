@@ -91,7 +91,7 @@ export default function TaskDetail() {
   
   // 购买相关盲盒
   const purchaseBlindBox = () => {
-    navigate('/blindbox/detail/summer-special'); // 导航到盲盒详情页
+    navigate('/BlindBox'); // 导航到盲盒详情页
   };
   
   // 提交挑战结果

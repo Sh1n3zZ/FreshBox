@@ -20,6 +20,7 @@ const TaskPanel = lazy(() => import('@/pages/admin/TaskPanel'))
 const NotFound = lazy(() => import('@/pages/NotFound'))
 const BlindBoxPage = lazy(() => import('@/pages/blindbox/BlindBox'))
 const Profile = lazy(() => import('@/pages/Profile'));
+const BlindBoxMore = lazy(() => import('@/pages/blindbox/BlindBoxMore'));
 
 const routes: RouteObject[] = [
   {
@@ -56,6 +57,7 @@ const routes: RouteObject[] = [
         ]
       },
       { path: 'BlindBox/:id', element: <BlindBoxPage /> },
+      { path: 'BlindBox', element: <BlindBoxMore /> },
       { 
         path: '/task',
         children: [

@@ -162,7 +162,7 @@ export default function Explore() {
   // 购买盲盒
   const handleBuyBlindbox = (e: React.MouseEvent) => {
     e.stopPropagation() // 阻止事件冒泡
-    navigate('/blindbox/detail/summer-special')
+    navigate('/BlindBox')
   }
   
   // 参与挑战
