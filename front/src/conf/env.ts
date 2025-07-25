@@ -197,6 +197,10 @@ export const API_URLS = {
     DELETE: (id: string) => `${config.apiBaseUrl}/tasks/${id}`,
     UPDATE_STATUS: (id: string) => `${config.apiBaseUrl}/tasks/${id}/status`,
     UPLOAD_CONTENT: (id: string) => `${config.apiBaseUrl}/tasks/${id}/content`,
+    // 新增：任务步骤相关API
+    STEPS: (id: string) => `${config.apiBaseUrl}/tasks/${id}/steps`,
+    STEP_DETAIL: (id: string, stepId: string) => `${config.apiBaseUrl}/tasks/${id}/steps/${stepId}`,
+    STEP_PROGRESS: (id: string) => `${config.apiBaseUrl}/tasks/${id}/steps/progress`,
     // 新增：任务提交相关API
     SUBMISSIONS: (id: string) => `${config.apiBaseUrl}/tasks/${id}/submissions`,
     SUBMISSION_DETAIL: (id: string, submissionId: string) => `${config.apiBaseUrl}/tasks/${id}/submissions/${submissionId}`,

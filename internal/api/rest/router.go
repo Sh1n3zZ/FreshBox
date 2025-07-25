@@ -106,6 +106,10 @@ func SetupRouter(
 	taskCommentService := service.NewTaskCommentService(db)
 	taskCommentHandler := handler.NewTaskCommentHandler(taskCommentService)
 
+	// 任务步骤服务和处理器
+	taskStepService := service.NewTaskStepService(db, userHandler.GetUserService())
+	taskStepHandler := handler.NewTaskStepHandler(taskStepService, userHandler.GetUserService())
+
 	// API v1
 	v1 := r.Group("/api/v1")
 	{
@@ -231,6 +235,26 @@ func SetupRouter(
 				tasksAuth.PUT("/:id", taskHandler.UpdateTask)                 // 更新任务详情
 				tasksAuth.PUT("/:id/status", taskHandler.UpdateTaskStatus)    // 更新任务状态
 				tasksAuth.POST("/:id/content", taskHandler.UploadTaskContent) // 上传任务内容
+			}
+
+			// 任务步骤相关接口
+			taskSteps := tasks.Group("/:id/steps")
+			{
+				// 公开接口
+				taskSteps.GET("", taskStepHandler.GetTaskSteps)                 // 获取任务所有步骤
+				taskSteps.GET("/progress", taskStepHandler.GetTaskStepProgress) // 获取任务步骤进度
+				taskSteps.GET("/:stepId", taskStepHandler.GetTaskStep)          // 获取单个步骤
+
+				// 需要认证的接口
+				taskStepsAuth := taskSteps.Group("")
+				taskStepsAuth.Use(middleware.Auth())
+				{
+					taskStepsAuth.POST("", taskStepHandler.CreateTaskStep)                     // 创建任务步骤
+					taskStepsAuth.PUT("/:stepId", taskStepHandler.UpdateTaskStep)              // 更新任务步骤
+					taskStepsAuth.DELETE("/:stepId", taskStepHandler.DeleteTaskStep)           // 删除任务步骤
+					taskStepsAuth.PUT("/:stepId/status", taskStepHandler.UpdateTaskStepStatus) // 更新步骤状态
+					taskStepsAuth.PUT("/reorder", taskStepHandler.ReorderTaskSteps)            // 重新排序步骤
+				}
 			}
 
 			// 任务提交相关接口

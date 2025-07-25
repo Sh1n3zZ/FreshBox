@@ -24,6 +24,11 @@ func NewUserHandler(userService *service.UserService) *UserHandler {
 	}
 }
 
+// GetUserService 获取用户服务实例
+func (h *UserHandler) GetUserService() *service.UserService {
+	return h.userService
+}
+
 // Register 用户注册
 // @Summary 用户注册
 // @Description 注册新用户

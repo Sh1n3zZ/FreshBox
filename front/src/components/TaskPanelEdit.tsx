@@ -14,6 +14,7 @@ import { createTask, updateTask, Task } from '@/lib/task'
 import { TaskPanelCreateCoverUpload } from './TaskPanelCreateCoverUpload'
 import { GlobalTaskCover } from './GlobalTaskCover'
 import { TaskPanelEditTags } from './TaskPanelEditTags'
+import { TaskPanelEditSteps } from './TaskPanelEditSteps'
 
 interface TaskPanelCreateProps {
   task?: Task | null
@@ -165,7 +166,7 @@ export function TaskPanelCreate({
           <DialogTitle>{task ? '编辑任务' : '新建任务'}</DialogTitle>
           <DialogDescription>{task ? '修改任务信息。' : '创建一个新的挑战任务。'}</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid gap-3 py-3">
+        <form onSubmit={handleSubmit} className="space-y-4 py-3">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="title" className="text-right">标题 *</Label>
             <Input id="title" name="title" value={formData.title} onChange={handleChange} className="col-span-3" required />
@@ -256,12 +257,25 @@ export function TaskPanelCreate({
               />
             </div>
           </div>
+          
           <DialogFooter className="pt-2">
             <Button type="submit" disabled={loading}>
               {loading ? (task ? '更新中...' : '创建中...') : (task ? '保存' : '创建')}
             </Button>
           </DialogFooter>
         </form>
+        
+        {/* 任务步骤编辑 - 仅在编辑模式下显示，独立于表单 */}
+        {task && (
+          <div className="border-t pt-4 mt-4">
+            <TaskPanelEditSteps
+              taskId={task.id}
+              onStepsChange={() => {
+                // 可以在这里添加步骤变化后的回调逻辑
+              }}
+            />
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )

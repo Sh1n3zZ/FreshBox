@@ -265,3 +265,116 @@ export async function joinTask(taskId: string): Promise<void> {
     throw new Error('加入挑战失败');
   }
 }
+
+// 任务步骤相关接口
+export interface TaskStep {
+  id: number;
+  task_id: string;
+  title: string;
+  description: string;
+  type: 'purchase' | 'create' | 'submit' | 'other';
+  status?: 'not_started' | 'in_progress' | 'completed';
+  order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// 获取任务步骤列表
+export async function getTaskSteps(taskId: string): Promise<TaskStep[]> {
+  try {
+    const data = await apiService.get<any>(API_URLS.TASK.STEPS(taskId));
+    return data.data || [];
+  } catch (error) {
+    console.error('获取任务步骤失败:', error);
+    throw new Error('获取任务步骤失败');
+  }
+}
+
+// 获取单个任务步骤
+export async function getTaskStep(taskId: string, stepId: number): Promise<TaskStep> {
+  try {
+    const data = await apiService.get<any>(API_URLS.TASK.STEP_DETAIL(taskId, stepId.toString()));
+    return data.data;
+  } catch (error) {
+    console.error('获取任务步骤失败:', error);
+    throw new Error('获取任务步骤失败');
+  }
+}
+
+// 创建任务步骤
+export async function createTaskStep(taskId: string, payload: {
+  title: string;
+  description?: string;
+  type: TaskStep['type'];
+  order?: number;
+}): Promise<TaskStep> {
+  try {
+    const data = await apiService.post<any>(API_URLS.TASK.STEPS(taskId), payload);
+    return data.data;
+  } catch (error) {
+    console.error('创建任务步骤失败:', error);
+    throw new Error('创建任务步骤失败');
+  }
+}
+
+// 更新任务步骤
+export async function updateTaskStep(taskId: string, stepId: number, payload: Partial<{
+  title: string;
+  description: string;
+  type: TaskStep['type'];
+  order: number;
+}>): Promise<void> {
+  try {
+    await apiService.put(API_URLS.TASK.STEP_DETAIL(taskId, stepId.toString()), payload);
+  } catch (error) {
+    console.error('更新任务步骤失败:', error);
+    throw new Error('更新任务步骤失败');
+  }
+}
+
+// 删除任务步骤
+export async function deleteTaskStep(taskId: string, stepId: number): Promise<void> {
+  try {
+    await apiService.delete(API_URLS.TASK.STEP_DETAIL(taskId, stepId.toString()));
+  } catch (error) {
+    console.error('删除任务步骤失败:', error);
+    throw new Error('删除任务步骤失败');
+  }
+}
+
+// 更新任务步骤状态
+export async function updateTaskStepStatus(taskId: string, stepId: number, status: TaskStep['status']): Promise<void> {
+  try {
+    await apiService.put(API_URLS.TASK.STEP_DETAIL(taskId, stepId.toString()) + '/status', { status });
+  } catch (error) {
+    console.error('更新任务步骤状态失败:', error);
+    throw new Error('更新任务步骤状态失败');
+  }
+}
+
+// 重新排序任务步骤
+export async function reorderTaskSteps(taskId: string, stepOrders: Record<number, number>): Promise<void> {
+  try {
+    await apiService.put(API_URLS.TASK.STEPS(taskId) + '/reorder', { step_orders: stepOrders });
+  } catch (error) {
+    console.error('重新排序任务步骤失败:', error);
+    throw new Error('重新排序任务步骤失败');
+  }
+}
+
+// 获取任务步骤进度
+export async function getTaskStepProgress(taskId: string): Promise<{
+  total_steps: number;
+  completed_steps: number;
+  in_progress_steps: number;
+  progress: number;
+  steps: TaskStep[];
+}> {
+  try {
+    const data = await apiService.get<any>(API_URLS.TASK.STEP_PROGRESS(taskId));
+    return data.data;
+  } catch (error) {
+    console.error('获取任务步骤进度失败:', error);
+    throw new Error('获取任务步骤进度失败');
+  }
+}
