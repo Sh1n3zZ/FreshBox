@@ -152,10 +152,29 @@ export function TaskPanelCreate({
     }
   }
 
+  const handleOpenChange = (newOpen: boolean) => {
+    if (onClose) {
+      if (!newOpen) onClose()
+    } else {
+      setOpen(newOpen)
+      if (!newOpen && !task) {
+        setFormData({
+          title: '',
+          description: '',
+          image: '',
+          deadline: '',
+          reward: 0,
+          tags: [],
+        })
+        setDate(undefined)
+      }
+    }
+  }
+
   const dialogOpen = onClose ? !!task : open
 
   return (
-    <Dialog open={dialogOpen} onOpenChange={handleClose}>
+    <Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
       {!task && (trigger || (
         <DialogTrigger asChild>
           <Button size="sm">新建任务</Button>

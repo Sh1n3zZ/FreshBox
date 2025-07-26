@@ -9,7 +9,6 @@ const About = lazy(() => import('@/pages/About'))
 const OCR = lazy(() => import('@/pages/OCR'))
 const Explore = lazy(() => import('@/pages/task/Explore'))
 const TaskDetail = lazy(() => import('@/pages/task/TaskDetail'))
-const TaskSubmit = lazy(() => import('@/pages/task/TaskSubmit'))
 const Login = lazy(() => import('@/pages/auth/Login'))
 const Register = lazy(() => import('@/pages/auth/Register'))
 const Dashboard = lazy(() => import('@/pages/admin/Dashboard'))
@@ -68,10 +67,6 @@ const routes: RouteObject[] = [
           {
             path: 'detail/:id',
             element: <TaskDetail />
-          },
-          {
-            path: 'submit/:id',
-            element: <TaskSubmit />
           }
         ]
       }
