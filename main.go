@@ -162,6 +162,9 @@ func main() {
 	// 服务前端构建文件
 	r.Static("/assets", frontendDir+"/assets")
 	r.StaticFile("/favicon.ico", frontendDir+"/favicon.ico")
+	r.StaticFile("/vite.svg", frontendDir+"/vite.svg")
+	r.StaticFile("/FreshBoxLogo.svg", frontendDir+"/FreshBoxLogo.svg")
+	r.StaticFile("/FreshBoxLogo.jpg", frontendDir+"/FreshBoxLogo.jpg")
 	r.StaticFile("/", frontendDir+"/index.html")
 
 	// 所有不匹配的路由都默认到index.html

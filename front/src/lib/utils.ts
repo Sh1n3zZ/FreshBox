@@ -1,5 +1,6 @@
-import { clsx, type ClassValue } from "clsx"
+import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { config } from '@/conf/env'
 
 /**
  * 合并 Tailwind CSS 类名
@@ -7,6 +8,24 @@ import { twMerge } from "tailwind-merge"
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
+// 安全地获取服务器基础URL
+export const getServerBaseUrl = () => {
+  try {
+    // 如果 apiBaseUrl 是绝对URL，直接使用其origin
+    if (config.apiBaseUrl.startsWith('http://') || config.apiBaseUrl.startsWith('https://')) {
+      return new URL(config.apiBaseUrl).origin;
+    }
+    // 如果是相对路径，使用当前页面的origin
+    return window.location.origin;
+  } catch (error) {
+    // 如果出现任何错误，回退到当前页面的origin
+    return window.location.origin;
+  }
+};
+
+// 将相对路径转换为完整URL
+export const toFullUrl = (path: string) => (path ? `${getServerBaseUrl()}${path}` : '');
 
 /**
  * 格式化日期

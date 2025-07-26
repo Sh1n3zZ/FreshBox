@@ -1,8 +1,5 @@
-import { config } from '@/conf/env';
+import { toFullUrl } from '@/lib/utils';
 import { Image } from 'lucide-react';
-
-const serverBaseUrl = new URL(config.apiBaseUrl).origin;
-const toFullUrl = (path: string) => (path ? `${serverBaseUrl}${path}` : '');
 
 interface GlobalProductCoverProps {
   cover?: string;

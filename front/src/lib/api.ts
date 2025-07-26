@@ -3,7 +3,8 @@ import { API_URLS } from '@/conf/env';
 
 // 创建一个 axios 实例
 const apiClient: AxiosInstance = axios.create({
-  baseURL: API_URLS.BASE,
+  // 不设置 baseURL，直接在各请求中使用完整路径（开发环境为绝对URL，生产环境为相对URL）
+  baseURL: '',
   headers: {
     'Content-Type': 'application/json',
   },

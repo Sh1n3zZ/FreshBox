@@ -1,9 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User } from 'lucide-react';
-import { config } from '@/conf/env';
-
-const serverBaseUrl = new URL(config.apiBaseUrl).origin;
-const toFullUrl = (path: string) => (path ? `${serverBaseUrl}${path}` : '');
+import { toFullUrl } from '@/lib/utils';
 
 interface GlobalAvatarProps {
   user: {
