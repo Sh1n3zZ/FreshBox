@@ -34,6 +34,7 @@ import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
+import { CreateBoxUploadBlindboxCover } from "@/components/CreateBoxUploadBlindboxCover";
 
 interface CreateBoxProps {
   onBoxCreated?: (newBox: BlindBox) => void;
@@ -48,7 +49,13 @@ const boxFormSchema = z.object({
     .min(0.1, { message: "折扣系数必须大于0.1" })
     .max(1, { message: "折扣系数不能大于1" }),
   category: z.string().min(1, { message: "请选择一个类别。" }),
-  imageURL: z.string().url({ message: "请输入有效的图片URL。" }).optional().or(z.literal('')),
+  imageURL: z.string()
+    .refine((val) => {
+      if (!val) return true;
+      return val.startsWith('http') || val.startsWith('/static/uploads/');
+    }, { message: "请输入有效的图片URL或上传图片。" })
+    .optional()
+    .or(z.literal('')),
   expirationTime: z.date({ required_error: "请选择过期日期。" }),
   donationAmount: z.coerce.number().min(0, { message: "捐赠金额不能为负数。" }).optional(),
 });
@@ -282,22 +289,8 @@ export function CreateBox({ onBoxCreated, box, readOnly = false }: CreateBoxProp
               name="imageURL"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>图片URL</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://..." {...field} disabled={readOnly} />
-                  </FormControl>
-                  {field.value && (
-                    <div className="mt-2">
-                      <img 
-                        src={field.value} 
-                        alt="盲盒图片" 
-                        className="max-h-40 max-w-full object-contain rounded-md border"
-                        onError={(e) => {
-                          e.currentTarget.src = "https://placehold.co/200x150?text=图片加载失败";
-                        }}
-                      />
-                    </div>
-                  )}
+                  <FormLabel>封面图片</FormLabel>
+                  <CreateBoxUploadBlindboxCover value={field.value} onChange={field.onChange} disabled={readOnly} />
                   <FormMessage />
                 </FormItem>
               )}

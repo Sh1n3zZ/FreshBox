@@ -83,6 +83,8 @@ func (h *ImageHandler) UploadImage(c *gin.Context) {
 		uploadDir = "./uploads/boxes"
 	case "user":
 		uploadDir = "./uploads/users"
+	case "product":
+		uploadDir = "./uploads/products"
 	default:
 		uploadDir = "./uploads/others"
 	}

@@ -33,8 +33,6 @@ export default function Home() {
     fetchBlindBoxes();
   }, []);
 
-  const defaultImageUrl = "https://placehold.co/400x300?text=盲盒";
-
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
@@ -64,7 +62,7 @@ export default function Home() {
             <Link to={`/BlindBox/${box.id}`} key={box.id}>
               <BlindBox
                 title={box.name}
-                imageUrl={box.imageUrl || defaultImageUrl}
+                imageUrl={box.imageUrl || ""}
                 alt={`${box.name} 盲盒图片`}
               />
             </Link>

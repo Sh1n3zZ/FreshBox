@@ -3,6 +3,7 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
+import { GlobalBlindboxCover } from "@/components/GlobalBlindboxCover";
 
 interface ProductProps {
   title: string;
@@ -15,10 +16,11 @@ export function BlindBox({ title, imageUrl, alt = "Product Image" }: ProductProp
     <Card className="overflow-hidden transition-all duration-200 hover:shadow-md p-0">
       <div className="flex flex-col h-full">
         <div className="w-full h-48">
-          <img
-            src={imageUrl}
+          <GlobalBlindboxCover
+            cover={imageUrl}
+            size="full"
             alt={alt}
-            className="h-full w-full object-cover"
+            className="rounded-none"
           />
         </div>
         <CardHeader className="p-4">

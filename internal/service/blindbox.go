@@ -99,10 +99,10 @@ func (s *BlindBoxService) UpdateBlindBox(ctx context.Context, id string, boxData
 	updates := map[string]interface{}{
 		"name":                 boxData.Name,
 		"description":          boxData.Description,
-		"image_url":            boxData.ImageURL,
+		"image_url":            boxData.ImageURL, // 数据库字段名保持下划线
 		"category":             boxData.Category,
-		"discount_coefficient": boxData.DiscountCoefficient,
-		"donation_amount":      boxData.DonationAmount,
+		"discount_coefficient": boxData.DiscountCoefficient, // 数据库字段名保持下划线
+		"donation_amount":      boxData.DonationAmount,      // 数据库字段名保持下划线
 		"updated_at":           time.Now(),
 	}
 

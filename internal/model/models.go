@@ -71,22 +71,22 @@ type Product struct {
 	Name             string           `json:"name" gorm:"size:255;not null"`
 	Category         string           `json:"category" gorm:"size:50;not null;index"`
 	Description      string           `json:"description" gorm:"size:500"`
-	ImageURL         string           `json:"image_url" gorm:"size:255"`
+	ImageURL         string           `json:"imageUrl" gorm:"size:255"`
 	Price            float64          `json:"price" gorm:"not null"`
-	ProductionDate   time.Time        `json:"production_date" gorm:"type:datetime;not null"`
+	ProductionDate   time.Time        `json:"productionDate" gorm:"type:datetime;not null"`
 	ShelfLifeHours   int              `json:"shelfLifeHours" gorm:"not null"`
 	Status           string           `json:"status" gorm:"size:20;default:'available'"` // available, in_blind_box, sold
-	BlindBoxID       string           `json:"BlindBoxID" gorm:"type:varchar(36);index"`
-	BlindBox         *BlindBox        `json:"blind_box" gorm:"foreignKey:BlindBoxID"`
-	CreatorID        string           `json:"creator_id" gorm:"type:varchar(36);index"`
+	BlindBoxID       string           `json:"blindBoxId" gorm:"type:varchar(36);index"`
+	BlindBox         *BlindBox        `json:"blindBox" gorm:"foreignKey:BlindBoxID"`
+	CreatorID        string           `json:"creatorId" gorm:"type:varchar(36);index"`
 	Creator          User             `json:"creator" gorm:"foreignKey:CreatorID"`
 	ManufacturerID   string           `json:"manufacturerId" gorm:"type:varchar(36);not null;index"`
 	Manufacturer     Manufacturer     `json:"manufacturer" gorm:"foreignKey:ManufacturerID"`
-	BatchNumber      string           `json:"batch_number" gorm:"size:50"`
-	StorageCondition StorageCondition `json:"storage_condition" gorm:"type:varchar(20);not null;default:'常温'"`
+	BatchNumber      string           `json:"batchNumber" gorm:"size:50"`
+	StorageCondition StorageCondition `json:"storageCondition" gorm:"type:varchar(20);not null;default:'常温'"`
 	Ingredients      []*Ingredient    `json:"ingredients" gorm:"many2many:product_ingredients;"`
-	CreatedAt        time.Time        `json:"created_at" gorm:"type:datetime"`
-	UpdatedAt        time.Time        `json:"updated_at" gorm:"type:datetime"`
+	CreatedAt        time.Time        `json:"createdAt" gorm:"type:datetime"`
+	UpdatedAt        time.Time        `json:"updatedAt" gorm:"type:datetime"`
 }
 
 // BlindBox 盲盒模型
@@ -94,16 +94,16 @@ type BlindBox struct {
 	ID                  string    `json:"id" gorm:"primarykey;type:varchar(36)"`
 	Name                string    `json:"name" gorm:"size:255;not null"`
 	Description         string    `json:"description" gorm:"size:500"`
-	DiscountCoefficient float64   `json:"discount_coefficient" gorm:"not null"`   // 动态定价系数
+	DiscountCoefficient float64   `json:"discountCoefficient" gorm:"not null"`    // 动态定价系数
 	Status              string    `json:"status" gorm:"size:20;default:'active'"` // active, sold_out
-	ImageURL            string    `json:"image_url" gorm:"size:255"`
-	ExpirationTime      time.Time `json:"expiration_time" gorm:"type:datetime;not null"`
+	ImageURL            string    `json:"imageUrl" gorm:"size:255"`
+	ExpirationTime      time.Time `json:"expirationTime" gorm:"type:datetime;not null"`
 	Category            string    `json:"category" gorm:"size:50;index"`
-	DonationAmount      float64   `json:"donation_amount" gorm:"default:0.10"`
-	CreatorID           string    `json:"creator_id" gorm:"type:varchar(36);index"`
+	DonationAmount      float64   `json:"donationAmount" gorm:"default:0.10"`
+	CreatorID           string    `json:"creatorId" gorm:"type:varchar(36);index"`
 	Creator             User      `json:"creator" gorm:"foreignKey:CreatorID"`
-	CreatedAt           time.Time `json:"created_at" gorm:"type:datetime"`
-	UpdatedAt           time.Time `json:"updated_at" gorm:"type:datetime"`
+	CreatedAt           time.Time `json:"createdAt" gorm:"type:datetime"`
+	UpdatedAt           time.Time `json:"updatedAt" gorm:"type:datetime"`
 }
 
 // BlindBoxOrder 盲盒订单模型

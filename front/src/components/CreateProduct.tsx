@@ -35,6 +35,7 @@ import { QuickCreateManufacturer } from './QuickCreateManufacturer';
 import { QuickCreateIngredient } from './QuickCreateIngredient';
 import { PlusCircle, MinusCircle, Pencil, Eye } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { CreateBoxUploadProductCover } from "@/components/CreateBoxUploadProductCover";
 
 interface CreateProductProps {
   onProductCreated?: (newProduct: Product) => void;
@@ -50,7 +51,14 @@ const productFormSchema = z.object({
   description: z.string().optional(),
   price: z.coerce.number().positive({ message: "价格必须是正数。" }),
   category: z.string().min(1, { message: "请选择一个类别。" }),
-  imageURL: z.string().url({ message: "请输入有效的图片URL。" }).optional().or(z.literal('')),
+  imageURL: z.string()
+    .refine((val) => {
+      if (!val) return true; // 允许空值
+      // 允许完整的URL或后端返回的相对路径格式
+      return val.startsWith('http') || val.startsWith('/static/uploads/');
+    }, { message: "请输入有效的图片URL或上传图片。" })
+    .optional()
+    .or(z.literal('')),
   productionDate: z.date({ required_error: "请选择生产日期。" }),
   shelfLifeHours: z.coerce.number().int().positive({ message: "保质期必须是正整数。" }),
   manufacturerId: z.string().min(1, { message: "请选择生产商。" }),
@@ -104,7 +112,7 @@ export function CreateProduct({ onProductCreated, product, readOnly = false, ope
       description: product?.description || "",
       price: product?.price || 0,
       category: product?.category || "",
-      imageURL: product?.imageURL || "",
+      imageURL: product?.imageUrl || "", // 修改为使用imageUrl字段
       productionDate: product?.productionDate ? new Date(product.productionDate) : undefined,
       shelfLifeHours: product?.shelfLifeHours || undefined,
       manufacturerId: product?.manufacturerId || "",
@@ -275,22 +283,8 @@ export function CreateProduct({ onProductCreated, product, readOnly = false, ope
               name="imageURL"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>图片URL</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://..." {...field} disabled={readOnly} />
-                  </FormControl>
-                  {field.value && (
-                    <div className="mt-2">
-                      <img 
-                        src={field.value} 
-                        alt="产品图片" 
-                        className="max-h-40 max-w-full object-contain rounded-md border"
-                        onError={(e) => {
-                          e.currentTarget.src = "https://placehold.co/200x150?text=图片加载失败";
-                        }}
-                      />
-                    </div>
-                  )}
+                  <FormLabel>封面图片</FormLabel>
+                  <CreateBoxUploadProductCover value={field.value} onChange={field.onChange} disabled={readOnly} />
                   <FormMessage />
                 </FormItem>
               )}

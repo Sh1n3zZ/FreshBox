@@ -1,4 +1,5 @@
 import axios from 'axios';
+import apiClient from '@/lib/api';
 import { API_URLS } from '@/conf/env';
 import { Product } from './product';
 
@@ -14,7 +15,7 @@ export interface BlindBox {
   donationAmount: number;
   productCount: number;
   createdAt: string;
-  creatorID?: string;
+  creatorId?: string;
 }
 
 export interface BlindBoxDetail extends BlindBox {
@@ -123,10 +124,10 @@ export const blindboxService = {
 
   // 更新盲盒
   async updateBlindBox(id: string, data: Partial<BlindBoxInputData>): Promise<BlindBox> {
-     // const response = await axios.put(API_URLS.BOX.UPDATE(id), data);
-     // Similar to create, backend returns { message, box_id }.
-     // Returning partial data for now.
-    return { id: id, ...data } as BlindBox;
+    await axios.put(API_URLS.BOX.UPDATE(id), data);
+    // Backend returns { message, box_id }, we need to get the updated box details
+    const updatedBox = await this.getBlindBox(id);
+    return updatedBox;
   },
 
   // 删除盲盒
@@ -168,5 +169,20 @@ export const blindboxService = {
       product_ids: productIds,
       blind_box_id: boxId,
     });
-  }
+  },
+
+  // 上传盲盒封面图片
+  async uploadBlindboxCover(file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const response = await apiClient.post(API_URLS.UPLOAD.WITH_TYPE('box'), formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    // 约定后端返回 { code, data: { url } }
+    return response.data.data?.url || '';
+  },
 };

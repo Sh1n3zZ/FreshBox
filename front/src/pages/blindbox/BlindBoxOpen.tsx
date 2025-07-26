@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PackageOpen, RotateCw } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { GlobalProductCover } from '@/components/GlobalProductCover';
 
 interface BlindBoxOpenProps {
   productInfo: ProductDTO | null;
@@ -16,7 +17,6 @@ interface BlindBoxOpenProps {
 
 export function BlindBoxOpenDisplay({ productInfo, isOpening, onOpen, onReset }: BlindBoxOpenProps) {
   const [showResult, setShowResult] = useState(false);
-  const baseUrl = "http://localhost:5173/";
 
   useEffect(() => {
     if (productInfo) {
@@ -27,12 +27,6 @@ export function BlindBoxOpenDisplay({ productInfo, isOpening, onOpen, onReset }:
       setShowResult(false);
     }
   }, [productInfo]);
-
-  // Construct full image URL from backend response
-  const getImageUrl = (imageUrl?: string) => {
-    if (!imageUrl) return "";
-    return imageUrl.startsWith('http') ? imageUrl : `${baseUrl}${imageUrl}`;
-  };
 
   return (
     <div className="flex flex-col items-center justify-center p-8 border rounded-lg min-h-[400px] bg-gradient-to-br from-primary/10 via-transparent to-secondary/10">
@@ -79,11 +73,14 @@ export function BlindBoxOpenDisplay({ productInfo, isOpening, onOpen, onReset }:
                   <CardDescription>来自盲盒的惊喜</CardDescription>
                 </CardHeader>
                 <CardContent className="items-center flex flex-col text-center">
-                  <img
-                    src={getImageUrl(productInfo.imageUrl)}
-                    alt={productInfo.name}
-                    className="w-48 h-48 object-contain mb-4 rounded border"
-                  />
+                  <div className="w-48 h-48 mb-4">
+                    <GlobalProductCover 
+                      cover={productInfo.imageUrl} 
+                      size="full" 
+                      alt={productInfo.name}
+                      className="rounded border"
+                    />
+                  </div>
                   <h3 className="text-xl font-semibold">{productInfo.name}</h3>
                   <p className="text-muted-foreground text-sm mb-2">{productInfo.description}</p>
                   <div className="flex gap-2 mb-2">

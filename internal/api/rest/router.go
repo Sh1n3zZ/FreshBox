@@ -82,6 +82,7 @@ func SetupRouter(
 	// 静态文件服务
 	r.Static("/static/uploads/boxes", "./uploads/boxes")
 	r.Static("/static/uploads/users", "./uploads/users")
+	r.Static("/static/uploads/products", "./uploads/products")
 	r.Static("/static/uploads/others", "./uploads/others")
 	r.Static("/static/uploads/ocr", "./uploads/ocr")
 

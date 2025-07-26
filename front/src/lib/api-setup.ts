@@ -35,7 +35,6 @@ export function setupAxiosInterceptors() {
       if (error.response && error.response.status === 401) {
         // 可以在这里处理401错误，例如重定向到登录页面
         console.error('认证失败，请重新登录');
-        // 重定向逻辑可以放在这里
       }
       return Promise.reject(error);
     }

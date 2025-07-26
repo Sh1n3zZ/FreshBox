@@ -28,7 +28,7 @@ export interface Product {
   description?: string;
   price: number;
   category: string;
-  imageURL?: string;
+  imageUrl?: string; // 修改为与后端一致的字段名
   status: string; // 'available', 'in_blind_box', 'sold'
   productionDate: string;
   shelfLifeHours: number;
@@ -48,7 +48,7 @@ export interface ProductInputData {
   description?: string;
   price: number;
   category: string;
-  imageURL?: string;
+  imageURL?: string; // 创建时仍使用imageURL，与后端API保持一致
   productionDate: string;    // ISO 8601 format string
   shelfLifeHours: number;
   manufacturerId: string;
@@ -222,5 +222,20 @@ export const productService = {
       console.error("Failed to create ingredient:", error);
       throw error;
     }
-  }
+  },
+
+  // 上传产品封面图片
+  async uploadProductCover(file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const response = await apiClient.post(API_URLS.UPLOAD.WITH_TYPE('product'), formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    // 约定后端返回 { code, data: { url } }
+    return response.data.data?.url || '';
+  },
 };
