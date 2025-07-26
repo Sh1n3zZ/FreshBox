@@ -165,6 +165,7 @@ func main() {
 	r.StaticFile("/vite.svg", frontendDir+"/vite.svg")
 	r.StaticFile("/FreshBoxLogo.svg", frontendDir+"/FreshBoxLogo.svg")
 	r.StaticFile("/FreshBoxLogo.jpg", frontendDir+"/FreshBoxLogo.jpg")
+	r.StaticFile("/images/example.jpg", frontendDir+"/images/example.jpg")
 	r.StaticFile("/", frontendDir+"/index.html")
 
 	// 所有不匹配的路由都默认到index.html
