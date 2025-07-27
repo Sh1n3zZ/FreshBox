@@ -1,8 +1,7 @@
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { uploadUserAvatar } from '@/lib/users';
-import apiClient from '@/lib/api';
+import { uploadUserAvatar, updateUserProfile } from '@/lib/profile';
 import { Pencil } from 'lucide-react';
 import { GlobalAvatar } from '@/components/GlobalAvatar';
 
@@ -16,7 +15,7 @@ export function ProfileAvatar({ user }: { user: any }) {
     setUploading(true);
     try {
       const url = await uploadUserAvatar(file);
-      await apiClient.put('/user/profile', { ...user, avatar: url });
+      await updateUserProfile({ ...user, avatar: url });
       // 更新 user.avatar 触发 GlobalAvatar 重新渲染
       user.avatar = url;
       toast.success('头像更新成功');

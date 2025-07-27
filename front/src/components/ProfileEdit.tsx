@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import apiClient from '@/lib/api';
+import { updateUserProfile } from '@/lib/profile';
 
 export function ProfileEdit({ user }: { user: any }) {
   const [form, setForm] = useState({ username: user.username, email: user.email });
@@ -16,7 +16,7 @@ export function ProfileEdit({ user }: { user: any }) {
     e.preventDefault();
     setLoading(true);
     try {
-      await apiClient.put('/user/profile', { ...user, ...form });
+      await updateUserProfile({ ...user, ...form });
       toast.success('资料更新成功');
     } catch (err) {
       toast.error('资料更新失败');
