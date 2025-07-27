@@ -152,3 +152,43 @@ type TaskCommentDTO struct {
 	IsLiked      bool             `json:"is_liked"` // 新增：当前用户是否已点赞
 	Replies      []TaskCommentDTO `json:"replies,omitempty"`
 }
+
+// TaskStepProgress 用户任务步骤进度记录
+type TaskStepProgress struct {
+	ID          string     `json:"id" gorm:"primarykey;type:varchar(36)"`
+	TaskID      string     `json:"task_id" gorm:"type:varchar(36);index;not null"`
+	Task        Task       `json:"task" gorm:"foreignKey:TaskID"`
+	StepID      int        `json:"step_id" gorm:"index;not null"`
+	Step        TaskStep   `json:"step" gorm:"foreignKey:StepID"`
+	UserID      string     `json:"user_id" gorm:"type:varchar(36);index;not null"`
+	User        User       `json:"user" gorm:"foreignKey:UserID"`
+	Status      TaskStatus `json:"status" gorm:"type:varchar(20);not null;default:'not_started'"`
+	Progress    float64    `json:"progress" gorm:"type:decimal(5,2);not null;default:0.00"` // 完成进度百分比 (0-100)
+	StartedAt   *time.Time `json:"started_at" gorm:"type:datetime"`                         // 开始时间
+	CompletedAt *time.Time `json:"completed_at" gorm:"type:datetime"`                       // 完成时间
+	Notes       string     `json:"notes" gorm:"type:text"`                                  // 用户备注
+	Evidence    string     `json:"evidence" gorm:"type:text"`                               // 完成证据 (JSON格式存储图片、文件等)
+	CreatedAt   time.Time  `json:"created_at" gorm:"type:datetime"`
+	UpdatedAt   time.Time  `json:"updated_at" gorm:"type:datetime"`
+}
+
+// TaskStepProgressDTO 任务步骤进度数据传输对象
+type TaskStepProgressDTO struct {
+	ID          string     `json:"id"`
+	TaskID      string     `json:"task_id"`
+	StepID      int        `json:"step_id"`
+	UserID      string     `json:"user_id"`
+	Status      TaskStatus `json:"status"`
+	Progress    float64    `json:"progress"`
+	StartedAt   *string    `json:"started_at,omitempty"`
+	CompletedAt *string    `json:"completed_at,omitempty"`
+	Notes       string     `json:"notes"`
+	Evidence    string     `json:"evidence"`
+	CreatedAt   string     `json:"created_at"`
+	UpdatedAt   string     `json:"updated_at"`
+	// 关联信息
+	StepTitle       string `json:"step_title"`
+	StepDescription string `json:"step_description"`
+	StepType        string `json:"step_type"`
+	StepOrder       int    `json:"step_order"`
+}

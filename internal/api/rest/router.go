@@ -111,6 +111,10 @@ func SetupRouter(
 	taskStepService := service.NewTaskStepService(db, userHandler.GetUserService())
 	taskStepHandler := handler.NewTaskStepHandler(taskStepService, userHandler.GetUserService())
 
+	// 任务步骤进度服务和处理器
+	taskStepProgressService := service.NewTaskStepProgressService(db, userHandler.GetUserService())
+	taskStepProgressHandler := handler.NewTaskStepProgressHandler(taskStepProgressService, userHandler.GetUserService())
+
 	// API v1
 	v1 := r.Group("/api/v1")
 	{
@@ -225,7 +229,6 @@ func SetupRouter(
 			tasks.GET("/recommended", taskHandler.GetRecommendedTasks) // 获取推荐任务
 			tasks.GET("/popular", taskHandler.GetPopularTasks)         // 获取热门任务
 			tasks.GET("/:id", taskHandler.GetTask)                     // 获取任务详情
-			tasks.GET("/:id/progress", taskHandler.GetTaskProgress)    // 获取任务进度
 			tasks.GET("/:id/contents", taskHandler.GetTaskContents)    // 获取任务内容列表
 
 			// 需要认证的接口
@@ -242,9 +245,8 @@ func SetupRouter(
 			taskSteps := tasks.Group("/:id/steps")
 			{
 				// 公开接口
-				taskSteps.GET("", taskStepHandler.GetTaskSteps)                 // 获取任务所有步骤
-				taskSteps.GET("/progress", taskStepHandler.GetTaskStepProgress) // 获取任务步骤进度
-				taskSteps.GET("/:stepId", taskStepHandler.GetTaskStep)          // 获取单个步骤
+				taskSteps.GET("", taskStepHandler.GetTaskSteps)        // 获取任务所有步骤
+				taskSteps.GET("/:stepId", taskStepHandler.GetTaskStep) // 获取单个步骤
 
 				// 需要认证的接口
 				taskStepsAuth := taskSteps.Group("")
@@ -255,6 +257,34 @@ func SetupRouter(
 					taskStepsAuth.DELETE("/:stepId", taskStepHandler.DeleteTaskStep)           // 删除任务步骤
 					taskStepsAuth.PUT("/:stepId/status", taskStepHandler.UpdateTaskStepStatus) // 更新步骤状态
 					taskStepsAuth.PUT("/reorder", taskStepHandler.ReorderTaskSteps)            // 重新排序步骤
+				}
+			}
+
+			// 任务步骤进度相关接口
+			taskProgress := tasks.Group("/:id/progress")
+			{
+				// 需要认证的接口
+				taskProgressAuth := taskProgress.Group("")
+				taskProgressAuth.Use(middleware.Auth())
+				{
+					taskProgressAuth.GET("", taskStepProgressHandler.GetUserTaskProgress)                   // 获取用户任务所有步骤进度
+					taskProgressAuth.GET("/overall", taskStepProgressHandler.GetTaskOverallProgress)        // 获取任务整体进度统计
+					taskProgressAuth.POST("", taskStepProgressHandler.CreateTaskStepProgress)               // 创建任务步骤进度记录
+					taskProgressAuth.PUT("/batch", taskStepProgressHandler.BatchUpdateTaskStepProgress)     // 批量更新任务步骤进度
+					taskProgressAuth.GET("/:progressId", taskStepProgressHandler.GetTaskStepProgress)       // 获取单个进度记录
+					taskProgressAuth.PUT("/:progressId", taskStepProgressHandler.UpdateTaskStepProgress)    // 更新任务步骤进度
+					taskProgressAuth.DELETE("/:progressId", taskStepProgressHandler.DeleteTaskStepProgress) // 删除任务步骤进度记录
+				}
+			}
+
+			// 任务步骤进度相关接口（按步骤）
+			taskStepsProgress := tasks.Group("/:id/steps/:stepId/progress")
+			{
+				// 需要认证的接口
+				taskStepsProgressAuth := taskStepsProgress.Group("")
+				taskStepsProgressAuth.Use(middleware.Auth())
+				{
+					taskStepsProgressAuth.GET("", taskStepProgressHandler.GetUserTaskStepProgress) // 获取用户在特定任务步骤的进度
 				}
 			}
 

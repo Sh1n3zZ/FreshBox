@@ -272,7 +272,7 @@ export async function getTaskDetail(taskId: string): Promise<TaskDetail> {
 // 加入挑战
 export async function joinTask(taskId: string): Promise<void> {
   try {
-    await apiService.post(API_URLS.TASK.UPDATE_STATUS(taskId), { status: 'in_progress' });
+    await apiService.put(API_URLS.TASK.UPDATE_STATUS(taskId), { status: 'in_progress' });
   } catch (error) {
     console.error('加入挑战失败:', error);
     throw new Error('加入挑战失败');
@@ -407,5 +407,114 @@ export async function getTaskStepProgress(taskId: string): Promise<{
   } catch (error) {
     console.error('获取任务步骤进度失败:', error);
     throw new Error('获取任务步骤进度失败');
+  }
+}
+
+// 任务步骤进度相关接口
+export interface TaskStepProgress {
+  id: string;
+  task_id: string;
+  step_id: number;
+  user_id: string;
+  status: 'not_started' | 'in_progress' | 'completed';
+  progress: number;
+  started_at?: string;
+  completed_at?: string;
+  notes: string;
+  evidence: string;
+  created_at: string;
+  updated_at: string;
+  step_title?: string;
+  step_description?: string;
+  step_type?: string;
+  step_order?: number;
+}
+
+// 获取用户任务所有步骤进度
+export async function getUserTaskProgress(taskId: string): Promise<TaskStepProgress[]> {
+  try {
+    const data = await apiService.get<any>(`${API_URLS.TASK.DETAIL(taskId)}/progress`);
+    return data.data || [];
+  } catch (error) {
+    console.error('获取用户任务进度失败:', error);
+    throw new Error('获取用户任务进度失败');
+  }
+}
+
+// 获取任务整体进度统计
+export async function getTaskOverallProgress(taskId: string): Promise<{
+  total_steps: number;
+  completed_steps: number;
+  in_progress_steps: number;
+  not_started_steps: number;
+  average_progress: number;
+  steps: TaskStep[];
+  progress_list: TaskStepProgress[];
+}> {
+  try {
+    const data = await apiService.get<any>(`${API_URLS.TASK.DETAIL(taskId)}/progress/overall`);
+    return data.data;
+  } catch (error) {
+    console.error('获取任务整体进度失败:', error);
+    throw new Error('获取任务整体进度失败');
+  }
+}
+
+// 创建任务步骤进度记录
+export async function createTaskStepProgress(taskId: string, payload: {
+  step_id: number;
+  status?: 'not_started' | 'in_progress' | 'completed';
+  progress?: number;
+  notes?: string;
+  evidence?: string;
+}): Promise<TaskStepProgress> {
+  try {
+    const data = await apiService.post<any>(`${API_URLS.TASK.DETAIL(taskId)}/progress`, payload);
+    return data.data;
+  } catch (error) {
+    console.error('创建任务步骤进度失败:', error);
+    throw new Error('创建任务步骤进度失败');
+  }
+}
+
+// 更新任务步骤进度
+export async function updateTaskStepProgress(taskId: string, progressId: string, payload: {
+  status?: 'not_started' | 'in_progress' | 'completed';
+  progress?: number;
+  notes?: string;
+  evidence?: string;
+}): Promise<void> {
+  try {
+    await apiService.put(`${API_URLS.TASK.DETAIL(taskId)}/progress/${progressId}`, payload);
+  } catch (error) {
+    console.error('更新任务步骤进度失败:', error);
+    throw new Error('更新任务步骤进度失败');
+  }
+}
+
+// 批量更新任务步骤进度
+export async function batchUpdateTaskStepProgress(taskId: string, updates: Array<{
+  step_id: number;
+  status?: 'not_started' | 'in_progress' | 'completed';
+  progress?: number;
+  notes?: string;
+  evidence?: string;
+}>): Promise<void> {
+  try {
+    await apiService.put(`${API_URLS.TASK.DETAIL(taskId)}/progress/batch`, { updates });
+  } catch (error) {
+    console.error('批量更新任务步骤进度失败:', error);
+    throw new Error('批量更新任务步骤进度失败');
+  }
+}
+
+// 获取用户在特定任务步骤的进度
+export async function getUserTaskStepProgress(taskId: string, stepId: number): Promise<TaskStepProgress> {
+  try {
+    const data = await apiService.get<any>(`${API_URLS.TASK.DETAIL(taskId)}/steps/${stepId}/progress`);
+    return data.data;
+  } catch (error) {
+    console.error('获取用户任务步骤进度失败:', error);
+    throw new Error('获取用户任务步骤进度失败');
   }
 }
