@@ -26,15 +26,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, PlusCircle, MinusCircle, Pencil, Eye } from "lucide-react";
+import { CalendarIcon, Pencil, Eye } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { blindboxService, BlindBox, BlindBoxInputData } from '@/lib/blindbox';
-import { productService, Product } from '@/lib/product';
+import { Product } from '@/lib/product';
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
 import { CreateBoxUploadBlindboxCover } from "@/components/CreateBoxUploadBlindboxCover";
+import { CreateBoxAddProductlList } from "@/components/CreateBoxAddProductlList";
 
 interface CreateBoxProps {
   onBoxCreated?: (newBox: BlindBox) => void;
@@ -65,7 +66,6 @@ type BoxFormValues = z.infer<typeof boxFormSchema>;
 export function CreateBox({ onBoxCreated, box, readOnly = false }: CreateBoxProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
   const [boxProducts, setBoxProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -75,10 +75,6 @@ export function CreateBox({ onBoxCreated, box, readOnly = false }: CreateBoxProp
       const fetchData = async () => {
         setIsLoading(true);
         try {
-          // 获取可用状态的产品
-          const response = await productService.getProductsByStatus('available');
-          setAvailableProducts(response.products || []);
-
           // 如果是编辑模式，获取盲盒中已有的产品
           if (box) {
             const boxDetail = await blindboxService.getBlindBox(box.id);
@@ -177,13 +173,11 @@ export function CreateBox({ onBoxCreated, box, readOnly = false }: CreateBoxProp
   const handleSelectProduct = (product: Product) => {
     if (readOnly) return;
     setSelectedProducts(prev => [...prev, product]);
-    setAvailableProducts(prev => prev.filter(p => p.id !== product.id));
   };
 
   const handleDeselectProduct = (product: Product) => {
     if (readOnly) return;
     setSelectedProducts(prev => prev.filter(p => p.id !== product.id));
-    setAvailableProducts(prev => [...prev, product]);
   };
 
   const calculateBoxTotal = () => {
@@ -404,66 +398,15 @@ export function CreateBox({ onBoxCreated, box, readOnly = false }: CreateBoxProp
               ) : (
                 <>
                   {!readOnly && (
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <h4 className="text-sm font-medium mb-2">可选产品</h4>
-                        <ScrollArea className="h-64 w-full rounded-md border p-2">
-                          {availableProducts.length > 0 ? (
-                            availableProducts.map((product) => (
-                              <div key={product.id} className="flex items-center justify-between p-2 hover:bg-accent rounded">
-                                <div className="flex-1">
-                                  <h5 className="font-medium">{product.name}</h5>
-                                  <div className="text-sm text-muted-foreground">
-                                    <p>{formatCurrency(product.price)}</p>
-                                    <p>类别: {product.category}</p>
-                                  </div>
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleSelectProduct(product)}
-                                  aria-label={`选择 ${product.name}`}
-                                >
-                                  <PlusCircle className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            ))
-                          ) : (
-                            <p className="text-sm text-muted-foreground p-1">暂无可用产品</p>
-                          )}
-                        </ScrollArea>
-                      </div>
-
-                      <div>
-                        <h4 className="text-sm font-medium mb-2">已选产品</h4>
-                        <ScrollArea className="h-64 w-full rounded-md border p-2">
-                          {selectedProducts.length > 0 ? (
-                            selectedProducts.map((product) => (
-                              <div key={product.id} className="flex items-center justify-between p-2 hover:bg-accent rounded">
-                                <div className="flex-1">
-                                  <h5 className="font-medium">{product.name}</h5>
-                                  <div className="text-sm text-muted-foreground">
-                                    <p>{formatCurrency(product.price)}</p>
-                                    <p>类别: {product.category}</p>
-                                  </div>
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDeselectProduct(product)}
-                                  aria-label={`移除 ${product.name}`}
-                                >
-                                  <MinusCircle className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            ))
-                          ) : (
-                            <p className="text-sm text-muted-foreground p-1">尚未选择产品</p>
-                          )}
-                        </ScrollArea>
-                      </div>
+                    <div className="mb-4">
+                      <CreateBoxAddProductlList
+                        availableProducts={[]}
+                        selectedProducts={selectedProducts}
+                        onSelectProduct={handleSelectProduct}
+                        onDeselectProduct={handleDeselectProduct}
+                        readOnly={readOnly}
+                        isLoading={isLoading}
+                      />
                     </div>
                   )}
 
