@@ -10,6 +10,7 @@ interface TaskStep {
   description: string
   type: string
   status?: string
+  order: number
 }
 
 // Props 类型定义
@@ -21,13 +22,20 @@ interface TaskDetailStepsProps {
 
 // TaskDetailSteps 组件用于展示挑战步骤
 export default function TaskDetailSteps({ steps, handleStepAction, getStepStatusIcon }: TaskDetailStepsProps) {
+  // Sort steps by order field to ensure correct display order
+  const sortedSteps = [...steps].sort((a, b) => {
+    const orderA = a.order ?? 0;
+    const orderB = b.order ?? 0;
+    return orderA - orderB;
+  });
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>挑战步骤</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {steps.map((step: TaskStep, index: number) => (
+        {sortedSteps.map((step: TaskStep, index: number) => (
           <div key={step.id} className="relative">
             <div className="flex">
               <div className="mr-4 flex-shrink-0">
@@ -56,7 +64,7 @@ export default function TaskDetailSteps({ steps, handleStepAction, getStepStatus
               </div>
             </div>
             {/* Step connector line */}
-            {index < steps.length - 1 && (
+            {index < sortedSteps.length - 1 && (
               <div className="absolute left-5 top-10 bottom-0 w-0.5 bg-border h-6"></div>
             )}
           </div>

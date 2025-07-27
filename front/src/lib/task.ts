@@ -243,13 +243,26 @@ export interface TaskDetail {
     description: string;
     type: string;
     status?: string;
+    order: number;
   }>;
 }
 
 export async function getTaskDetail(taskId: string): Promise<TaskDetail> {
   try {
     const data = await apiService.get<any>(API_URLS.TASK.DETAIL(taskId));
-    return data.data || data;
+    const taskDetail = data.data || data;
+    
+    // Sort steps by order field if steps exist
+    if (taskDetail.steps && Array.isArray(taskDetail.steps)) {
+      taskDetail.steps.sort((a: any, b: any) => {
+        // Handle cases where order might be undefined
+        const orderA = a.order ?? 0;
+        const orderB = b.order ?? 0;
+        return orderA - orderB;
+      });
+    }
+    
+    return taskDetail;
   } catch (error) {
     console.error('获取任务详情失败:', error);
     throw new Error('获取任务详情失败');
@@ -283,7 +296,14 @@ export interface TaskStep {
 export async function getTaskSteps(taskId: string): Promise<TaskStep[]> {
   try {
     const data = await apiService.get<any>(API_URLS.TASK.STEPS(taskId));
-    return data.data || [];
+    const steps = data.data || [];
+    
+    // Sort steps by order field
+    return steps.sort((a: TaskStep, b: TaskStep) => {
+      const orderA = a.order ?? 0;
+      const orderB = b.order ?? 0;
+      return orderA - orderB;
+    });
   } catch (error) {
     console.error('获取任务步骤失败:', error);
     throw new Error('获取任务步骤失败');
@@ -372,7 +392,18 @@ export async function getTaskStepProgress(taskId: string): Promise<{
 }> {
   try {
     const data = await apiService.get<any>(API_URLS.TASK.STEP_PROGRESS(taskId));
-    return data.data;
+    const result = data.data;
+    
+    // Sort steps by order field if steps exist
+    if (result.steps && Array.isArray(result.steps)) {
+      result.steps.sort((a: TaskStep, b: TaskStep) => {
+        const orderA = a.order ?? 0;
+        const orderB = b.order ?? 0;
+        return orderA - orderB;
+      });
+    }
+    
+    return result;
   } catch (error) {
     console.error('获取任务步骤进度失败:', error);
     throw new Error('获取任务步骤进度失败');
