@@ -7,9 +7,9 @@ import { useTranslation } from "react-i18next"
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { GlobalAvatar } from '@/components/GlobalAvatar'
 import { dashboardService } from '@/lib/dashboard'
 import { ActivityItem } from '@/lib/dashboard'
 
@@ -101,10 +101,13 @@ export function UserRecentActivity() {
       <CardContent className="space-y-4">
         {activities.map((activity) => (
           <div key={activity.id} className="flex items-start space-x-3">
-            <Avatar>
-              <AvatarImage src={activity.avatar} alt={activity.user} />
-              <AvatarFallback>{activity.user.charAt(0)}</AvatarFallback>
-            </Avatar>
+            <GlobalAvatar 
+              user={{ 
+                avatar: activity.avatar, 
+                username: activity.user 
+              }} 
+              size="sm"
+            />
             <div className="flex-1 space-y-1">
               <p className="text-sm font-medium">
                 <span className="font-semibold">{activity.user}</span>{' '}
