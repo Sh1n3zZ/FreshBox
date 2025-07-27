@@ -31,6 +31,7 @@ interface TaskStep {
   description: string
   type: string
   status?: string
+  order: number
 }
 
 interface TaskDetail {
