@@ -5,7 +5,7 @@ import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
 import { useTranslation } from "react-i18next"
 import { useEffect, useState } from "react"
 import { dashboardService, BlindBoxOpeningTrendResponse } from "@/lib/dashboard"
-import { format, subDays, subWeeks, subMonths } from 'date-fns'
+import { format, subDays, subWeeks, subMonths, addDays } from 'date-fns'
 
 import {
   Card,
@@ -50,20 +50,20 @@ export function BlindBoxOpeningTrendChart({ className }: BlindBoxTrendProps) {
 
         switch (selectedPeriod) {
           case 'daily':
-            startTime = subDays(now, 1);
-            endTime = now;
+            startTime = now; // 当天开始时间
+            endTime = addDays(now, 1); // 下一天开始时间，这样可以包含当天的所有数据
             break;
           case 'weekly':
             startTime = subWeeks(now, 1);
-            endTime = now;
+            endTime = addDays(now, 1); // 包含今天的数据
             break;
           case 'monthly':
             startTime = subMonths(now, 1);
-            endTime = now;
+            endTime = addDays(now, 1); // 包含今天的数据
             break;
           default:
             startTime = subMonths(now, 1);
-            endTime = now;
+            endTime = addDays(now, 1); // 包含今天的数据
         }
 
         const response = await dashboardService.getBlindBoxOpeningTrend(
@@ -85,7 +85,7 @@ export function BlindBoxOpeningTrendChart({ className }: BlindBoxTrendProps) {
     const now = new Date();
     switch (selectedPeriod) {
       case 'daily':
-        return format(subDays(now, 1), 'yyyy-MM-dd');
+        return format(now, 'yyyy-MM-dd'); // 显示当天日期
       case 'weekly':
         return format(subWeeks(now, 1), 'yyyy-MM-dd');
       case 'monthly':
